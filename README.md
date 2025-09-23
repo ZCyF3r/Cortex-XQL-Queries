@@ -1,2 +1,2 @@
 # Cortex-XQL-Queries
-Detection rule for the query language XQL
+Detections for the query language XQL
