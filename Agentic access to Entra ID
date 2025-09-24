@@ -1,0 +1,7 @@
+//Agentic access to Entra ID
+
+config case_sensitive = false timeframe = 30d
+| dataset = msft_azure_ad_raw
+| filter agent contains "agenticApp" or agent contains "agenticAppInstance"
+| filter resourceDisplayName contains "Entra"
+| fields agent, appDisplayName, appId, resourceDisplayName
