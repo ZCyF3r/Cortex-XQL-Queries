@@ -1,4 +1,4 @@
-//Title: Malicious NPM Package Versions
+//Malicious NPM Package Versions
 //Description: This query looks for IOCs of npm packages downloaded.
 
 config case_sensitive = false timeframe = 30d
