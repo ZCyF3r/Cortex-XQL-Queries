@@ -1,0 +1,13 @@
+//Identify code scanning tools looking for AWS credentials
+
+
+config case_sensitive = false timeframe = 30d
+dataset = xdr_data
+| filter file_path contains ".aws\\credentials"
+  and ( 
+    actor_process_command_line contains "trufflehog"
+    or actor_process_command_line contains "gitleaks"
+    or actor_process_command_line contains "gittyleaks"
+  )
+| fields *
+| sort timestamp desc
