@@ -2,7 +2,7 @@
 
 
 config case_sensitive = false timeframe = 30d
-dataset = xdr_data
+| dataset = xdr_data
 | filter action_file_path contains ".aws\\credentials"
   and ( 
     actor_process_command_line contains "trufflehog"
