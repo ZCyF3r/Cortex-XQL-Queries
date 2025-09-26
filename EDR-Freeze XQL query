@@ -7,23 +7,17 @@ config case_sensitive = false timeframe = 30d
 //Werfaultsecure.exe targeting EDR/AV processes
 dataset = xdr_data
 | filter actor_process_image_name contains "WerFaultSecure.exe"
-  and target_process_image_name in arraycreate(
-    "lsass.exe", "MsMpEng.exe", "Sense.exe", "CSFalconService.exe",
-    "bdservicehost.exe", "elastic-agent.exe", "savservice.exe", "bdservicehost.exe",
-    "esensor.exe", "tmws.exe", "HuntressAgent.exe", "SentinelAgent.exe",
-    "symantec.exe", "secureworks.exe", "CyveraService.exe", "cortex-xdr-payload.exe",
-  )
-| alter wer_time = timestamp
-| fields endpoint_name, actor_process_image_name, actor_process_command_line, target_process_image_name, wer_time
+  and actor_process_image_name matches regex "(?i)(CyveraService\.exe|cortex-xdr-payload\.exe|CSFalconService\.exe|CrowdStrikeService\.exe|HuntressAgent\.exe|HuntressUpdater\.exe|SentinelAgent\.exe|SentinelHelperService\.exe|bdservicehost\.exe|vsserv\.exe|ntrtscan\.exe|clientcommunicationservice\.exe|elastic-agent\.exe|elastic-endpoint\.exe|MsMpEng\.exe|Sense\.exe|ccSvcHst\.exe|Smc\.exe)"
+| alter wer_time = event_timestamp
+| fields endpoint_name, actor_process_image_name, actor_process_command_line, action_process_image_name, wer_time
 | join conflict_strategy = left
   (
     //NtSuspendProcess invocation
     dataset = xdr_data
     | filter actor_process_command_line contains "NtSuspendProcess"
-    | alter suspend_time = timestamp
+    | alter suspend_time = event_timestamp
     | fields endpoint_name, actor_process_image_name as suspender_process, actor_process_command_line as suspender_cmd, suspend_time
-  )
-  on endpoint_name
+  ) as suspend_data
 | filter timestamp_diff(suspend_time, wer_time, "second") > 0
 | filter timestamp_diff(suspend_time, wer_time, "second") < 300
 | sort wer_time desc
