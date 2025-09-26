@@ -11,7 +11,7 @@ dataset = xdr_data
     "lsass.exe", "MsMpEng.exe", "Sense.exe", "CSFalconService.exe",
     "bdservicehost.exe", "elastic-agent.exe", "savservice.exe", "bdservicehost.exe",
     "esensor.exe", "tmws.exe", "HuntressAgent.exe", "SentinelAgent.exe",
-    "symantec.exe", "secureworks.exe", "CyveraService.exe", cortex-xdr-payload.exe,
+    "symantec.exe", "secureworks.exe", "CyveraService.exe", "cortex-xdr-payload.exe",
   )
 | alter wer_time = timestamp
 | fields endpoint_name, actor_process_image_name, actor_process_command_line, target_process_image_name, wer_time
