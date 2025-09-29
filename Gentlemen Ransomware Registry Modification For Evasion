@@ -1,0 +1,30 @@
+//Detection for the weakening of security controls by modifying critical registry settings that govern authentication and remote access protocols
+//This impair defense technique is commonly used by "The Gentlemen" ransomware group
+
+//Counts how many times each modification occurred & only alerts when 2 or more of these modifications happen
+
+
+config case_sensitive = false timeframe = 30d
+
+dataset = xdr_data
+| filter event_type = ENUM.REGISTRY
+| filter (
+    (action_registry_key_name contains "SYSTEM\\CurrentControlSet\\Control\\Lsa\\MSV1_0" 
+     and action_registry_value_name = "RestrictSendingNTLMTraffic" 
+     and action_registry_data = "0")
+    or
+    (action_registry_key_name contains "SYSTEM\\CurrentControlSet\\Control\\Lsa" 
+     and action_registry_value_name = "DisableRestrictedAdmin" 
+     and action_registry_data = "0")
+    or
+    (action_registry_key_name contains "SYSTEM\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp" 
+     and action_registry_value_name = "SecurityLayer" 
+     and action_registry_data = "1")
+)
+| alter registry_modification = if(
+    action_registry_value_name = "RestrictSendingNTLMTraffic", "NTLM_Restriction_Disabled",
+    if(action_registry_value_name = "DisableRestrictedAdmin", "Restricted_Admin_Disabled",
+    if(action_registry_value_name = "SecurityLayer", "RDP_Security_Weakened",
+    "Unknown")))
+| comp count() as modification_count by agent_hostname, actor_primary_username, action_process_image_name, registry_modification
+| filter modification_count >= 2
