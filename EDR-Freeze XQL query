@@ -1,19 +1,23 @@
-//EDR-Freeze targeting EDR/AV processes and invoking NtSuspendProcess
-//EDR process list Cortex, CS, WinDef, Bitdefender, SentinalOne, Elastic, Huntress, Secureworks, symantec, Sophos
+//EDR-Freeze detection
+//Detects WER processes loading ntdll.dll
+//Extracts the target PID from the command line
+//Joins with ALL processes to get the target process name
+//THEN filters to only show when the target is EDR/AV
 
 
 config case_sensitive = false timeframe = 30d
+
 | dataset = xdr_data
-| filter actor_process_image_name contains "WerFaultSecure.exe"
-  and actor_process_image_name contains "(?i)(CyveraService\.exe|cortex-xdr-payload\.exe|CSFalconService\.exe|CrowdStrikeService\.exe|HuntressAgent\.exe|HuntressUpdater\.exe|SentinelAgent\.exe|SentinelHelperService\.exe|bdservicehost\.exe|vsserv\.exe|ntrtscan\.exe|clientcommunicationservice\.exe|elastic-agent\.exe|elastic-endpoint\.exe|MsMpEng\.exe|Sense\.exe|ccSvcHst\.exe|Smc\.exe)"
-| alter wer_time = event_timestamp
-| fields agent_hostname, actor_process_image_name, actor_process_command_line, action_process_image_name, wer_time
-| join conflict_strategy = left
-  (
+| filter event_type = ENUM.LOAD_IMAGE
+| filter action_process_image_name in ("WerFaultSecure.exe", "WerFault.exe")
+| filter action_module_path contains "ntdll.dll"
+| alter target_pid_array = regextract(action_process_command_line, "(\d+)")
+| alter target_pid = arrayindex(target_pid_array, 0)
+| filter target_pid != null
+| join (
     dataset = xdr_data
-    | filter actor_process_command_line contains "NtSuspendProcess"
-    | alter suspend_time = event_timestamp
-    | fields agent_hostname, actor_process_image_name as suspender_process, actor_process_command_line as suspender_cmd, suspend_time
-  ) as suspend_data
-| filter timestamp_diff(suspend_time, wer_time, "second") > 0
-| filter timestamp_diff(suspend_time, wer_time, "second") < 300
+    | alter edr_pid = to_string(action_process_pid)
+    | fields edr_pid, action_process_image_name as target_process_name
+) as edr_processes edr_processes.edr_pid = target_pid
+| filter target_process_name in ("CrowdStrike", "SentinelOne", "MsMpEng", "CarbonBlack", "CSFalcon", "MsSense", "Defender")
+| comp count() as edr_targeting by action_local_ip, actor_primary_username, target_process_name
