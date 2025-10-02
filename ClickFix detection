@@ -1,0 +1,3 @@
+//XQL query for detection ClickFix via the RunMRU registry key
+
+config case_sensitive = false timeframe = 30d
