@@ -9,15 +9,15 @@ config case_sensitive = false timeframe = 30d
 dataset = xdr_data
 | filter event_type = ENUM.REGISTRY
 | filter (
-    (action_registry_key_name contains "SYSTEM\\CurrentControlSet\\Control\\Lsa\\MSV1_0" 
+    (action_registry_key_name contains "SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" 
      and action_registry_value_name = "RestrictSendingNTLMTraffic" 
      and action_registry_data = "0")
     or
-    (action_registry_key_name contains "SYSTEM\\CurrentControlSet\\Control\\Lsa" 
+    (action_registry_key_name contains "SYSTEM\CurrentControlSet\Control\Lsa" 
      and action_registry_value_name = "DisableRestrictedAdmin" 
      and action_registry_data = "0")
     or
-    (action_registry_key_name contains "SYSTEM\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp" 
+    (action_registry_key_name contains "SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" 
      and action_registry_value_name = "SecurityLayer" 
      and action_registry_data = "1")
 )
