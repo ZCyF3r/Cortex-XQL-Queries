@@ -1,3 +1,7 @@
 //XQL query for detection ClickFix via the RunMRU registry key
 
 config case_sensitive = false timeframe = 30d
+| dataset = xdr_data
+| event_type = ENUM.REGISTRY_SET_VALUE
+| filter action_registry_key_name contains "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RunMRU"
+| filter action_registry_data contains 
