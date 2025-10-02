@@ -1,0 +1,13 @@
+//XQL query for detecting FileFix via the TypedPaths registry key
+
+config case_sensitive = false timeframe = 30d
+| dataset = xdr_data
+| filter event_type = ENUM.REGISTRY
+| filter action_registry_key_name contains "Software\Microsoft\Windows\CurrentVersion\Explorer\TypedPaths"
+| filter action_registry_data contains "powershell" or
+    action_registry_data contains "mshta" or 
+    action_registry_data contains "certutil" or
+    action_registry_data contains "curl" or 
+    action_registry_data contains "bitsadmin" or 
+    action_registry_data contains "wget"
+| fields action_registry_data, action_registry_file_path, action_registry_key_name, agent_hostname, actor_effective_username
