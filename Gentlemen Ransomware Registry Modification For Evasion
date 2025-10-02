@@ -6,7 +6,7 @@
 
 config case_sensitive = false timeframe = 30d
 
-dataset = xdr_data
+| dataset = xdr_data
 | filter event_type = ENUM.REGISTRY
 | filter (
     (action_registry_key_name contains "SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0" 
