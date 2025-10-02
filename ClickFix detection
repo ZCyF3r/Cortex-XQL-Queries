@@ -3,7 +3,7 @@
 config case_sensitive = false timeframe = 30d
 | dataset = xdr_data
 | filter event_type = ENUM.REGISTRY
-| filter action_registry_key_name contains "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\RunMRU"
+| filter action_registry_key_name contains "Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU"
 | filter action_registry_data in ("powershell","pwsh","mshta","certutil","bitsadmin","curl","wget")
 | filter action_registry_data contains "http"
   or action_registry_data contains "iex"
