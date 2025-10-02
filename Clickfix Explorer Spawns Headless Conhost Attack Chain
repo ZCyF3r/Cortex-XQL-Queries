@@ -1,0 +1,22 @@
+//Detects a process execution chain characteristic of the ClickFix technique, where explorer.exe spawns a headless conhost.exe, which in turn leads to the execution of a LOLBin to download a payload
+
+config case_sensitive = false timeframe = 7d
+
+| dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter actor_process_image_name contains "explorer"
+| filter action_process_image_name contains "conhost"
+| filter action_process_command_line contains "-headless"
+	or action_process_command_line contains "--headless"
+| fields _time, agent_hostname, actor_effective_username, action_process_image_command_line, action_process_instance_id
+| join type = left (
+		dataset = xdr_data
+		| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+		| filter action_process_image_name contains "curl"
+		or action_process_image_name contains "pwsh"
+		or action_process_image_name contains "powershell"
+		or action_process_image_name contains "mshta"
+		| filter action_process_image_command_line ~= "http"
+		| fields action_process_instance_id as process_instance, actor_process_instance_id as process_parent, action_process_command_line as process_command
+) as process_exec process_exec.process_parent = action_process_instance_id
+| fields _time, agent_hostname, actor_effective_username, action_process_image_command_line, process_command
