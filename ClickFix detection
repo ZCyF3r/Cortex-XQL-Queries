@@ -4,11 +4,10 @@ config case_sensitive = false timeframe = 30d
 | dataset = xdr_data
 | filter event_type = ENUM.REGISTRY
 | filter action_registry_key_name contains "Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU"
-| filter action_registry_data in ("powershell","pwsh","mshta","certutil","bitsadmin","curl","wget")
-| filter action_registry_data contains "http"
-  or action_registry_data contains "iex"
-  or action_registry_data contains "Invoke-Expression"
-  or action_registry_data contains "DownloadString"
-  or action_registry_data contains "iwr"
-  or action_registry_data contains "Invoke-WebRequest"
-| fields *
+| filter action_registry_data contains "powershell" or
+    action_registry_data contains "mshta" or 
+    action_registry_data contains "certutil" or
+    action_registry_data contains "curl" or 
+    action_registry_data contains "bitsadmin" or 
+    action_registry_data contains "wget"
+| fields action_registry_data, action_registry_file_path, action_registry_key_name, agent_hostname, actor_effective_username
