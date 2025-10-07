@@ -1,0 +1,9 @@
+//Timestomping detection
+
+config case_sensitive = false timeframe = 90d
+
+| dataset = xdr_data
+| filter event_sub_type = ENUM.FILE_CREATE_NEW or event_sub_type = ENUM.FILE_WRITE
+| filter action_file_create_time > action_file_mod_time
+| filter action_file_extension in ("vbs", "cmd", "ps1", "dll", "exe", "bat", "js")
+| fields _time, agent_hostname, actor_effective_username, action_file_path, action_file_name, action_file_create_time, action_file_mod_time, action_process_image_name
