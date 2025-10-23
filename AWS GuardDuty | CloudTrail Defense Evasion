@@ -1,0 +1,17 @@
+config case_sensitive = false timeframe = 7d
+
+| dataset = amazon_aws_raw 
+| filter eventName in (
+    "StopLogging",
+    "DeleteTrail",
+    "UpdateTrail",
+    "DeleteMembers",
+    "DisassociateFromMasterAccount",
+    "ArchieveFindings",
+    "StopMonitoringMembers",
+    "UpdateDetector",
+    "DeleteDetector",
+    "PutEventSelectors"
+)
+| filter errorCode = null or errorMessage = ""
+| fields _time, eventName, eventSource, userIdentity, userAgent, sourceIPAddress, awsRegion, eventID
