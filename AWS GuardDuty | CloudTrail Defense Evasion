@@ -1,3 +1,5 @@
+//AWS CloudTrail / GuardDuty log tampering
+
 config case_sensitive = false timeframe = 7d
 
 | dataset = amazon_aws_raw 
@@ -7,7 +9,7 @@ config case_sensitive = false timeframe = 7d
     "UpdateTrail",
     "DeleteMembers",
     "DisassociateFromMasterAccount",
-    "ArchieveFindings",
+    "ArchiveFindings",
     "StopMonitoringMembers",
     "UpdateDetector",
     "DeleteDetector",
