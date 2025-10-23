@@ -1,0 +1,17 @@
+//COLDDRIVER bitsadmin download from delivery domain
+
+config case_sensitive = false timeframe = 30d
+
+| dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name contains "bitsadmin"
+| filter action_process_image_command_line contains "libsystemhealthcheck.py" or 
+  action_process_image_command_line contains "libcryptopydatasize.py"
+| fields _time, agent_hostname, actor_effective_username, action_process_image_command_line, action_process_instance_id
+| join (
+  dataset = xdr_data
+  | filter event_type = ENUM.NETWORK
+  | filter dns_query_name contains "inspectguarantee.org"
+  | fields agent_hostname as network_hostname, dns_query_name, action_remote_ip, action_process_instance_id as network_process_id
+) as network network.network_hostname = agent_hostname and network.network_process_id = action_process_instance_id
+| fields _time, agent_hostname, actor_effective_username, action_process_image_command_line, action_process_instance_id, dns_query_name, action_remote_ip
