@@ -1,3 +1,5 @@
+//MonsterV2 Network Detection
+
 config case_sensitive = false timeframe = 7d
 
 | dataset = xdr_data
