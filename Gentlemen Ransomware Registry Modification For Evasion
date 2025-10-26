@@ -1,6 +1,5 @@
 //Detection for the weakening of security controls by modifying critical registry settings that govern authentication and remote access protocols
 //This impair defense technique is commonly used by "The Gentlemen" ransomware group
-
 //Counts how many times each modification occurred & only alerts when 2 or more of these modifications happen
 
 
