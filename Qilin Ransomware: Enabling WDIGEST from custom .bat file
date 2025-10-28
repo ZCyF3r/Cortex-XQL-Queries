@@ -1,0 +1,11 @@
+//Qilin Ransomware: Enabling WDIGEST from custom .bat file
+
+config case_sensitive = false timeframe = 30d
+
+| dataset = xdr_data
+| filter event_type = ENUM.REGISTRY and event_sub_type = ENUM.REGISTRY_SET_VALUE
+| filter action_registry_key_name contains "WDigest"
+| filter action_registry_value_name = "UseLogonCredential"
+| filter action_registry_data = "1"
+| filter actor_process_image_name ~= ".*!light.*\.bat"
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, actor_process_image_command_line, action_registry_key_name, action_registry_value_name, action_registry_data
