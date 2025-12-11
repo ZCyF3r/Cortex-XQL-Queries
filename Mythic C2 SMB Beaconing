@@ -1,0 +1,21 @@
+//Hunting for Mythic C2 in network traffic
+
+config case_sensitive = false timeframe = 7d
+
+| dataset = xdr_data
+| filter event_type = ENUM.NETWORK
+| filter action_network_app_ids contains "smb"
+| filter action_total_upload > 360
+| filter action_remote_ip ~= "^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\.|^192\.168\."
+| filter action_local_ip ~= "^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\.|^192\.168\."
+| filter uuid != null
+| filter uuid ~= "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+| comp count() as beacon_count,
+       sum(action_total_upload) as total_bytes_sent,
+       values(uuid) as beacon_uuids,
+       min(_time) as first_seen,
+       max(_time) as last_seen
+       by agent_hostname, action_local_ip, action_remote_ip, actor_process_image_name
+| filter beacon_count >= 3
+| fields agent_hostname, action_local_ip, action_remote_ip, actor_process_image_name, beacon_count, total_bytes_sent, first_seen, last_seen
+| sort desc beacon_count
