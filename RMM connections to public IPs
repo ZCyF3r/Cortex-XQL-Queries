@@ -1,0 +1,20 @@
+//Popular RMM tools connecting to remote public IPs
+
+dataset = xdr_data
+| filter event_type = ENUM.NETWORK
+| filter actor_process_image_name in (
+    "TeamViewer.exe",
+    "ScreenConnect.exe",
+    "AnyDesk.exe",
+    "LogMeIn.exe",
+    "RemotePC.exe",
+    "Splashtop.exe",
+    "GoToMyPC.exe",,
+    "AeroAdmin.exe",
+    "rustdesk.exe",
+    "vncviewer.exe"
+)
+| filter action_remote_ip !~= "^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\.|^192\.168\.|^127\."
+| filter action_remote_ip !~= "^169\.254\.|^224\.|^255\."
+| fields _time, agent_hostname, actor_process_image_name, action_local_ip, action_remote_ip, action_remote_port, actor_effective_username
+| sort desc _time
