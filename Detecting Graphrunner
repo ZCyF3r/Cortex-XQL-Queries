@@ -1,12 +1,12 @@
-//Detecting GraphRunner in Azure Environments
+//Detecting GraphRunner in Azure Environments from default user agent strings
 
-dataset = msft_azure_ad_raw
-//Device Code Authentication to Microsoft Graph
+config case_sensitive = false timeframe = 7d
+
+| dataset = msft_azure_ad_raw
 | filter (
     authenticationProtocol  = "deviceCode" 
     and resourceDisplayName  = "Microsoft Graph"
 )
-//GraphRunner Default User-Agent Patterns
 or (
     userAgent contains "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15" or
     userAgent contains "Mozilla/5.0 (iPhone; CPU iPhone OS 8_3 like Mac OS X) AppleWebKit/600.1.4" or
