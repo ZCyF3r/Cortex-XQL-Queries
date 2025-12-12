@@ -1,0 +1,43 @@
+//Detecting GraphRunner in Azure Environments
+
+dataset = msft_azure_ad_audit_raw
+// === DETECTION 1: Device Code Authentication to Microsoft Graph ===
+| filter (
+    authentication_protocol = "deviceCode" 
+    and resource_display_name = "Microsoft Graph"
+)
+// === DETECTION 2: GraphRunner Default User-Agent Patterns ===
+or (
+    user_agent contains "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15" or
+    user_agent contains "Mozilla/5.0 (iPhone; CPU iPhone OS 8_3 like Mac OS X) AppleWebKit/600.1.4" or
+    user_agent contains "Mozilla/5.0 (Linux; Android 6.0; Build/MRA58N) AppleWebKit/537.36" or
+    user_agent contains "Mozilla/5.0 (Linux; Android 8.1.0; Pixel Build/OPM4.171019.021.D1) AppleWebKit/537.36" or
+    user_agent contains "Mozilla/5.0 (Linux; U; Android 4.0.2; en-us; Galaxy Nexus Build/ICL53F) AppleWebKit/534.30" or
+    user_agent contains "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36" or
+    user_agent contains "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15" or
+    user_agent contains "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" or
+    user_agent contains "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" or
+    user_agent contains "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:70.0) Gecko/20101101 Firefox/70.0" or
+    user_agent contains "Mozilla/5.0 (Windows NT 10.0; WOW64; Trident/7.0; rv:11.0) like Gecko"
+)
+// === COMBINE: High-confidence if both indicators present ===
+| alter detection_type = if(
+    authentication_protocol = "deviceCode" and (
+        user_agent contains "Mozilla/5.0 (iPhone" or
+        user_agent contains "Mozilla/5.0 (Linux; Android" or
+        user_agent contains "Mozilla/5.0 (Macintosh" or
+        user_agent contains "Mozilla/5.0 (Windows NT"
+    ),
+    "HIGH_CONFIDENCE_GRAPHRUNNER",
+    if(authentication_protocol = "deviceCode", "DEVICE_CODE_AUTH", "SUSPICIOUS_USER_AGENT")
+)
+| fields _time,
+        detection_type,
+        user_principal_name,
+        authentication_protocol,
+        resource_display_name,
+        ip_address,
+        location,
+        user_agent,
+        result_description
+| sort desc _time
