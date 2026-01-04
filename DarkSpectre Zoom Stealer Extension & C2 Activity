@@ -1,0 +1,33 @@
+//DarkSpectre Zoom Stealer Browser Extension & C2 activity
+//https://www.koi.ai/blog/darkspectre-unmasking-the-threat-actor-behind-7-8-million-infected-browsers#heading-7
+
+config case_snesitive = false timeframe = 30d
+
+dataset = xdr_data
+| filter event_type = ENUM.NETWORK
+//ZOOM STEALER C2 DOMAINS
+| filter action_remote_ip contains "meetingtv.us" or
+        action_remote_ip contains "webinarstvus.cloudfunctions.net" or 
+        action_remote_ip contains "zoocorder.firebaseio.com"
+//CHROME EXTENSION IDs
+| filter action_file_path contains "kfokdmfpdnokpmpbjhjbcabgligoelgp" or
+        action_file_path contains "pdadlkbckhinonakkfkdaadceojbekep" or
+        action_file_path contains "akmdionenlnfcipmdhbhcnkighafmdha" or
+        action_file_path contains "pabkjoplheapcclldpknfpcepheldbga" or
+        action_file_path contains "aedgpiecagcpmehhelbibfbgpfiafdkm" or
+        action_file_path contains "dpdgjbnanmmlikideilnpfjjdbmneanf" or
+        action_file_path contains "kabbfhmcaaodobkfbnnehopcghicgffo" or
+        action_file_path contains "cphibdhgbdoekmkkcbbaoogedpfibeme" or
+        action_file_path contains "ceofheakaalaecnecdkdanhejojkpeai" or
+        action_file_path contains "dakebdbeofhmlnmjlmhjdmmjmfohiicn" or
+        action_file_path contains "adjoknoacleghaejlggocbakidkoifle" or
+        action_file_path contains "pgpidfocdapogajplhjofamgeboonmmj" or
+        action_file_path contains "ifklcpoenaammhnoddgedlapnodfcjpn" or
+        action_file_path contains "ebhomdageggjbmomenipfbhcjamfkmbl" or
+        action_file_path contains "ajfokipknlmjhcioemgnofkpmdnbaldi" or
+//EDGE EXTENSION ID
+        action_file_path contains "mhjdjckeljinofckdibjiojbdpapoecj" or
+//FIREFOX EXTENSION IDs
+        action_file_path contains "{7536027f-96fb-4762-9e02-fdfaedd3bfb5}" or
+        action_file_path contains "xtwitterdownloader@benimaddonum.com"
+| fields _time, agent_hostname, action_remote_ip, action_file_path, actor_process_image_name, actor_effective_username
