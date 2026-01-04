@@ -1,7 +1,9 @@
 //DarkSpectre Zoom Stealer Browser Extension & C2 activity
 //https://www.koi.ai/blog/darkspectre-unmasking-the-threat-actor-behind-7-8-million-infected-browsers#heading-7
 
-dataset = xdr_data
+config case_sensitive = false timeframe = 30d
+
+| dataset = xdr_data
 | filter event_type = ENUM.NETWORK and event_type = ENUM.FILE
 | filter (
     //C2 DOMAIN COMMUNICATION
