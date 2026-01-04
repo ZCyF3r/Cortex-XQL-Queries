@@ -1,0 +1,15 @@
+//AWS S3 Object Encryption with SSE-C or Vulnerable Signature Versions
+
+config case_sensitive = false timeframe = 7d
+
+| dataset = amazon_aws_raw   
+| filter eventSource = "[s3.amazonaws.com](http://s3.amazonaws.com/)"  
+| filter eventName = "PutObject"  
+| alter S3bucket = json_extract(requestParameters, "$.bucketName")  
+| alter URI = json_extract(requestParameters, "$.Host")  
+| alter FilePath = json_extract(requestParameters, "$.key")  
+| alter ServerSideEncryption = json_extract(responseElements, "$.x-amz-server-side-encryption")  
+| alter SSEType = json_extract(additionalEventData, "$.SSEApplied")  
+| alter SignVersion = json_extract(additionalEventData, "$.SignatureVersion")
+| filter SSEType = "SSE-C" or SignVersion = "SigV2"  
+| fields _time, eventName, eventSource, S3bucket, URI, FilePath, ServerSideEncryption, SSEType, SignVersion, userAgent, userIdentity
