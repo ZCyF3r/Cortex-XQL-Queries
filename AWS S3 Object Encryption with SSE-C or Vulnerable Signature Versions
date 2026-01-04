@@ -3,7 +3,7 @@
 config case_sensitive = false timeframe = 7d
 
 | dataset = amazon_aws_raw   
-| filter eventSource = "[s3.amazonaws.com](http://s3.amazonaws.com/)"  
+| filter eventSource = "s3.amazonaws.com"  
 | filter eventName = "PutObject"  
 | alter S3bucket = json_extract(requestParameters, "$.bucketName")  
 | alter URI = json_extract(requestParameters, "$.Host")  
