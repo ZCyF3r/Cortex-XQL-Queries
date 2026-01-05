@@ -1,0 +1,28 @@
+config case_sensitive = false timeframe = 7d
+| dataset = msft_azure_ad_raw 
+| filter authenticationProtocol = "deviceCode"
+| filter authenticationRequirement = "singleFactorAuthentication" or mfaDetail = "" or authenticationDetails not contains "MFA"
+| alter app_name = coalesce(appDisplayName, resourceDisplayName)
+| alter UPN = coalesce(userPrincipalName, userId, userDisplayName)
+| alter ClientApp = coalesce(clientAppUsed, userAgent, deviceDetail)
+| alter Location = coalesce(location, ipAddress)
+| comp count() as login_count,
+    count_distinct(UPN) as unique_users,
+    count_distinct(ClientApp) as unique_apps,
+    count_distinct(location) as unique_locations,
+    values(ClientApp) as applications_accessed,
+    values(UPN) as users_involved,
+    min(_time) as first_login,
+    max(_time) as last_login
+    by ipAddress, ClientApp
+| alter time_windows_hours = timestamp_diff(last_login, first_login, "hour")
+| alter is_suspicious = if(
+    unique_users > 3 or unique_apps > 5 or login_count > 20, true, false
+)
+| alter pattern_type = if(
+    time_windows_hours < 1 and login_count > 10, "enumeration",
+    if(unique_apps > 5, "app_enumeration",
+        if(unique_users > 3, "user_enumeration", "normal_behavior"))
+)
+| filter is_suspicious = true or pattern_type != "normal_behavior"
+| fields ipAddress, ClientApp, pattern_type, login_count, unique_users, unique_apps, unique_locations, time_windows_hours, applications_accessed, users_involved, first_login, last_login
