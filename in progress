@@ -1,4 +1,9 @@
+//M365 Device Code OAuth Consent
+//Detects single-factor auth & OAuth 2.0 device code grant
+
+
 config case_sensitive = false timeframe = 7d
+
 | dataset = msft_azure_ad_raw 
 | filter authenticationProtocol = "deviceCode"
 | filter authenticationRequirement = "singleFactorAuthentication" or mfaDetail = "" or authenticationDetails not contains "MFA"
@@ -25,4 +30,4 @@ config case_sensitive = false timeframe = 7d
         if(unique_users > 3, "user_enumeration", "normal_behavior"))
 )
 | filter is_suspicious = true or pattern_type != "normal_behavior"
-| fields ipAddress, ClientApp, pattern_type, login_count, unique_users, unique_apps, unique_locations, time_windows_hours, applications_accessed, users_involved, first_login, last_login
+| fields first_login, last_login, ipAddress, users_involved, pattern_type, ClientApp, login_count, unique_users, unique_apps, unique_locations, time_windows_hours, applications_accessed
