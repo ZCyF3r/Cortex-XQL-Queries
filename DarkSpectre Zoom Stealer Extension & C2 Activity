@@ -12,7 +12,7 @@ config case_sensitive = false timeframe = 30d
 //EXTRACT EXTENSION ID FROM FILE PATH
 | alter extension_id = arrayindex(regextract(action_file_path, "[\\/]Extensions[\\/]+([^\\/]+)"), 0)
 //FILTER FOR DARKSPECTRE EXTENSION IDs
-| filter extension_id in (
+| filter browser_extension in (
     //CHROME EXTENSION IDs
     "kfokdmfpdnokpmpbjhjbcabgligoelgp",
     "pdadlkbckhinonakkfkdaadceojbekep", 
@@ -34,5 +34,5 @@ config case_sensitive = false timeframe = 30d
     //FIREFOX EXTENSION IDs
     "{7536027f-96fb-4762-9e02-fdfaedd3bfb5}",
     "xtwitterdownloader@benimaddonum.com")
-| fields _time, agent_hostname, dns_query_name, action_file_path, extension_id, actor_process_image_name, actor_effective_username  
+| fields _time, agent_hostname, action_file_path, browser_extension, actor_process_image_name, actor_effective_username  
 | sort desc _time
