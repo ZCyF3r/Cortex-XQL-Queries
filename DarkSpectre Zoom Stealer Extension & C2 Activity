@@ -4,7 +4,7 @@
 config case_sensitive = false timeframe = 30d
 
 | dataset = xdr_data
-| filter event_type = ENUM.NETWORK and event_type = ENUM.FILE
+| filter event_type in (ENUM.NETWORK, ENUM.FILE)
 | filter (
     //C2 DOMAIN COMMUNICATION
     dns_query_name contains "meetingtv.us" or
