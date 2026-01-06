@@ -1,18 +1,14 @@
-//DarkSpectre Zoom Stealer Browser Extension & C2 activity
+//DarkSpectre Zoom Stealer Browser Extension
 //https://www.koi.ai/blog/darkspectre-unmasking-the-threat-actor-behind-7-8-million-infected-browsers#heading-7
+
 config case_sensitive = false timeframe = 30d
+
 | dataset = xdr_data
-| filter event_type in (ENUM.NETWORK, ENUM.FILE)
-| filter (
-    //C2 DOMAIN COMMUNICATION
-    dns_query_name contains "meetingtv.us" or
-    dns_query_name contains "webinarstvus.cloudfunctions.net" or 
-    dns_query_name contains "zoocorder.firebaseio.com"
-) or (
-    //BROWSER EXTENSION FILE PATHS
-    action_file_path contains "\\Chrome\\User Data\\Default\\Extensions\\" or
-    action_file_path contains "\\Edge\\User Data\\Default\\Extensions\\" or
-    action_file_path contains "\\Firefox\\Profiles\\" and action_file_path contains "\\extensions\\"
+| filter event_type = ENUM.FILE
+| filter action_file_path in(
+    "*\AppData\Local\Google\Chrome\User Data\Default\Extensions\*",
+    "*\AppData\Local\Microsoft\Edge\User Data\Default\Extensions\*",
+    "*\Firefox\Profiles\*"
 )
 //EXTRACT EXTENSION ID FROM FILE PATH
 | alter extension_id = arrayindex(regextract(action_file_path, "[\\/]Extensions[\\/]+([^\\/]+)"), 0)
@@ -39,7 +35,6 @@ config case_sensitive = false timeframe = 30d
     //FIREFOX EXTENSION IDs
     "{7536027f-96fb-4762-9e02-fdfaedd3bfb5}",
     "xtwitterdownloader@benimaddonum.com"
-) or dns_query_name != ""
-| fields _time, agent_hostname, dns_query_name, action_file_path,
-        extension_id, actor_process_image_name, actor_effective_username  
+)
+| fields _time, agent_hostname, dns_query_name, action_file_path, extension_id, actor_process_image_name, actor_effective_username  
 | sort desc _time
