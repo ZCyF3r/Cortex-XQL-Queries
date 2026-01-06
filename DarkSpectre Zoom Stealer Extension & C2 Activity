@@ -1,8 +1,6 @@
 //DarkSpectre Zoom Stealer Browser Extension & C2 activity
 //https://www.koi.ai/blog/darkspectre-unmasking-the-threat-actor-behind-7-8-million-infected-browsers#heading-7
-
 config case_sensitive = false timeframe = 30d
-
 | dataset = xdr_data
 | filter event_type in (ENUM.NETWORK, ENUM.FILE)
 | filter (
@@ -11,27 +9,37 @@ config case_sensitive = false timeframe = 30d
     dns_query_name contains "webinarstvus.cloudfunctions.net" or 
     dns_query_name contains "zoocorder.firebaseio.com"
 ) or (
-    //CHROME EXTENSION IDs
-    action_file_path contains "kfokdmfpdnokpmpbjhjbcabgligoelgp" or
-    action_file_path contains "pdadlkbckhinonakkfkdaadceojbekep" or
-    action_file_path contains "akmdionenlnfcipmdhbhcnkighafmdha" or
-    action_file_path contains "pabkjoplheapcclldpknfpcepheldbga" or
-    action_file_path contains "aedgpiecagcpmehhelbibfbgpfiafdkm" or
-    action_file_path contains "dpdgjbnanmmlikideilnpfjjdbmneanf" or
-    action_file_path contains "kabbfhmcaaodobkfbnnehopcghicgffo" or
-    action_file_path contains "cphibdhgbdoekmkkcbbaoogedpfibeme" or
-    action_file_path contains "ceofheakaalaecnecdkdanhejojkpeai" or
-    action_file_path contains "dakebdbeofhmlnmjlmhjdmmjmfohiicn" or
-    action_file_path contains "adjoknoacleghaejlggocbakidkoifle" or
-    action_file_path contains "pgpidfocdapogajplhjofamgeboonmmj" or
-    action_file_path contains "ifklcpoenaammhnoddgedlapnodfcjpn" or
-    action_file_path contains "ebhomdageggjbmomenipfbhcjamfkmbl" or
-    action_file_path contains "ajfokipknlmjhcioemgnofkpmdnbaldi" or
-    //EDGE EXTENSION IDs
-    action_file_path contains "mhjdjckeljinofckdibjiojbdpapoecj" or
-    //FIREFOX EXTENSION IDs
-    action_file_path contains "{7536027f-96fb-4762-9e02-fdfaedd3bfb5}" or
-    action_file_path contains "xtwitterdownloader@benimaddonum.com"
+    //BROWSER EXTENSION FILE PATHS
+    action_file_path contains "\\Chrome\\User Data\\Default\\Extensions\\" or
+    action_file_path contains "\\Edge\\User Data\\Default\\Extensions\\" or
+    action_file_path contains "\\Firefox\\Profiles\\" and action_file_path contains "\\extensions\\"
 )
-| fields _time, agent_hostname, dns_query_name, action_file_path, actor_process_image_name, actor_effective_username
+//EXTRACT EXTENSION ID FROM FILE PATH
+| alter extension_id = arrayindex(regextract(action_file_path, "[\\/]Extensions[\\/]+([^\\/]+)"), 0)
+//FILTER FOR DARKSPECTRE EXTENSION IDs
+| filter extension_id in (
+    //CHROME EXTENSION IDs
+    "kfokdmfpdnokpmpbjhjbcabgligoelgp",
+    "pdadlkbckhinonakkfkdaadceojbekep", 
+    "akmdionenlnfcipmdhbhcnkighafmdha",
+    "pabkjoplheapcclldpknfpcepheldbga",
+    "aedgpiecagcpmehhelbibfbgpfiafdkm",
+    "dpdgjbnanmmlikideilnpfjjdbmneanf",
+    "kabbfhmcaaodobkfbnnehopcghicgffo",
+    "cphibdhgbdoekmkkcbbaoogedpfibeme",
+    "ceofheakaalaecnecdkdanhejojkpeai",
+    "dakebdbeofhmlnmjlmhjdmmjmfohiicn",
+    "adjoknoacleghaejlggocbakidkoifle",
+    "pgpidfocdapogajplhjofamgeboonmmj",
+    "ifklcpoenaammhnoddgedlapnodfcjpn",
+    "ebhomdageggjbmomenipfbhcjamfkmbl",
+    "ajfokipknlmjhcioemgnofkpmdnbaldi",
+    //EDGE EXTENSION IDs  
+    "mhjdjckeljinofckdibjiojbdpapoecj",
+    //FIREFOX EXTENSION IDs
+    "{7536027f-96fb-4762-9e02-fdfaedd3bfb5}",
+    "xtwitterdownloader@benimaddonum.com"
+) or dns_query_name != ""
+| fields _time, agent_hostname, dns_query_name, action_file_path,
+        extension_id, actor_process_image_name, actor_effective_username  
 | sort desc _time
