@@ -9,7 +9,7 @@ dataset = xdr_data
     "LogMeIn.exe",
     "RemotePC.exe",
     "Splashtop.exe",
-    "GoToMyPC.exe",,
+    "GoToMyPC.exe",
     "AeroAdmin.exe",
     "rustdesk.exe",
     "vncviewer.exe"
