@@ -1,3 +1,5 @@
+//Code scanning tools opening AWS credentials file
+
 config case_sensitive = false timeframe = 30d
 
 | dataset = xdr_data
