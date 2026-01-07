@@ -1,0 +1,19 @@
+//PHALT BLYX Startup URL Persistence
+
+config case_sensitive = false timeframe = 7d
+
+| dataset = xdr_data 
+| filter event_type = ENUM.FILE and event_sub_type = ENUM.FILE_CREATE_NEW 
+| filter action_file_name contains ".url"
+| filter action_file_path contains "\Microsoft\Windows\Start Menu\Programs\Startup"
+| filter actor_process_image_name not in(
+    "explorer.exe",
+    "msedge.exe",
+    "chrome.exe",
+    "firefox.exe",
+    "iexplore.exe"
+)
+| alter Startup_URL_Persistence = if(
+    action_file_name = "DeleteApp.url", "PHALT_BLYX_IOC", "SUSPICIOUS_STARTUP_URL"
+)
+| fields _time, agent_hostname, action_file_name, action_file_path, action_file_sha256, actor_process_image_name, actor_process_command_line, actor_effective_username, Startup_URL_Persistence
