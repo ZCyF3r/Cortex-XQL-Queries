@@ -1,4 +1,5 @@
 //PHALT BLYX Startup URL Persistence
+//https://www.securonix.com/blog/analyzing-phaltblyx-how-fake-bsods-and-trusted-build-tools-are-used-to-construct-a-malware-infection/
 
 config case_sensitive = false timeframe = 7d
 
