@@ -1,4 +1,6 @@
-
+//GoBruteforcer Process Name Masquerading
+//Detects malware masquerading as 'init' process to evade detection
+//Based on: https://research.checkpoint.com/2026/inside-gobruteforcer-ai-generated-server-defaults-weak-passwords-and-crypto-focused-campaigns/
 
 config case_sensitive = false timeframe = 7d
 
