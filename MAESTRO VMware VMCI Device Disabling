@@ -1,0 +1,25 @@
+//
+//
+
+config case_sensitive = false timeframe = 7d
+
+| dataset = xdr_data 
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name = "devcon.exe" or 
+    actor_process_image_name = "devcon.exe"
+| filter action_process_image_command_line contains "disable" or
+    actor_process_image_command_line contains "disable"
+| filter action_process_image_command_line in(
+    "PCI\VEN_15AD&DEV_0740",
+    "ROOT\VMWVMCIHOSTDEV"
+) or actor_process_image_command_line in(
+    "PCI\VEN_15AD&DEV_0740",
+    "ROOT\VMWVMCIHOSTDEV"
+)
+| alter attack_staging = if(
+    action_process_image_command_line contains "PCI\VEN_15AD&DEV_0740" or
+    actor_process_image_command_line contains "PCI\VEN_15AD&DEV_0740", "VMCI_PCI_DISABLE",
+    if(action_process_image_command_line contains "ROOT\VMWVMCIHOSTDEV" or
+    action_process_image_command_line contains "ROOT\VMWVMCIHOSTDEV", "VMCI_ROOT_DISABLE", "VMCI_UNKNOWN")
+)
+| fields _time, agent_hostname, attack_staging, action_process_image_name, action_process_image_command_line, actor_process_image_name, actor_process_command_line, actor_effective_username
