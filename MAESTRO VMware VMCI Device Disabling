@@ -1,5 +1,5 @@
-//
-//
+//MAESTRO VM Escape VMware VMCI Device Disabling
+//https://www.huntress.com/blog/esxi-vm-escape-exploit
 
 config case_sensitive = false timeframe = 7d
 
