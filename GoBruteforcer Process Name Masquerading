@@ -9,7 +9,7 @@ config case_sensitive = false timeframe = 7d
 | filter action_process_image_name = "init"
 | filter action_process_instance_id != "1"
 | filter action_process_image_path not contains "/sbin/init" and 
-    action_process_image_name not contains "/usr/lib/systemd/systemd"
+    action_process_image_path not contains "/usr/lib/systemd/systemd"
 | alter suspicious_path = if(
     action_process_image_path contains "/tmp/" or
     action_process_image_path contains "/var/tmp/" or
