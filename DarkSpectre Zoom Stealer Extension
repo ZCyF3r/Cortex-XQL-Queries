@@ -10,7 +10,7 @@ config case_sensitive = false timeframe = 30d
     "*\AppData\Local\Microsoft\Edge\User Data\Default\Extensions\*",
     "*\Firefox\Profiles\*")
 //EXTRACT EXTENSION ID FROM FILE PATH
-| alter extension_id = arrayindex(regextract(action_file_path, "[\\/]Extensions[\\/]+([^\\/]+)"), 0)
+| alter browser_extension = arrayindex(regextract(action_file_path, "[\\/]Extensions[\\/]+([^\\/]+)"), 0)
 //FILTER FOR DARKSPECTRE EXTENSION IDs
 | filter browser_extension in (
     //CHROME EXTENSION IDs
