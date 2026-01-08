@@ -25,5 +25,8 @@ config case_sensitive = false timeframe = 30d
     if(action_registry_value_name = "DisableRestrictedAdmin", "Restricted_Admin_Disabled",
     if(action_registry_value_name = "SecurityLayer", "RDP_Security_Weakened",
     "Unknown")))
-| comp count() as modification_count by agent_hostname, actor_primary_username, action_process_image_name, registry_modification
-| filter modification_count >= 2
+| comp count_distinct(registry_modification) as modification_types,
+       count() as total_modifications,
+       values(registry_modification) as modifications
+       by agent_hostname, actor_primary_username, action_process_image_name
+| filter modification_types >= 2
