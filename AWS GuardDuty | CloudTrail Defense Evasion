@@ -15,5 +15,5 @@ config case_sensitive = false timeframe = 7d
     "DeleteDetector",
     "PutEventSelectors"
 )
-| filter errorCode = null or errorMessage = ""
+| filter errorCode = null or errorMessage = ""  // Matches successful operations (either field indicates success)
 | fields _time, eventName, eventSource, userIdentity, userAgent, sourceIPAddress, awsRegion, eventID
