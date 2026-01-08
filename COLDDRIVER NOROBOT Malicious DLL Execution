@@ -1,3 +1,6 @@
+//COLDDRIVER NOROBOT Malicious DLL Execution
+//Detects COLDDRIVER malware loading malicious DLLs via rundll32.exe
+
 config case_sensitive = false timeframe = 30d
 
 | dataset = xdr_data
