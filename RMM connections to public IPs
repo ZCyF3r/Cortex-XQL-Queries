@@ -1,6 +1,8 @@
 //Popular RMM tools connecting to remote public IPs
 
-dataset = xdr_data
+config case_sensitive = false timeframe = 7d
+
+| dataset = xdr_data
 | filter event_type = ENUM.NETWORK
 | filter actor_process_image_name in (
     "TeamViewer.exe",
