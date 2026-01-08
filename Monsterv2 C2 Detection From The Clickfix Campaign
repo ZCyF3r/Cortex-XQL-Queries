@@ -4,5 +4,5 @@ config case_sensitive = false timeframe = 7d
 
 | dataset = xdr_data
 | filter event_type = ENUM.NETWORK
-| filter (dns_query_name contains "api.ipify.org") or (action_remote_port = 7712 and action_remote_ip not contains "10., 192.168., 172.16.")
+| filter (dns_query_name contains "api.ipify.org") or (action_remote_port = 7712 and action_remote_ip !~= "^10\.|^192\.168\.|^172\.(1[6-9]|2[0-9]|3[0-1])\.")
 | fields _time, agent_hostname, dns_query_name, action_remote_port, action_remote_ip
