@@ -10,5 +10,8 @@ config case_sensitive = false timeframe = 30d
     action_registry_data contains "curl" or 
     action_registry_data contains "bitsadmin" or 
     action_registry_data contains "wget" or
-    action_registry_data contains "finger"
+    action_registry_data contains "finger" or
+    action_registry_data contains "Captcha" or
+    action_registry_data contains "msiexec" or
+    action_registry_data contains "bot"
 | fields action_registry_data, action_registry_file_path, action_registry_key_name, agent_hostname, actor_effective_username
