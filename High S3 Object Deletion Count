@@ -12,8 +12,10 @@ config case_sensitive = false timeframe = 1d
 | comp count() as deleted_count,
     count_distinct(S3Bucket) as unique_buckets,
     count_distinct(DeletedObject) as unique_objects,
-    values(S3Bucket) as buckets_affected
+    values(S3Bucket) as buckets_affected,
+    min(_time) as window_start,
+    max(_time) as window_end
     by caller_ip, identity_name, user_agent
 | filter deleted_count >= 10
-| fields buckets_affected, deleted_count, caller_ip, identity_name, unique_buckets, unique_objects, user_agent
+| fields window_start, window_end, buckets_affected, deleted_count, caller_ip, identity_name, unique_buckets, unique_objects, user_agent
 | sort desc deleted_count
