@@ -1,5 +1,4 @@
-//
-//
+//Potential S3 data exfiltration
 
 config case_sensitive = false timeframe = 7d
 
@@ -12,4 +11,4 @@ config case_sensitive = false timeframe = 7d
 | filter operation_status = "Success"
 | alter S3Bucket = json_extract_scalar(raw_log, "$.requestParameters.bucketName")
 | alter BucketFile = json_extract_scalar(raw_log, "$.requestParameters.key")
-| fields _time, S3Bucket, BucketFile, operation_name_orig, caller_ip, caller_ip_asn, caller_ip_geolocation, identity_invoked_by_uuid, identity_name, referenced_resource, raw_log, user_agent
+| fields _time, S3Bucket, BucketFile, operation_name_orig, caller_ip, caller_ip_asn, caller_ip_geolocation, identity_invoked_by_uuid, identity_name, referenced_resource, user_agent
