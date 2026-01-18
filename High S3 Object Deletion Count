@@ -1,0 +1,19 @@
+//
+
+config case_sensitive = false timeframe = 1d
+
+| dataset = cloud_audit_logs 
+| filter cloud_provider = ENUM.AWS
+| filter operation_name_orig in ("DeleteObjects", "DeleteObject", "DeleteBucket")
+| filter operation_status = "Success"
+| filter resource_sub_type = "Bucket"
+| alter S3Bucket = json_extract_scalar(raw_log, "$.requestParameters.bucketName")
+| alter DeletedObject = json_extract_scalar(raw_log, "$.requestParameters.key")
+| comp count() as deleted_count,
+    count_distinct(S3Bucket) as unique_buckets,
+    count_distinct(DeletedObject) as unique_objects,
+    values(S3Bucket) as buckets_affected
+    by caller_ip, identity_name, user_agent
+| filter deleted_count >= 10
+| fields buckets_affected, deleted_count, caller_ip, identity_name, unique_buckets, unique_objects, user_agent
+| sort desc deleted_count
