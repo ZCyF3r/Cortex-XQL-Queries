@@ -1,3 +1,5 @@
+//ClearFake SyncAppvPublishingServer ClickFix Campaign
+
 config case_sensitive = false timeframe = 30d
 
 | dataset = xdr_data 
