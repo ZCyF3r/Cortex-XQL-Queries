@@ -1,0 +1,8 @@
+config case_sensitive = false timeframe = 30d
+
+| dataset = xdr_data 
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START 
+| filter action_process_image_name = "SyncAppvPublishingServer.vbs" or
+    action_process_image_name contains "SyncAppvPublishingServer"
+| filter action_process_image_command_line contains ";"
+| fields _time, agent_hostname, action_process_image_name, action_process_image_command_line, actor_process_image_name, actor_process_command_line, actor_effective_username
