@@ -1,0 +1,16 @@
+//Chrysalis Backdoor Network IOC Detection  
+//Detects network connections to known Lotus Blossom C2 infrastructure
+
+config case_sensitive = false timeframe = 30d
+| dataset = xdr_data
+| filter event_type in (ENUM.NETWORK, ENUM.STORY)
+| filter action_remote_ip in (
+    "95.179.213.0",
+    "61.4.102.97", 
+    "59.110.7.32",
+    "124.222.137.114"
+) or action_external_hostname in (
+    "api.skycloudcenter.com",
+    "api.wiresguard.com"
+)
+| fields _time, agent_hostname, action_remote_ip, action_external_hostname, action_remote_port, action_network_protocol, actor_process_image_name, actor_effective_username
