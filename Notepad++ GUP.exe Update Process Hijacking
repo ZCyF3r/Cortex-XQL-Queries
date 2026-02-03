@@ -1,0 +1,19 @@
+//Notepad++ GUP.exe Update Process Hijacking Detection
+//Detects gup.exe spawning suspicious child processes indicating update hijacking
+
+config case_sensitive = false timeframe = 30d
+| dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter actor_process_image_name = "gup.exe"
+| filter action_process_image_name != "explorer.exe"
+| filter action_process_image_name !~= "^npp\..*\.Installer.*\.exe$"
+| filter action_process_image_name in (
+    "update.exe", "AutoUpdater.exe", "curl.exe", "cmd.exe", 
+    "powershell.exe", "wscript.exe", "cscript.exe", "rundll32.exe"
+) or action_process_image_path contains "\\Temp\\" or
+     action_process_image_path contains "\\tmp\\" or
+     action_process_image_path contains "AppData\\Local\\"
+| fields _time, agent_hostname, agent_ip_address, actor_process_image_name, 
+        actor_process_command_line, action_process_image_name, action_process_image_path,
+        action_process_command_line, actor_effective_username,
+        causality_actor_process_image_name, causality_actor_process_command_line
