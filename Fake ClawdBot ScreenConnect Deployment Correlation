@@ -1,0 +1,30 @@
+//Fake ClawdBot ScreenConnect Deployment Correlation
+//Correlates ScreenConnect installation, component deployment, and C2 communication
+
+config case_sensitive = false timeframe = 1h
+| dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_path contains "ScreenConnect Client (083e4d30c7ea44f7)" or
+        action_process_image_name in (
+            "ScreenConnect.ClientService.exe",
+            "ScreenConnect.WindowsBackstageShell.exe", 
+            "ScreenConnect.WindowsFileManager.exe"
+        )
+| alter time_window = format_timestamp("%Y-%m-%d %H:00:00", _time)
+| comp count() as screenconnect_processes,
+       values(action_process_image_name) as processes_deployed,
+       min(_time) as first_process,
+       max(_time) as last_process
+       by agent_hostname, time_window
+| join type = left (
+    dataset = xdr_data
+    | filter event_type in (ENUM.NETWORK, ENUM.STORY)
+    | filter action_external_hostname = "meeting.bulletmailer.net" and action_remote_port = 8041
+    | alter time_window = format_timestamp("%Y-%m-%d %H:00:00", _time)
+    | fields time_window, agent_hostname, action_remote_ip, action_external_hostname,
+             actor_process_image_name as network_process
+) as network_data
+    network_data.agent_hostname = agent_hostname and network_data.time_window = time_window
+| fields first_process, last_process, agent_hostname, screenconnect_processes, processes_deployed,
+        action_remote_ip, action_external_hostname, network_process
+| sort desc screenconnect_processes
