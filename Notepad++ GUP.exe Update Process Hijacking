@@ -13,7 +13,4 @@ config case_sensitive = false timeframe = 30d
 ) or action_process_image_path contains "\\Temp\\" or
      action_process_image_path contains "\\tmp\\" or
      action_process_image_path contains "AppData\\Local\\"
-| fields _time, agent_hostname, agent_ip_address, actor_process_image_name, 
-        actor_process_command_line, action_process_image_name, action_process_image_path,
-        action_process_command_line, actor_effective_username,
-        causality_actor_process_image_name, causality_actor_process_command_line
+| fields _time, agent_hostname, actor_process_image_name, actor_process_command_line, action_process_image_name, action_process_image_path, action_process_image_command_line, actor_effective_username, causality_actor_process_image_name, causality_actor_process_command_line
