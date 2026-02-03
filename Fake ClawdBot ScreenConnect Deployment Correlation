@@ -21,10 +21,8 @@ config case_sensitive = false timeframe = 1h
     | filter event_type in (ENUM.NETWORK, ENUM.STORY)
     | filter action_external_hostname = "meeting.bulletmailer.net" and action_remote_port = 8041
     | alter time_window = format_timestamp("%Y-%m-%d %H:00:00", _time)
-    | fields time_window, agent_hostname, action_remote_ip, action_external_hostname,
-             actor_process_image_name as network_process
+    | fields time_window, agent_hostname, action_remote_ip, action_external_hostname, actor_process_image_name as network_process
 ) as network_data
     network_data.agent_hostname = agent_hostname and network_data.time_window = time_window
-| fields first_process, last_process, agent_hostname, screenconnect_processes, processes_deployed,
-        action_remote_ip, action_external_hostname, network_process
+| fields first_process, last_process, agent_hostname, screenconnect_processes, processes_deployed, action_remote_ip, action_external_hostname, network_process
 | sort desc screenconnect_processes
