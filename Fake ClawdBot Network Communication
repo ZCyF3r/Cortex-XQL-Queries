@@ -13,4 +13,4 @@ config case_sensitive = false timeframe = 30d
     "getintwopc.site",
     "darkgptprivate.com"
 )
-| fields _time, agent_hostname, agent_ip_address, action_remote_ip, action_external_hostname, action_remote_port, action_local_port, action_network_protocol, action_network_direction, actor_process_image_name, actor_process_command_line, actor_effective_username, causality_actor_process_image_name
+| fields _time, agent_hostname, action_remote_ip, action_external_hostname, action_remote_port, action_local_port, action_network_protocol, actor_process_image_name, actor_process_command_line, actor_effective_username, causality_actor_process_image_name
