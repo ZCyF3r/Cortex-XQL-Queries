@@ -1,0 +1,16 @@
+//Fake ClawdBot Network Communication Detection
+//Detects network connections to malicious ClawdBot C2 infrastructure
+
+config case_sensitive = false timeframe = 30d
+| dataset = xdr_data
+| filter event_type in (ENUM.NETWORK, ENUM.STORY)
+| filter action_remote_ip in (
+    "179.43.176.32",
+    "178.16.54.253"
+) or action_external_hostname in (
+    "meeting.bulletmailer.net",
+    "clawdbot.getintwopc.site", 
+    "getintwopc.site",
+    "darkgptprivate.com"
+)
+| fields _time, agent_hostname, agent_ip_address, action_remote_ip, action_external_hostname, action_remote_port, action_local_port, action_network_protocol, action_network_direction, actor_process_image_name, actor_process_command_line, actor_effective_username, causality_actor_process_image_name
