@@ -3,7 +3,7 @@
 config case_sensitive = false timeframe = 7d
 
 | dataset = xdr_data
-| filter event_type = ENUM.NETWORK
+| filter event_type in(ENUM.NETWORK, ENUM.STORY)
 | filter actor_process_image_name in (
     "TeamViewer.exe",
     "ScreenConnect.exe",
@@ -16,7 +16,6 @@ config case_sensitive = false timeframe = 7d
     "rustdesk.exe",
     "vncviewer.exe"
 )
-| filter action_remote_ip !~= "^10\.|^172\.(1[6-9]|2[0-9]|3[0-1])\.|^192\.168\.|^127\."
-| filter action_remote_ip !~= "^169\.254\.|^224\.|^255\."
+| filter incidr(action_remote_ip, "10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, 224.0.0.0/4") = false
 | fields _time, agent_hostname, actor_process_image_name, action_local_ip, action_remote_ip, action_remote_port, actor_effective_username
 | sort desc _time
