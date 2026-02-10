@@ -1,0 +1,29 @@
+//Windows Successful Logon Tracking Event ID (4624)
+
+dataset = xdr_data 
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4624
+| alter TargetUserName = action_evtlog_data_fields -> TargetUserName
+| alter LogonType = action_evtlog_data_fields -> LogonType
+| alter WorkstationName = action_evtlog_data_fields -> WorkstationName
+| alter IpAddress = action_evtlog_data_fields -> IpAddress
+| alter IpPort = action_evtlog_data_fields -> IpPort
+| alter AuthenticationPackageName = action_evtlog_data_fields -> AuthenticationPackageName
+| alter TargetDomainName = action_evtlog_data_fields -> TargetDomainName
+| alter LogonProcessName = action_evtlog_data_fields -> LogonProcessName
+| alter logon_type_description = if(
+    LogonType = "2", "Interactive",
+    if(LogonType = "3", "Network",
+        if(LogonType = "4", "Batch",
+            if(LogonType = "5", "Service",
+                if(LogonType = "7", "Unlock",
+                    if(LogonType = "8", "NetworkClearText",
+                        if(LogonType = "9", "NewCredentials",
+                            if(LogonType = "10", "RemoteInteractive",
+                                if(LogonType = "11", "CachedInteractive", "Other")))))))))
+//| filter IpAddress = ""
+//| filter agent_hostname = ""
+//| filter WorkstationName = ""
+//| filter logon_type_description = ""
+//| filter LogonType = ""
+| fields _time, agent_hostname, TargetUserName, TargetDomainName, LogonType, logon_type_description, WorkstationName, IpAddress, IpPort, AuthenticationPackageName
