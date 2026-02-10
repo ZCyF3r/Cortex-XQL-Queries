@@ -15,5 +15,5 @@ config case_sensitive = false timeframe = 30d
     | filter action_remote_ip = "69.67.173.30"
     | fields agent_hostname, action_remote_ip, action_remote_port, actor_process_image_name as network_process
 ) as network_data
-    network_data.agent_hostname = agent_hostname
-| fields _time, agent_ip_addresses, action_process_image_name, action_process_image_command_line, actor_process_image_name, actor_effective_username, action_remote_ip
+    network_data.agent_hostname = agent_hostname and network_data.action_remote_ip = action_remote_ip
+| fields _time, agent_ip_addresses, action_process_image_name, action_process_image_command_line, actor_process_image_name, actor_effective_username, action_remote_ip, network_process
