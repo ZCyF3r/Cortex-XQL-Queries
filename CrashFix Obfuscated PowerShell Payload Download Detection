@@ -1,0 +1,11 @@
+//CrashFix Obfuscated PowerShell Script.ps1 Download Detection
+//Detects obfuscated PowerShell downloading script.ps1 from CrashFix C2 using regex patterns
+
+config case_sensitive = false timeframe = 30d
+| dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name = "powershell.exe" or action_process_image_name = "pwsh.exe"
+| alter obfuscated_patterns = regextract(action_process_command_line, 
+    "(\[char\]\(?\d+\)?|-join|-split|frombase64string|downloadfile|webclient|invoke-expression|iex|script\.ps1|69\.67\.173\.30)")
+| filter obfuscated_patterns != ""
+| fields _time, agent_hostname, agent_ip_address, action_process_image_name, action_process_command_line, obfuscated_patterns, actor_process_image_name, actor_effective_username, causality_actor_process_image_name
