@@ -5,18 +5,15 @@ config case_sensitive = false timeframe = 30d
 
 | dataset = xdr_data
 | filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
-| filter action_process_command_line contains "finger.exe" or
-        action_process_command_line contains "ct.exe"
-| filter action_process_command_line contains "start" and 
-        action_process_command_line contains "cmd.exe"
-| alter time_window = format_timestamp("%Y-%m-%d %H:00:00", _time)
+| filter action_process_image_command_line contains "finger.exe" or
+        action_process_image_command_line contains "ct.exe"
+    and action_process_image_command_line contains "start" and
+        action_process_image_command_line contains "cmd.exe"
 | join type = left (
     dataset = xdr_data
     | filter event_type in (ENUM.NETWORK, ENUM.STORY)
     | filter action_remote_ip = "69.67.173.30"
-    | alter time_window = format_timestamp("%Y-%m-%d %H:00:00", _time)
-    | fields time_window, agent_hostname, action_remote_ip, action_remote_port,
-             actor_process_image_name as network_process
+    | fields agent_hostname, action_remote_ip, action_remote_port, actor_process_image_name as network_process
 ) as network_data
-    network_data.agent_hostname = agent_hostname and network_data.time_window = time_window
-| fields _time, agent_hostname, action_process_image_name, action_process_command_line, actor_process_image_name, actor_effective_username, action_remote_ip, network_process
+    network_data.agent_hostname = agent_hostname
+| fields _time, agent_ip_addresses, action_process_image_name, action_process_image_command_line, actor_process_image_name, actor_effective_username, action_remote_ip
