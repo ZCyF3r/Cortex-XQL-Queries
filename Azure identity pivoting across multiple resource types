@@ -1,0 +1,20 @@
+// Azure identity pivoting across multiple resource types
+// Detects a single identity accessing more than 3 distinct azure resource types within a short window
+
+
+dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure
+| filter operation_name != null and identity_name != null
+| filter resource_type != null and resource_type != ""
+| comp count() as total_events,
+    count_distinct(resource_type) as distinct_resource_type,
+    count_distinct(referenced_resource_name) as distinct_resources,
+    count_distinct(caller_ip) as distinct_ips,
+    values(resource_type) as resource_types_accessed,
+    values(referenced_resource_name) as resources_accessed,
+    values(caller_ip) as ip_list,
+    values(caller_ip_geolocation) as locations,
+    values(operation_name) as operations
+    by identity_name 
+| filter distinct_resource_type >= 3
+| sort desc distinct_resource_type
