@@ -1,0 +1,24 @@
+// Azure Impossible Travel
+// Detects the same identity signing in from more than 2 ditinct geolocations within a 1hr window
+
+
+dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure 
+| filter operation_name_orig = "Sign-in activity"
+| filter identity_name != null and identity_name != ""
+| filter caller_ip != null and caller_ip != ""
+| filter caller_ip_geolocation != null and caller_ip_geolocation != ""
+| bin _time span = 1h
+| comp count() as total_signins,
+    count_distinct(caller_ip_geolocation) as distinct_locations,
+    count_distinct(caller_ip) as distinct_ips,
+    count_distinct(caller_ip_asn) as distinct_asns,
+    values(caller_ip_geolocation) as locations,
+    values(caller_ip) as ip_list,
+    values(caller_ip_asn_org) as asn_orgs,
+    values(user_agent) as user_agents,
+    values(region) as regions
+    by identity_name, _time
+| filter distinct_locations >= 2
+//| filter identity_name = "Replace This & uncomment"
+| sort desc distinct_locations
