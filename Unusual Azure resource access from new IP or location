@@ -1,0 +1,19 @@
+// Unusual Azure resource access from new IP or location
+// Detects principals accessing Azure resources from multiple distinct IPs/locations
+// It's possible to add in a filter to detect for specific locations or resources accessed
+
+
+config case_sensitive = false timeframe = 7d
+| dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure
+| filter operation_name != null and caller_ip != null and caller_ip != ""
+| comp count() as total_events,
+    count_distinct(caller_ip) as distinct_ips,
+    count_distinct(referenced_resource_name) as distinct_resources,
+    count_distinct(caller_ip_geolocation) as distinct_locations,
+    values(caller_ip) as ip_list,
+    values(caller_ip_geolocation) as locations,
+    values(operation_name) as operations
+    by identity_name
+| filter distinct_ips > 1 and distinct_resources > 2
+| sort desc distinct_ips
