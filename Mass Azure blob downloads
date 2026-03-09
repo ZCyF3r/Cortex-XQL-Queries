@@ -1,0 +1,22 @@
+// Mass Azure blob downloads
+// Detects identities downloading an unusually high number of blobs within a 1hr window
+
+
+dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure 
+| filter operation_name_orig = "GetBlob"
+| filter operation_status_orig_code = "200"
+| filter operation_status_reason_provided = "Success"
+| alter FileName = json_extract_scalar(raw_log, "$.properties.objectKey")
+| bin _time span = 1h
+| comp count() as total_downloads,
+    count_distinct(referenced_resource_name) as distinct_blobs,
+    count_distinct(caller_ip) as distinct_ips,
+    values(referenced_resource_name) as blobs_accessed,
+    values(caller_ip) as ip_list,
+    values(caller_ip_geolocation) as locations,
+    values(caller_ip_asn_org) as asn_orgs,
+    values(user_agent) as user_agents
+    by identity_name, _time
+| filter total_downloads > 100
+| sort desc total_downloads
