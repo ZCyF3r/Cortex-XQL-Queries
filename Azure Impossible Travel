@@ -12,7 +12,7 @@ dataset = cloud_audit_logs
 | comp count() as total_signins,
     count_distinct(caller_ip_geolocation) as distinct_locations,
     count_distinct(caller_ip) as distinct_ips,
-    count_distinct(caller_ip_asn) as distinct_asns,
+    count_distinct(caller_ip_asn_org) as distinct_asns,
     values(caller_ip_geolocation) as locations,
     values(caller_ip) as ip_list,
     values(caller_ip_asn_org) as asn_orgs,
