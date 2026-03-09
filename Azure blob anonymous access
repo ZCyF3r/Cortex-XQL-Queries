@@ -1,0 +1,10 @@
+// Azure blob anonymous access
+// Detects unauthenticated/anonymous access to azure blob storage
+
+dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure 
+| filter operation_name_orig contains "blob"
+| filter identity_name ~= "(?i)anonymous" or identity_invoked_by_name ~= "(?i)anonymous"
+| filter operation_status_orig_code = "200"
+| filter operation_status_reason_provided = "Success"
+| fields _time, identity_name, identity_invoked_by_name, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_geolocation, caller_ip_asn_org, user_agent, region
