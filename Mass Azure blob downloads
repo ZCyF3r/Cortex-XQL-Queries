@@ -7,7 +7,6 @@ dataset = cloud_audit_logs
 | filter operation_name_orig = "GetBlob"
 | filter operation_status_orig_code = "200"
 | filter operation_status_reason_provided = "Success"
-| alter FileName = json_extract_scalar(raw_log, "$.properties.objectKey")
 | bin _time span = 1h
 | comp count() as total_downloads,
     count_distinct(referenced_resource_name) as distinct_blobs,
