@@ -1,4 +1,4 @@
-// Mass Azure blob downloads
+// Large Azure blob downloads
 // Detects identities downloading an unusually high number of blobs within a 1hr window
 
 
