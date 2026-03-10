@@ -1,0 +1,55 @@
+dataset = xdr_data
+| filter event_type = ENUM.FILE
+    and event_sub_type in (ENUM.FILE_CREATE_NEW, ENUM.FILE_WRITE)
+    and agent_os_type = ENUM.AGENT_OS_WINDOWS
+    and action_file_extension = "pfx"
+    and action_file_path !=  null
+    and action_file_name !=  null
+| fields
+    _time as creation_time,
+    agent_hostname as host,
+    action_file_path as pfx_file_path,
+    action_file_name as pfx_file_name,
+    action_file_sha256 as pfx_file_sha256_created,
+    actor_process_image_name as creator_process_name,
+    actor_process_image_path as creator_process_path,
+    actor_effective_username as creator_username,
+    action_process_instance_id as creator_process_instance_id
+| join type=inner conflict_strategy=both (
+    dataset = xdr_data
+    | filter event_type = ENUM.FILE
+        and event_sub_type = ENUM.FILE_REMOVE
+        and agent_os_type = ENUM.AGENT_OS_WINDOWS
+        and action_file_extension = "pfx"
+        and action_file_path is not null
+        and action_file_name is not null
+    | fields
+        _time as deletion_time,
+        agent_hostname as host_del,
+        action_file_path as pfx_file_path_del,
+        action_file_name as pfx_file_name_del,
+        action_file_sha256 as pfx_file_sha256_deleted,
+        actor_process_image_name as deleter_process_name,
+        actor_process_image_path as deleter_process_path,
+        actor_effective_username as deleter_username,
+        action_process_instance_id as deleter_process_instance_id
+) as deletion_events
+deletion_events.host_del = host
+and deletion_events.pfx_file_path_del = pfx_file_path
+and deletion_events.deletion_time > creation_time
+| filter timestamp_diff(deletion_time, creation_time, "MINUTE") <= 60
+| fields
+    host,
+    pfx_file_path,
+    pfx_file_name,
+    creation_time,
+    creator_username,
+    creator_process_name,
+    creator_process_path,
+    pfx_file_sha256_created,
+    deletion_time,
+    deleter_username,
+    deleter_process_name,
+    deleter_process_path,
+    pfx_file_sha256_deleted
+| sort asc creation_time
