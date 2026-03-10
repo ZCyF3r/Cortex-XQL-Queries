@@ -3,8 +3,8 @@ dataset = xdr_data
     and event_sub_type in (ENUM.FILE_CREATE_NEW, ENUM.FILE_WRITE)
     and agent_os_type = ENUM.AGENT_OS_WINDOWS
     and action_file_extension = "pfx"
-    and action_file_path !=  null
-    and action_file_name !=  null
+    and action_file_path != null
+    and action_file_name != null
 | fields
     _time as creation_time,
     agent_hostname as host,
@@ -21,8 +21,8 @@ dataset = xdr_data
         and event_sub_type = ENUM.FILE_REMOVE
         and agent_os_type = ENUM.AGENT_OS_WINDOWS
         and action_file_extension = "pfx"
-        and action_file_path is not null
-        and action_file_name is not null
+        and action_file_path != null
+        and action_file_name != null
     | fields
         _time as deletion_time,
         agent_hostname as host_del,
@@ -33,10 +33,9 @@ dataset = xdr_data
         actor_process_image_path as deleter_process_path,
         actor_effective_username as deleter_username,
         action_process_instance_id as deleter_process_instance_id
-) as deletion_events
-deletion_events.host_del = host
-and deletion_events.pfx_file_path_del = pfx_file_path
-and deletion_events.deletion_time > creation_time
+) as deletion_events on deletion_events.host_del = host
+    and deletion_events.pfx_file_path_del = pfx_file_path
+    and deletion_events.deletion_time > creation_time
 | filter timestamp_diff(deletion_time, creation_time, "MINUTE") <= 60
 | fields
     host,
