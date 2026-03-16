@@ -1,3 +1,8 @@
+// Storm-2561 - Fake VPN DLL Sideloading and RunOnce Persistence
+// Detects trojanized VPN process spawning suspicious child processes and writing RunOnce persistence in the same execution chain
+// https://www.microsoft.com/en-us/security/blog/2026/03/12/storm-2561-uses-seo-poisoning-to-distribute-fake-vpn-clients-for-credential-theft/
+
+
 dataset = xdr_data 
 | filter agent_os_type = ENUM.AGENT_OS_WINDOWS
 | alter fake_vpn = if(arrayindex(regextract(actor_process_image_name, "(?i)(Pulse|GlobalProtect-VPN|VPN-Client|Sophos-Connect-Client|vpn)\.exe"), 0) != null, "true", "false") 
