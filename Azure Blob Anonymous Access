@@ -1,4 +1,4 @@
-// Azure blob anonymous access
+// Azure Blob Anonymous Access
 // Detects unauthenticated/anonymous access to azure blob storage
 
 dataset = cloud_audit_logs
