@@ -1,5 +1,5 @@
 // AWS SNS Subscription to External HTTP | HTTPS Endpoint
-// 
+// Detects SNS subscriptions created pointing to external HTTP/HTTPS endpoints
 
 dataset = amazon_aws_raw
 | filter eventSource = "sns.amazonaws.com"
