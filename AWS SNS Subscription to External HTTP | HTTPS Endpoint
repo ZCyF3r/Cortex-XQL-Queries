@@ -9,5 +9,5 @@ dataset = amazon_aws_raw
 | alter ARN = json_extract_scalar(userIdentity, "$.arn")
 | alter identity = json_extract_scalar(userIdentity, "$.principalId")
 | filter protocol in("http", "https")
-| filter endpoint not contains "amazon.com" or endpoint not contains "awsapps.com" or endpoint not contains "amazonaws.com"
+| filter endpoint not contains "amazon.com" and endpoint not contains "awsapps.com" and endpoint not contains "amazonaws.com"
 | fields _time, ARN, identity, eventName, eventSource, protocol, endpoint, userAgent, errorCode, errorMessage
