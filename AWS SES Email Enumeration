@@ -1,5 +1,5 @@
 // AWS SES Email Enumeration Detection
-// 
+// Detects enumeration of SES email identities and sending quotas, can indicate attacker reconnaissance before phishing or BEC attacks
 
 dataset = amazon_aws_raw
 | filter eventSource = "ses.amazonaws.com"
