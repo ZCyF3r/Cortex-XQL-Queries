@@ -1,0 +1,16 @@
+// 
+// 
+
+
+dataset = amazon_aws_raw 
+| filter eventSource = "iam.amazonaws.com"
+| filter eventName in(
+    "CreateSAMLProvider",
+    "UpdateSAMLProvider",
+    "CreateOpenIDConnectProvider",
+    "UpdateOpenIDConnectProvider",
+    "AddClientIDToOpenIDConnectProvider")
+| alter ARN = json_extract_scalar(userIdentity, "$.arn")
+| alter identity = json_extract_scalar(userIdentity, "$.principalId")
+| alter openIDARN = json_extract_scalar(responseElements, "$.openIDConnectProviderArn")
+| fields _time, eventName, ARN, identity, openIDARN, sourceIPAddress, userAgent, requestParameters
