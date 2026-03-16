@@ -1,3 +1,7 @@
+// MicroStealer NSIS Electron Java chain detection
+// https://any.run/cybersecurity-blog/microstealer-technical-analysis/#indicatorsofcompromiseiocs-19049
+
+
 dataset = xdr_data
 | filter (actor_process_image_name ~= "(RocobeSetup|Game Launcher|miicrosoft)\.exe"
     or action_process_image_name ~= "(Game Launcher|miicrosoft)\.exe")
