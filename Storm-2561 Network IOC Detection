@@ -1,0 +1,34 @@
+// Storm-2561 - Network IOC Detection
+// Detects outbound connections to confirmed Storm-2561 C2 infrastructure
+// Covers C2 IP, credential exfil domains, and initial access spoofed VPN domains
+dataset = xdr_data
+| filter agent_os_type = ENUM.AGENT_OS_WINDOWS
+| filter event_type = ENUM.NETWORK
+| filter action_remote_ip = "194.76.226.93"
+    or action_remote_port = 8080
+    and action_remote_ip = "194.76.226.93"
+    or dns_query_name in (
+        "checkpoint-vpn.com",
+        "cisco-secure-client.es",
+        "forticlient-for-mac.com",
+        "forticlient-vpn.de",
+        "forticlient-vpn.fr",
+        "forticlient-vpn.it",
+        "forticlient.ca",
+        "forticlient.co.uk",
+        "forticlient.no",
+        "fortinet-vpn.com",
+        "ivanti-vpn.org",
+        "ivanti-secure-access.de",
+        "ivanti-pulsesecure.com",
+        "sonicwall-netextender.nl",
+        "sophos-connect.org",
+        "vpn-fortinet.com",
+        "watchguard-vpn.com",
+        "vpn-connection.pro",
+        "myconnection.pro"
+    )
+| fields _time, agent_hostname, actor_effective_username,
+         actor_process_image_name, action_remote_ip,
+         action_remote_port, dns_query_name,
+         actor_process_command_line, actor_process_image_path
