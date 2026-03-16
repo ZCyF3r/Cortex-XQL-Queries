@@ -1,0 +1,16 @@
+//
+//
+
+dataset = amazon_aws_raw 
+| filter eventSource  = "signin.amazonaws.com"
+| filter eventName = "ConsoleLogin"
+| alter login_result = json_extract_scalar(responseElements, "$.ConsoleLogin")
+| filter login_result = "Failure"
+| bin _time span = 1h
+| comp count() as failed_attempts,
+    count_distinct(userIdentity) as distinct_accounts,
+    values(userIdentity) as target_accounts,
+    values(userAgent) as user_agents
+    by sourceIPAddress, _time
+| filter failed_attempts >= 5
+| sort desc failed_attempts
