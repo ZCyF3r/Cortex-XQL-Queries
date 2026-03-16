@@ -19,7 +19,5 @@ dataset = xdr_data
     "eb8b81277c80eeb3c094d0a168533b07366e759a8671af8bfbe12d8bc87650c9",
     "8ebe082a4b52ad737f7ed33ccc61024c9f020fd085c7985e9c90dc2008a15adc"
 )
-| fields _time, agent_hostname, actor_effective_username,
-         actor_process_image_name, action_file_name,
-         action_file_path, action_file_sha256,
-         action_file_signature_vendor
+| filter action_file_signature_vendor = "Taiyuan Lihua Near Information Technology Co., Ltd."
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, action_file_name, action_file_path, action_file_sha256, action_file_signature_vendor
