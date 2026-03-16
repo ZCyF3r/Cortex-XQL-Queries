@@ -1,0 +1,13 @@
+// AWS SNS Subscription to External HTTP | HTTPS Endpoint
+// 
+
+dataset = amazon_aws_raw
+| filter eventSource = "sns.amazonaws.com"
+| filter eventName = "Subscribe"
+| alter protocol = json_extract_scalar(requestParameters, "$.protocol")
+| alter endpoint = json_extract_scalar(requestParameters, "$.endpoint")
+| alter ARN = json_extract_scalar(userIdentity, "$.arn")
+| alter identity = json_extract_scalar(userIdentity, "$.principalId")
+| filter protocol in("http", "https")
+| filter endpoint not in("amazon.com", "awsapps.com", "amazonaws.com")
+| fields _time, ARN, identity, eventName, eventSource, protocol, endpoint, userAgent, errorCode, errorMessage
