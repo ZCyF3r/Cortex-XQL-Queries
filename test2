@@ -5,6 +5,6 @@ dataset = xdr_data
 | alter malicious_dll = if(arrayindex(regextract(action_file_name, "(?i)^(dwmapi\.dll|inspector\.dll)$"), 0) != null, "true", "false")
 | alter runonce = if(event_type = ENUM.REGISTRY and action_registry_key_name = "RunOnce"
     and arrayindex(regextract(action_registry_value_name, "(?i)(Pulse|VPN|GlobalProtect|Sophos|vpnclient)"), 0) != null, "true", "false")
-| filter fake_vpn = "true" and (child_processes = "true" or runonce = "true")
+| filter fake_vpn = "true" and (child_processes = "true" or runonce = "true" or malicious_dll = "true")
 | filter actor_process_signature_vendor contains "Taiyuan Lihua Near Information Technology"
 | fields _time, fake_vpn, child_processes, malicious_dll, runonce, agent_hostname, actor_effective_username, actor_process_image_name, action_process_image_name, actor_process_command_line, action_file_name, action_file_path, action_file_sha256, action_registry_key_name, action_registry_value_name, actor_process_image_path
