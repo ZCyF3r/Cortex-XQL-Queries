@@ -1,6 +1,5 @@
-// 
-// 
-
+// AWS New SAML/OIDC Identity Provider Added
+// Detects when a new federation identity provider is created or updated in IAM
 
 dataset = amazon_aws_raw 
 | filter eventSource = "iam.amazonaws.com"
