@@ -1,7 +1,8 @@
 dataset = xdr_data 
 | filter agent_os_type = ENUM.AGENT_OS_WINDOWS
-| filter actor_process_image_name = "(?i)(Pulse|GlobalProtect-VPN|VPN-Client|Sophos-Connect-Client|vpn)\.exe"
-| filter action_process_image_name = "(?i)(rundll32|regsvr32|mshta|wscript|powershell|cmd)\.exe"
-| filter action_registry_key_name = "RunOnce"
-    and action_registry_value_name = "(?i)(Pulse|VPN|GlobalProtect|Sophos|vpnclient)"
+| alter fake_vpn = if(regextract(actor_process_image_name, "(?i)(Pulse|GlobalProtect-VPN|VPN-Client|Sophos-Connect-Client|vpn)\.exe"), "true", "false")
+| alter child_processes = if(regextract(action_process_image_name, "(?i)(rundll32|regsvr32|mshta|wscript|powershell|cmd)\.exe"), "true", "false")
+| alter runonce = if(event_type = ENUM.REGISTRY and action_registry_key_name = "RunOnce"
+    and regextract(action_registry_value_name, "(?i)(Pulse|VPN|GlobalProtect|Sophos|vpnclient)"), "true", "false")
+| filter fake_vpn = "true" and (child_processes = "true" or runonce = "true")
 | fields _time, agent_hostname, actor_effective_username, actor_process_image_name, action_process_image_name, actor_process_command_line, action_registry_key_name, action_registry_value_name, actor_process_image_path
