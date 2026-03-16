@@ -1,0 +1,20 @@
+// AWS SES Email Enumeration Detection
+// 
+
+dataset = amazon_aws_raw
+| filter eventSource = "ses.amazonaws.com"
+| filter eventName in(
+    "GetSendQuota",
+    "ListIdentities",
+    "GetIdentityVerificationAttributes",
+    "VerifyEmailIdentity",
+    "VerifyEmailAddress")
+| bin _time span = 2h
+| comp count() as total_events,
+    count_distinct(eventName) as distinct_operations,
+    values(eventName) as operations_peroformed,
+    values(sourceIPAddress) as ips,
+    values(userAgent) as user_agents
+    by userIdentity, _time
+| filter distinct_operations >= 2
+//| filter userIdentity = "REPLACE"
