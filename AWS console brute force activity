@@ -1,5 +1,5 @@
 // AWS Console Brute Force Activity
-// Detects 5 or more failed attempts via the AWS console
+// Detects repeated failed console login attempts from the same IP within a 1hr window
 
 dataset = amazon_aws_raw 
 | filter eventSource  = "signin.amazonaws.com"
