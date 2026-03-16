@@ -1,0 +1,31 @@
+// MicroStealer Network IOCs
+// Confirmed C2 domains and Discord webhook with MicroStealer/1.0 user agent
+// https://any.run/cybersecurity-blog/microstealer-technical-analysis/#indicatorsofcompromiseiocs-19049
+
+
+dataset = xdr_data
+| filter agent_os_type = ENUM.AGENT_OS_WINDOWS
+| filter event_type in (ENUM.NETWORK, ENUM.STORY)
+| filter dns_query_name in (
+    "78smp.com",
+    "vrcpluginhub.com",
+    "dashlune.xyz",
+    "slumpcute.com",
+    "churilend.com",
+    "kittycraftmc.com",
+    "buradakimvar.com",
+    "buradabmwking.com",
+    "banterplugins.com",
+    "zarvethion.com",
+    "welarith.com",
+    "kittenscraft.com",
+    "crushfall.com",
+    "velyonar.com",
+    "kittiesmc.com",
+    "eldrynworld.com"
+)
+    or (dns_query_name ~= "(?i)discordapp\.com"
+        and action_user_agent = "MicroStealer/1.0")
+| fields _time, agent_hostname, actor_effective_username,
+         actor_process_image_name, dns_query_name,
+         action_remote_ip, actor_process_command_line
