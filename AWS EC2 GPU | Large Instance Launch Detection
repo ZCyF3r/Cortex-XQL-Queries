@@ -1,0 +1,11 @@
+// AWS EC2 GPU / Large Instance Launch Detection
+// 
+
+dataset = amazon_aws_raw
+| filter eventSource = "ec2.amazonaws.com"
+| filter eventName = "RunInstances"
+| alter instance_type = json_extract_scalar(requestParameters, "$.instanceType")
+| alter ARN = json_extract_scalar(userIdentity, "$.arn")
+| alter identity = json_extract_scalar(userIdentity, "$.principalId")
+| filter instance_type ~= arrayindex(regextract(instance_type, "^(p3|p4d?|p5|g4dn|g4ad|g5g?|g6|gr6|inf1|inf2|trn1|m5zn|m5n|m5dn|m6i|m6a|m7i|m7a)"),0)
+| fields _time, instance_type, ARN, identity, eventName, eventSource, sourceIPAddress, userAgent, errorCode, errorMessage
