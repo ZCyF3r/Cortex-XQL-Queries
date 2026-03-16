@@ -1,5 +1,5 @@
-//
-//
+// AWS Console Brute Force Activity
+// Detects 5 or more failed attempts via the AWS console
 
 dataset = amazon_aws_raw 
 | filter eventSource  = "signin.amazonaws.com"
@@ -14,3 +14,4 @@ dataset = amazon_aws_raw
     by sourceIPAddress, _time
 | filter failed_attempts >= 5
 | sort desc failed_attempts
+//| filter sourceIPAddress = "REPLACE"
