@@ -1,9 +1,9 @@
-// 
-// 
+// AWS Region Enablement Detection
+// Detects when a commonly abused & dormant/opt-in AWS region is enabled in an account
 
 dataset = amazon_aws_raw
 | filter eventName = "EnableRegion"
 | filter eventSource = "account.amazonaws.com"
 | alter region_enabled = json_extract_scalar(requestParameters, "$.regionName")
-| filter region_enabled in("ap-southeast-3", "ap-southeast-4", "me-central-1", "me-south-1", "af-south-1", "ap-south-1")
+| filter region_enabled in("ap-southeast-3", "ap-southeast-4", "me-central-1", "me-south-1", "af-south-1", "ap-south-1", "ca-west-1", "eu-south-1", "eu-south-2", "ap-south-2", "ap-east-1")
 | fields _time, userIdentity, eventName, region_enabled, sourceIPAddress, userAgent, errorCode, errorMessage
