@@ -4,7 +4,7 @@
 
 dataset = xdr_data
 | filter agent_os_type = ENUM.AGENT_OS_WINDOWS
-| filter event_type in("ENUM.NETWORK", "ENUM.STORY")
+| filter event_type in(ENUM.NETWORK, ENUM.STORY)
 | filter action_remote_ip = "194.76.226.93"
     or dns_query_name in (
         "checkpoint-vpn.com",
