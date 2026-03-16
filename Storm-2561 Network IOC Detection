@@ -1,12 +1,11 @@
 // Storm-2561 - Network IOC Detection
 // Detects outbound connections to confirmed Storm-2561 C2 infrastructure
 // Covers C2 IP, credential exfil domains, and initial access spoofed VPN domains
+
 dataset = xdr_data
 | filter agent_os_type = ENUM.AGENT_OS_WINDOWS
-| filter event_type = ENUM.NETWORK
+| filter event_type in("ENUM.NETWORK", "ENUM.STORY")
 | filter action_remote_ip = "194.76.226.93"
-    or action_remote_port = 8080
-    and action_remote_ip = "194.76.226.93"
     or dns_query_name in (
         "checkpoint-vpn.com",
         "cisco-secure-client.es",
@@ -28,7 +27,4 @@ dataset = xdr_data
         "vpn-connection.pro",
         "myconnection.pro"
     )
-| fields _time, agent_hostname, actor_effective_username,
-         actor_process_image_name, action_remote_ip,
-         action_remote_port, dns_query_name,
-         actor_process_command_line, actor_process_image_path
+| fields _time, agent_hostname, action_remote_ip, action_remote_port, dns_query_name
