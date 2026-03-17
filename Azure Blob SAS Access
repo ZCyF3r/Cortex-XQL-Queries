@@ -1,5 +1,5 @@
 // Azure Blob SAS Access
-//
+// Detects blob access authenticated via SAS signature
 
 dataset = cloud_audit_logs
 | filter cloud_provider = ENUM.Azure
