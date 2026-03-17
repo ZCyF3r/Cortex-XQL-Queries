@@ -1,0 +1,14 @@
+// Azure Blob SAS Access
+//
+
+dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure
+| alter access_type = json_extract_scalar(identity_orig, "$.type")
+| filter access_type = "SAS"
+| filter operation_name_orig contains "blob"
+| filter identity_name ~= "(?i)^key[12]"
+| filter identity_type = "token"
+| filter identity_sub_type = "key"
+| filter operation_status_orig_code = "200"
+| filter operation_status_reason_provided = "Success"
+| fields _time, access_type, identity_name, identity_type, identity_invoked_by_sub_type, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_geolocation, caller_ip_asn_org, user_agent, region
