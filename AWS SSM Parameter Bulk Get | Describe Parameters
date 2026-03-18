@@ -1,5 +1,5 @@
 // AWS SSM Parameter Bulk Get | Describe Parameters
-// 
+// Detects identities reading an unusually high number of SSM parameters in a short window
 
 dataset = amazon_aws_raw
 | filter eventSource = "ssm.amazonaws.com"
