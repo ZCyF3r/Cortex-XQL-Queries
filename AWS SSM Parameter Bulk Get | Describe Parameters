@@ -3,8 +3,7 @@
 
 dataset = amazon_aws_raw
 | filter eventSource = "ssm.amazonaws.com"
-| filter eventName contains "parameter"
-| filter eventName in ("GetParameters", "GetParametersByPath", "DescribeParameters")
+| filter eventName in ("GetParameter", "GetParametersByPath", "DescribeParameters")
 | alter ARN = json_extract_scalar(userIdentity, "$.arn")
 | alter Identity = json_extract_scalar(userIdentity, "$.principalId")
 | alter Identity_type = json_extract_scalar(userIdentity, "$.type")
@@ -17,5 +16,6 @@ dataset = amazon_aws_raw
     values(userAgent) as user_agents
     by ARN, Identity, _time
 | filter total_parameters_read >= 10
+| filter distinct_parameters >= 5
 //| filter ARN = "REPLACE"
 //| filter Identity = "REPLACE"
