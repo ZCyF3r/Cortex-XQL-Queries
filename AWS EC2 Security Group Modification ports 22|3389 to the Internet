@@ -1,0 +1,16 @@
+// AWS EC2 Security Group Modification ports 22/3389 to the Internet
+// 
+
+dataset = amazon_aws_raw
+| filter eventSource = "ec2.amazonaws.com"
+| filter eventName = "AuthorizeSecurityGroupIngress"
+| alter group_id = json_extract_scalar(requestParameters, "$.groupId")
+| alter from_port = json_extract_scalar(requestParameters, "$.ipPermissions.items[0].fromPort")
+| alter to_port = json_extract_scalar(requestParameters, "$.ipPermissions.items[0].toPort")
+| alter cidr_ip = json_extract_scalar(requestParameters, "$.ipPermissions.items[0].ipRanges.items[0].cidrIp")
+| alter ARN = json_extract_scalar(userIdentity, "$.arn")
+| alter Identity = json_extract_scalar(userIdentity, "$.principalId")
+| alter Identity_type = json_extract_scalar(userIdentity, "$.type")
+| filter cidr_ip = "0.0.0.0/0"
+| filter from_port in("22", "3389") or to_port in("22", "3389")
+| fields _time, ARN, awsRegion, Identity, Identity_type, group_id, from_port, to_port, cidr_ip, sourceIPAddress, userAgent, errorCode, errorMessage
