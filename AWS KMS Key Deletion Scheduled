@@ -1,0 +1,17 @@
+// AWS KMS Key Deletion Scheduled
+// 
+
+dataset = amazon_aws_raw
+| filter eventSource = "kms.amazonaws.com"
+| filter eventName = "ScheduleKeyDeletion"
+| alter pending_days = json_extract_scalar(responseElements, "$.pendingWindowInDays")
+| alter deletion_date = json_extract_scalar(responseElements, "$.deletionDate")
+| alter key_id = json_extract_scalar(responseElements, "$.keyId")
+| alter ARN = json_extract_scalar(userIdentity, "$.arn")
+| alter Identity = json_extract_scalar(userIdentity, "$.principalId")
+| alter Identity_type = json_extract_scalar(userIdentity, "$.type")
+| filter sourceIPAddress not contains "cloudformation"
+| filter sourceIPAddress not contains "terraform"
+| filter pending_days = "REPLACE"
+| filter key_id = "REPLACE"
+| fields _time, ARN, Identity, Identity_type, pending_days, deletion_date, key_id, sourceIPAddress
