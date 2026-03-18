@@ -1,0 +1,21 @@
+// AWS SSM Parameter Bulk Get | Describe Parameters
+// 
+
+dataset = amazon_aws_raw
+| filter eventSource = "ssm.amazonaws.com"
+| filter eventName contains "parameter"
+| filter eventName in ("GetParameters", "GetParametersByPath", "DescribeParameters")
+| alter ARN = json_extract_scalar(userIdentity, "$.arn")
+| alter Identity = json_extract_scalar(userIdentity, "$.principalId")
+| alter Identity_type = json_extract_scalar(userIdentity, "$.type")
+| bin _time span = 1h
+| comp count() as total_parameters_read,
+    count_distinct(requestParameters) as distinct_parameters,
+    values(requestParameters) as parameters_read,
+    values(eventName) as operations,
+    values(sourceIPAddress) as ip_list,
+    values(userAgent) as user_agents
+    by ARN, Identity, _time
+| filter total_parameters_read >= 10
+//| filter ARN = "REPLACE"
+//| filter Identity = "REPLACE"
