@@ -7,6 +7,6 @@ dataset = xdr_data
 | filter event_type = ENUM.PROCESS
 | filter action_process_image_name = "curl"
 | filter actor_process_command_line contains "trivy-action"
-| filter action_process_command_line contains "POST"
-    and action_process_command_line contains "--data-binary"
-| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, action_process_image_name, action_process_command_line, actor_process_command_line
+| filter action_process_image_command_line contains "POST"
+    and action_process_image_command_line contains "--data-binary"
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, action_process_image_name, action_process_image_command_line, actor_process_command_line
