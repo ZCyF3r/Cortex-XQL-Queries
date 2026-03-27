@@ -1,0 +1,12 @@
+// TeamPCP Trivy Supply Chain - C2 IOCs in Process Command Lines
+// Detects processes referencing confirmed TeamPCP C2 infrastructure or known malicious artifacts from the Trivy supply chain compromise
+// https://www.microsoft.com/en-us/security/blog/2026/03/24/detecting-investigating-defending-against-trivy-supply-chain-compromise/
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS
+| filter action_process_command_line ~= "(?i)(scan\.aquasecurtiy\.org|45\.148\.10\.212|plug-tab-protective-relay\.trycloudflare\.com|tdtqy-oyaaa-aaaae-af2dq-cai\.raw\.icp0\.io|checkmarx\.zone)"
+    or action_process_command_line contains "/tmp/runner_collected_"
+    or action_process_command_line contains "tpcp.tar.gz"
+    or (actor_process_image_name contains "entrypoint.sh"
+        and action_process_command_line contains "grep -qiE (env|ssh)")
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, action_process_image_name, action_process_command_line, actor_process_command_line
