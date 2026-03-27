@@ -1,0 +1,6 @@
+dataset = host_inventory 
+| alter App = json_extract_scalar_array(applications, "$.application_name")
+| alter Version = to_json_string(applications, "$.version")
+| filter App = "trivy"
+| filter Version = "0.69.1"
+| fields App, Version
