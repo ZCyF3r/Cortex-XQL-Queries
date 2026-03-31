@@ -1,5 +1,5 @@
-// 
-// 
+// Microsoft Teams External Phishing Detection
+// Detects messages sent or chats created by external/guest users with the pretext of being IT
 
 
 dataset = saas_audit_logs 
@@ -11,7 +11,12 @@ dataset = saas_audit_logs
 | filter UserChatName contains "IT Support" or 
     UserChatName contains "Helpdesk" or 
     UserChatName contains "Corporate" or 
-    UserChatName contains "Service"
+    UserChatName contains "Service" or
+    UserChatName contains "Security" or
+    UserChatName contains "Admin" or
+    UserChatName contains "Microsoft" or
+    UserChatName contains "Account" or
+    UserChatName contains "Password"
 //Filter out known internal domains
 //| filter sender_domain != "REPLACE WITH YOUR DOMAIN"
 | fields _time, identity_name, UserChatName, sender_domain, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, raw_log
