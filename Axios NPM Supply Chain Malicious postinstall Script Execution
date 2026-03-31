@@ -10,8 +10,8 @@ dataset = xdr_data
     or actor_process_command_line contains "postinstall"
     or actor_process_command_line contains "plain-crypto-js"
 | filter action_process_image_name ~= "(curl|wget|python|python3|bash|sh|cmd|powershell|wt)\.exe"
-    or action_process_command_line contains "sfrclak.com"
-    or action_process_command_line contains "142.11.206.73"
-    or action_process_command_line contains "ld.py"
-    or action_process_command_line contains "com.apple.act.mond"
-| fields _time, agent_hostname, agent_os_type, actor_effective_username, actor_process_image_name, action_process_image_name, actor_process_command_line, action_process_command_line
+    or action_process_image_command_line contains "sfrclak.com"
+    or action_process_image_command_line contains "142.11.206.73"
+    or action_process_image_command_line contains "ld.py"
+    or action_process_image_command_line contains "com.apple.act.mond"
+| fields _time, agent_hostname, agent_os_type, actor_effective_username, actor_process_image_name, action_process_image_name, actor_process_command_line, action_process_image_command_line
