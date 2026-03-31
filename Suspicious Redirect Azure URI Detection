@@ -1,0 +1,29 @@
+// 
+// 
+// 
+
+
+dataset = cloud_audit_logs 
+| filter cloud_provider = ENUM.Azure
+| filter operation_name_orig in("Update Service Principal", "Add Application", "Update Application")
+| filter identity_name != "Microsoft Online Services" and identity_invoked_by_name != "Microsoft Online Services"
+| alter NewURI = json_extract_scalar(raw_log, "$.properties.targetResources[0].modifiedProperties[0].newValue")
+| alter OldURI = json_extract_scalar(raw_log, "$.properties.targetResources[0].modifiedProperties[0].oldValue")
+| alter display_name = json_extract_scalar(raw_log, "$.properties.targetResources[0].modifiedProperties[0].displayName")
+| filter display_name = "AppAddress"
+// Tunnel / Reverse Proxy Patterns
+| alter is_tunnel = if(
+    NewURI ~= "(ngrok|trycloudflare|cfargotunnel|loca\.lt|localhost\.run|serveo\.net|bore\.digital|tunnelto\.dev|telebit|pagekit|loophole\.cloud|zrok\.io|playit\.gg|tailscale\.net|devtunnels\.ms|portmap\.io)", "true", "false")
+// Callback Infrastructure
+| alter is_callback = if(
+    NewURI ~= "(burpcollaborator|oastify\.com|interact\.sh|oast\.fun|oast\.me|oast\.online|pipedream|requestbin|webhook\.site|canarytokens|hookbin\.com|beeceptor\.com|requestcatcher\.com|mockbin\.org|postb\.in)",
+    "true", "false")
+// localhost
+| alter is_localhost = if(
+    NewURI ~= "(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])", "true", "false")
+| alter pattern_match = if(
+    is_tunnel = "true", "tunnel/RevProxy",
+    if(is_callback = "true", "Callback/Interaction",
+    if(is_localhost = "true", "localhost/loopback", null)))
+| filter pattern_match != null
+| fields _time, identity_name, identity_invoked_by_name, operation_name, operation_name_orig, pattern_match, display_name, NewURI, OldURI, caller_ip, caller_ip_asn, caller_ip_geolocation, user_agent
