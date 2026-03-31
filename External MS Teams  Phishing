@@ -7,8 +7,10 @@ dataset = saas_audit_logs
 | filter operation_name_orig in("MessageSent", "ChatCreated")
 | alter sender_domain = arrayindex(regextract(identity_name, "@(.+)$"), 0)
 | alter UserChatName = json_extract_scalar(raw_log, "$.Members[0].DisplayName")
+| alter UserID = json_extract_scalar(raw_log, "$.UserId")
 | filter sender_domain != "" and sender_domain != null
-| filter UserChatName ~= "(?i)(IT Support|Helpdesk|Help Desk|Corporate|Service Desk|Tech Support|IT Team|IT Department|Security|Admin|Administrator|Microsoft|Password|Account|Support|Compliance|Cyber|SOC|Incident|Notification|Alert|Verify|Verification|Reset|MFA|Authentication)"
+| filter UserChatName ~= "(?i)(IT Support|Helpdesk|Help Desk|Corporate|Service Desk|Tech Support|IT Team|IT Department|Security|Admin|Administrator|Password|Account|Support|Compliance|Cyber|SOC|Incident|Notification|Alert|Verify|Verification|Reset|MFA|Authentication)"
+    or UserID ~= "(?i)(IT Support|Helpdesk|Help Desk|Corporate|Service Desk|Tech Support|IT Team|IT Department|Security|Admin|Administrator|Password|Account|Support|Compliance|Cyber|SOC|Incident|Notification|Alert|Verify|Verification|Reset|MFA|Authentication)"
 //Filter out known internal domains
 //| filter sender_domain != "REPLACE WITH YOUR DOMAIN"
-| fields _time, identity_name, UserChatName, sender_domain, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, raw_log
+| fields _time, identity_name, UserChatName, UserID, sender_domain, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, raw_log
