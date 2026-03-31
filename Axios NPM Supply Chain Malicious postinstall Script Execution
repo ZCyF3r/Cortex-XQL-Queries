@@ -1,0 +1,17 @@
+// Axios NPM Supply Chain Malicious postinstall Script Execution
+// Detects npm postinstall spawning suspicious processes
+// Indicative of plain-crypto-js@4.2.1 RAT dropper executing during npm install
+// https://www.stepsecurity.io/blog/axios-compromised-on-npm-malicious-versions-drop-remote-access-trojan#indicators-of-compromise
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS
+| filter actor_process_image_name in ("npm", "node", "npm.cmd")
+    or actor_process_command_line contains "postinstall"
+    or actor_process_command_line contains "plain-crypto-js"
+| filter action_process_image_name ~= "(curl|wget|python|python3|bash|sh|cmd|powershell|wt)\.exe"
+    or action_process_command_line contains "sfrclak.com"
+    or action_process_command_line contains "142.11.206.73"
+    or action_process_command_line contains "ld.py"
+    or action_process_command_line contains "com.apple.act.mond"
+| fields _time, agent_hostname, agent_os_type, actor_effective_username, actor_process_image_name, action_process_image_name, actor_process_command_line, action_process_command_line
