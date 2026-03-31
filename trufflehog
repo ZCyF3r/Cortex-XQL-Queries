@@ -1,0 +1,7 @@
+// 
+// 
+
+
+dataset = cloud_audit_logs
+| filter user_agent contains "trufflehog"
+| fields _time, identity_name, identity_invoked_by_name, referenced_resource_name, referenced_resource, caller_ip, caller_ip_asn, caller_ip_geolocation,user_agent
