@@ -1,10 +1,9 @@
 // axios npm Supply Chain - C2 Network Detection
 // Detects connections to confirmed axios RAT C2 infrastructure
-// 
+// https://www.stepsecurity.io/blog/axios-compromised-on-npm-malicious-versions-drop-remote-access-trojan
 
 
 dataset = xdr_data
 | filter event_type in (ENUM.NETWORK, ENUM.STORY)
-| filter action_remote_ip = "142.11.206.73"
-    or dns_query_name = "sfrclak.com"
+| filter action_remote_ip = "142.11.206.73" or dns_query_name = "sfrclak.com"
 | fields _time, agent_hostname, actor_effective_username, actor_process_image_name, action_remote_ip, action_remote_port, dns_query_name, actor_process_command_line
