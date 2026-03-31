@@ -1,5 +1,4 @@
-// 
-// 
+// TruffleHog Activity in Cloud Environments
 
 
 dataset = cloud_audit_logs
