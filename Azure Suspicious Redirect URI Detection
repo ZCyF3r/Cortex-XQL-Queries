@@ -1,6 +1,5 @@
-// 
-// 
-// 
+// Azure Suspicious Redirect URI Detection
+// Looks for reverse proxies, tunnels & callback infra
 
 
 dataset = cloud_audit_logs 
