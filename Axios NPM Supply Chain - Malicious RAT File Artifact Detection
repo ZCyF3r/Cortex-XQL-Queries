@@ -1,0 +1,19 @@
+// axios npm Supply Chain - Malicious RAT File Artifact Detection
+// Detects RAT payloads dropped by plain-crypto-js@4.2.1 postinstall script which covers Windows, macOS and Linux artifacts
+// https://www.stepsecurity.io/blog/axios-compromised-on-npm-malicious-versions-drop-remote-access-trojan
+
+dataset = xdr_data
+| filter event_type = ENUM.FILE
+// Windows: %PROGRAMDATA%\wt.exe
+| filter (agent_os_type = ENUM.AGENT_OS_WINDOWS
+    and action_file_name = "wt.exe"
+    and action_file_path contains "ProgramData")
+// Linux: /tmp/ld.py
+    or (agent_os_type = ENUM.AGENT_OS_LINUX
+    and action_file_name = "ld.py"
+    and action_file_path contains "/tmp/")
+// macOS: /Library/Caches/com.apple.act.mond
+    or (agent_os_type = ENUM.AGENT_OS_MAC
+    and action_file_name = "com.apple.act.mond"
+    and action_file_path contains "/Library/Caches/")
+| fields _time, agent_hostname, agent_os_type, actor_effective_username, actor_process_image_name, action_file_name, action_file_path, action_file_sha256
