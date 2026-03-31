@@ -2,6 +2,7 @@
 // Detects RAT payloads dropped by plain-crypto-js@4.2.1 postinstall script which covers Windows, macOS and Linux artifacts
 // https://www.stepsecurity.io/blog/axios-compromised-on-npm-malicious-versions-drop-remote-access-trojan
 
+
 dataset = xdr_data
 | filter event_type = ENUM.FILE
 // Windows: %PROGRAMDATA%\wt.exe
