@@ -1,4 +1,4 @@
-// axios npm Supply Chain - C2 Network Detection
+// axios npm Supply Chain C2 Network Detection
 // Detects connections to confirmed axios RAT C2 infrastructure
 // https://www.stepsecurity.io/blog/axios-compromised-on-npm-malicious-versions-drop-remote-access-trojan
 
