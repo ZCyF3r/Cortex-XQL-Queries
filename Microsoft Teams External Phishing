@@ -8,8 +8,9 @@ dataset = saas_audit_logs
 | alter sender_domain = arrayindex(regextract(identity_name, "@(.+)$"), 0)
 | alter UserChatName = json_extract_scalar(raw_log, "$.Members[0].DisplayName")
 | filter sender_domain != "" and sender_domain != null
-| filter UserChatName contains "IT Support" or 
-    UserChatName contains "Helpdesk" or 
+| filter UserChatName contains "IT" or 
+    UserChatName contains "Support" or
+    UserChatName contains "Help Desk" or 
     UserChatName contains "Corporate" or 
     UserChatName contains "Service" or
     UserChatName contains "Security" or
