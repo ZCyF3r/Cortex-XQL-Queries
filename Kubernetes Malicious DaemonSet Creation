@@ -5,7 +5,7 @@
 // https://arstechnica.com/security/2026/03/self-propagating-malware-poisons-open-source-software-and-wipes-iran-based-machines/
 
 
-dataset = xdr_data 
+dataset = xdr_data
 | filter event_type = ENUM.PROCESS
 | filter actor_process_image_name contains "kubectl"
 | filter action_process_image_command_line contains "daemonset"
