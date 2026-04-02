@@ -1,0 +1,10 @@
+// Kubectl EXEC shell spawned in container
+// Detects interactive shell sessions launched inside containers via kubectl exec
+
+
+dataset = xdr_data 
+| filter event_type = ENUM.PROCESS
+| filter actor_process_image_name contains "kubectl"
+    and actor_process_image_command_line contains "exec"
+| filter action_process_image_name ~= "(?i)(bash|sh|zsh|fish|dash|ksh)$"
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, action_process_image_name, actor_process_image_command_line, action_process_image_command_line, actor_process_image_path 
