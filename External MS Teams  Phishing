@@ -10,7 +10,6 @@ dataset = saas_audit_logs
 | alter UPN = json_extract_scalar(raw_log, "$.Members[1].UPN")
 | alter UserID = json_extract_scalar(raw_log, "$.UserId")
 | filter sender_domain != "" and sender_domain != null
-| filter UserChatName != "" and UserChatName != null
 | filter UserChatName ~= "(?i)(IT Support|Helpdesk|Help Desk|Corporate|Service Desk|Tech Support|IT Team|IT Department|Security|Admin|Administrator|Password|Account|Support|Compliance|Cyber|SOC|Incident|Notification|Alert|Verify|Verification|Reset|MFA|Authentication)"
     or UserID ~= "(?i)(IT Support|Helpdesk|Help Desk|Corporate|Service Desk|Tech Support|IT Team|IT Department|Security|Admin|Administrator|Password|Account|Support|Compliance|Cyber|SOC|Incident|Notification|Alert|Verify|Verification|Reset|MFA|Authentication)"
 | fields _time, identity_name, UserChatName, UserID, sender_domain, UPN, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, raw_log
