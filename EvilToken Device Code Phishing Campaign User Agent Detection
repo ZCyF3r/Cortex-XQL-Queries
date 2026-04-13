@@ -3,8 +3,6 @@
 // kali365-live/1.0.0 - confirmed M365 exploitation toolkit UA
 
 
-
-dataset = msft_azure_ad_raw
-| filter authenticationProtocol = "deviceCode"
-| filter userAgent ~= "(?i)(python-requests/2\.31\.0|kali365-live/1\.0\.0)"
-| fields _time, userPrincipalName, authenticationProtocol, resourceDisplayName, ipAddress, location, userAgent
+dataset = saas_audit_logs 
+| filter user_agent ~= "(?i)(python-requests/2\.31\.0|kali365-live/1\.0\.0)"
+| fields _time, identity_name ,operation_name_orig, referenced_resource_name, service_sub_type, service_type, caller_ip, caller_ip_geolocation, user_agent, raw_log
