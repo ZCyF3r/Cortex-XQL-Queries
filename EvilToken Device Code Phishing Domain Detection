@@ -1,0 +1,8 @@
+// EvilToken Device Code Phishing Domain Detection
+// Detects endpoints connecting to confirmed EvilToken phishing infrastructure
+
+
+dataset = xdr_data
+| filter event_type in (ENUM.NETWORK, ENUM.STORY)
+| filter dns_query_name ~= "(?i)(ms-teamsmeeting\.top|microsoft365onlineoffice\.com|microsoftonlineoffice365\.com|microsoftofficeonline365\.com|filesharebysecureoffice365\.com|office365documentbysecuredportal\.com|documentsecuredbyoffice365\.com|verifyoff36s5hareddocauthby\.biz|authverfyupdatebydoc\.biz|onlinedocumentreviewandsign\.com|documentsalived\.com|assetstrust\.cfd|coremessagesecure1x\.com|accountmessage\.com|secure-encryptions\.cc|webviewdoc\.com|celestineholdings\.com|nikadent\.icu|viesonlinecheck1\.com|bookingservicestwo\.sbs|democrakidsradio\.org|sedoasiis\.com|noboundseyetech\.com|newmarys\.com|concordisseniorliving\.net|bluemangolove\.com|natmanco\.com|schulzscpa\.com|powwowavants\.cc)"
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, dns_query_name, action_remote_ip, actor_process_command_line
