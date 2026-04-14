@@ -1,5 +1,6 @@
 // EvilToken Device Code Phishing Domain Detection
 // Detects endpoints connecting to confirmed EvilToken phishing infrastructure
+// https://coralogix.com/blog/evil-token-ai-enabled-device-code-phishing-campaign/
 
 
 dataset = xdr_data
