@@ -1,5 +1,6 @@
 // EvilToken Malicious IP Detection
 // DigitalOcean, PacketHub and Cloudflare IPs from Coralogix EvilToken article
+// https://coralogix.com/blog/evil-token-ai-enabled-device-code-phishing-campaign/
 
 
 dataset = msft_azure_ad_raw
