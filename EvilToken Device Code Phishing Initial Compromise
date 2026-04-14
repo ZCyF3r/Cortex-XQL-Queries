@@ -1,5 +1,6 @@
 // EvilToken Device Code Phishing Initial Compromise
 // Catches the exploitation toolkit UA being used during the device code authentication flow
+// https://coralogix.com/blog/evil-token-ai-enabled-device-code-phishing-campaign/
 
 
 dataset = msft_azure_ad_raw 
