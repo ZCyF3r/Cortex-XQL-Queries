@@ -1,0 +1,8 @@
+// EvilToken Device Code Phishing Initial Compromise
+// Catches the exploitation toolkit UA being used during the device code authentication flow
+
+
+dataset = msft_azure_ad_raw 
+| filter userAgent ~= "(?i)(python-requests/2\.31\.0|kali365-live/1\.0\.0)"
+| filter originalTransferMethod = "deviceCodeFlow"
+| fields _time, userAgent, userDisplayName, userPrincipalName, location, ipAddress, originalTransferMethod, tokenIssuerName, tokenIssuerType, sessionId
