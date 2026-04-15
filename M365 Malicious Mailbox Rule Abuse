@@ -1,5 +1,10 @@
-// 
-// 
+// Malicious Inbox Rule Creation - Post Account Takeover Persistence
+
+// High fidelity filters that follow attacker TTPs:
+// Blank, null, or trivial rule name (., .., ;) to avoid detection
+// Moves mail to "Conversation History" folder (rarely monitored)
+// Marks emails as read to hide activity from victim
+// StopProcessingRules = True to ensure rule takes priority
 
 
 dataset = saas_audit_logs 
