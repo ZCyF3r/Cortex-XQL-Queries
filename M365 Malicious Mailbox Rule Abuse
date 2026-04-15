@@ -1,4 +1,4 @@
-// Malicious Inbox Rule Creation - Post Account Takeover Persistence
+// M365 Malicious Mailbox Rule Abuse
 
 // High fidelity filters that follow attacker TTPs:
 // Blank, null, or trivial rule name (., .., ;) to avoid detection
