@@ -7,4 +7,4 @@ dataset = msft_azure_ad_raw
 | filter originalTransferMethod = "deviceCodeFlow"
 | filter userAgent contains "kali365-live/1.0.0"
     or (userAgent contains "python-requests/2.31.0" and resourceDisplayName = "Microsoft Graph")
-| fields _time, userAgent, userDisplayName, userPrincipalName, location, ipAddress, originalTransferMethod, tokenIssuerName, tokenIssuerType, sessionId
+| fields _time, userAgent, userDisplayName, userPrincipalName, resourceDisplayName, location, ipAddress, originalTransferMethod, tokenIssuerName, tokenIssuerType, sessionId
