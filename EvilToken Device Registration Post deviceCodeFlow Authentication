@@ -17,7 +17,4 @@ dataset = cloud_audit_logs
     | fields _time, userPrincipalName, ipAddress, userAgent, location
     | bin _time span = 24h
 ) as auth auth.userPrincipalName = identity_name and auth._time = _time
-| fields _time, identity_name, operation_name_orig,
-         referenced_resource_name, caller_ip,
-         caller_ip_geolocation, caller_ip_asn_org,
-         user_agent, auth.ipAddress, auth.userAgent, auth.location
+| fields _time, identity_name, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_geolocation, caller_ip_asn_org, user_agent, ipAddress, userAgent, location
