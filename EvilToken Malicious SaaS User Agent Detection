@@ -1,0 +1,8 @@
+// EvilToken Malicious SaaS User Agent Detection
+// python-requests/2.31.0 = automated scripting agent
+// kali365-live/1.0.0 - confirmed M365 exploitation toolkit UA
+
+dataset = saas_audit_logs 
+| filter user_agent ~= "(?i)(python-requests/2\.31\.0|kali365-live/1\.0\.0)"
+//| filter caller_ip = "REPLACE" 
+| fields _time, identity_name, operation_name_orig, service_sub_type, service_type, caller_ip, caller_ip_geolocation, user_agent, raw_log
