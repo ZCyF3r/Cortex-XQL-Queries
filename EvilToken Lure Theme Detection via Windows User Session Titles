@@ -1,0 +1,10 @@
+// EvilToken Lure Theme Detection via Windows User Session Titles
+// Detects window titles matching confirmed EvilTokens phishing lure themes
+// Event type UserSession captures window title changes on Windows hosts
+
+
+dataset = xdr_data
+| filter event_type = ENUM.USER_SESSION
+// Using title field for window title matching
+| filter title ~= "(?i)(cash flow.*AP.*AR|GV Advisors|investment.*funding|meetInvitation|SPEED International Logistics|TR Purchase order|Secured Share Point|OPEN DOCUMENT NOW|password.*expir|voicemail|email quarantine|eFax|construction bid|customervoice\.microsoft\.com|adobe.*acrobat.*sign|docusign.*verify|payroll adjustment|onedrive.*shared|sharepoint.*access request|calendar.*invite.*action required)"
+| fields _time, agent_hostname, actor_effective_username, title, actor_process_image_name, action_process_image_name
