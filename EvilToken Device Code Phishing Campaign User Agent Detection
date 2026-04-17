@@ -4,6 +4,9 @@
 // https://coralogix.com/blog/evil-token-ai-enabled-device-code-phishing-campaign/
 
 
-dataset = saas_audit_logs 
-| filter user_agent ~= "(?i)(python-requests/2\.31\.0|kali365-live/1\.0\.0)"
+dataset = saas_audit_logs
+| filter originalTransferMethod = "deviceCodeFlow"
+| filter userAgent ~= "(?i)(python-requests/2\.31\.0|kali365-live/1\.0\.0)"
+    or (userAgent ~= "iPhone OS 18" and userAgent ~= "Version/26\.")
+    or userAgent ~= "OS/10\.0\.26200"
 | fields _time, identity_name, operation_name_orig, service_sub_type, service_type, caller_ip, caller_ip_geolocation, user_agent, raw_log
