@@ -1,10 +1,11 @@
-// EvilToken Device Code Phishing Campaign SaaS User Agent Detection
+// EvilToken Device Code Phishing Campaign User Agent Detection
 // python-requests/2.31.0 = automated scripting agent
 // kali365-live/1.0.0 - confirmed M365 exploitation toolkit UA
 // https://coralogix.com/blog/evil-token-ai-enabled-device-code-phishing-campaign/
 
 
-dataset = saas_audit_logs
+dataset = msft_azure_ad_raw
+| filter originalTransferMethod = "deviceCodeFlow"
 | filter userAgent contains "kali365-live/1.0.0"
     or (userAgent contains "python-requests/2.31.0" and resourceDisplayName = "Microsoft Graph")
-| fields _time, identity_name, operation_name_orig, service_sub_type, service_type, caller_ip, caller_ip_geolocation, user_agent, raw_log
+| fields _time, userAgent, userDisplayName, userPrincipalName, location, ipAddress, resourceDisplayName, originalTransferMethod
