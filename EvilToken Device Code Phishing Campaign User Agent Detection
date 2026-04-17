@@ -4,7 +4,7 @@
 // https://coralogix.com/blog/evil-token-ai-enabled-device-code-phishing-campaign/
 
 
-dataset = msft_azure_ad_raw
+dataset = saas_audit_logs
 | filter originalTransferMethod = "deviceCodeFlow"
 | filter userAgent contains "kali365-live/1.0.0"
     or (userAgent contains "python-requests/2.31.0" and resourceDisplayName = "Microsoft Graph")
