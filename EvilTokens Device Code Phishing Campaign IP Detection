@@ -15,4 +15,5 @@ dataset = msft_o365_azure_ad_raw
     or incidr(ActorIpAddress, "69.9.164.0/22") = true
     or incidr6(ActorIpAddress, "2607:99c0::/32") = true
 | alter request_type = arrayindex(regextract(ExtendedProperties, "\"Name\":\s*\"RequestType\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| filter request_type = "Cmsi:Cmsi"
 | fields _time, UserId, ActorIpAddress, request_type,Operation, ResultStatus, ErrorNumber, LogonError, DeviceProperties
