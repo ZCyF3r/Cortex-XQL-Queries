@@ -1,4 +1,4 @@
-// EvilToken Device Code Phishing Initial Compromise
+// EvilToken Device Code Phishing Azure AD Auth
 // Catches the exploitation toolkit UA being used during the device code authentication flow
 // https://coralogix.com/blog/evil-token-ai-enabled-device-code-phishing-campaign/
 
