@@ -5,8 +5,14 @@
 
 dataset = msft_azure_ad_raw
 | filter originalTransferMethod = "deviceCodeFlow"
-| filter ipAddress ~= "^(167\.99\.0\.116|104\.248\.200\.231|157\.230\.53\.233|159\.203\.163\.96|162\.243\.166\.119|185\.81\.126\.157|151\.241\.19\.10|172\.67\.152\.123|172\.67\.144\.113|216\.203\.20\.95)$"
-    or ipAddress contains "162.220.232."
-    or ipAddress contains "162.220.234"
-    or is_ipv6("2606:4700:3037::6815:388b")
+| filter ipAddress ~= "^(167\.99\.0\.116|104\.248\.200\.231|157\.230\.53\.233|159\.203\.163\.96|162\.243\.166\.119|185\.81\.126\.157|151\.241\.19\.10|172\.67\.152\.123|172\.67\.144\.113)$"
+    or ipAddress = "2606:4700:3037::6815:388b"
+    or incidr(ipAddress, "152.55.176.0/20") = true
+    or incidr(ipAddress, "162.220.232.0/22") = true
+    or incidr(ipAddress, "162.220.234.0/22") = true
+    or incidr(ipAddress, "208.77.244.0/22") = true
+    or incidr(ipAddress, "66.33.22.0/23") = true
+    or incidr(ipAddress, "69.46.46.0/24") = true
+    or incidr(ipAddress, "69.9.164.0/22") = true
+    or incidr(ipAddress, "2607:99c0::/32") = true
 | fields _time, userPrincipalName, authenticationProtocol, resourceDisplayName, ipAddress, location, userAgent
