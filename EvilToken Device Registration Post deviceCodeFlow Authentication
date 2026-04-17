@@ -9,21 +9,15 @@ dataset = cloud_audit_logs
 | filter operation_name_orig in ("Add device", "Register device", "Add registered owner to device", "Update device")
 | filter identity_name != "Microsoft Online Services"
     and identity_invoked_by_name != "Microsoft Online Services"
-| bin _time span = 1h
+| filter caller_ip != null and caller_ip != ""
+| bin _time span = 24h
 | join type = inner conflict_strategy = both (
     dataset = msft_azure_ad_raw
     | filter originalTransferMethod = "deviceCodeFlow"
-    | fields _time, userPrincipalName, ipAddress, userAgent
-    | bin _time span = 1h
-) as devicecode devicecode.userPrincipalName = identity_name and devicecode._time = _time
-| fields _time, identity_name, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_geolocation, user_agent, ipAddress, userAgent
-
-
-
-dataset = cloud_audit_logs
-| filter cloud_provider = ENUM.Azure
-| filter operation_name_orig in ("Add device", "Register device", "Add registered owner to device", "Update device")
-| filter identity_name != "Microsoft Online Services"
-    and identity_invoked_by_name != "Microsoft Online Services"
-| filter caller_ip != null
-    or caller_ip != ""
+    | fields _time, userPrincipalName, ipAddress, userAgent, location
+    | bin _time span = 24h
+) as auth auth.userPrincipalName = identity_name and auth._time = _time
+| fields _time, identity_name, operation_name_orig,
+         referenced_resource_name, caller_ip,
+         caller_ip_geolocation, caller_ip_asn_org,
+         user_agent, auth.ipAddress, auth.userAgent, auth.location
