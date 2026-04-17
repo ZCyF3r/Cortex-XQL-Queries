@@ -4,7 +4,16 @@
 
 
 dataset = xdr_data
-| filter event_type = ENUM.USER_SESSION
-// Using title field for window title matching
-| filter title ~= "(?i)(cash flow.*AP.*AR|GV Advisors|investment.*funding|meetInvitation|SPEED International Logistics|TR Purchase order|Secured Share Point|OPEN DOCUMENT NOW|password.*expir|voicemail|email quarantine|eFax|construction bid|customervoice\.microsoft\.com|adobe.*acrobat.*sign|docusign.*verify|payroll adjustment|onedrive.*shared|sharepoint.*access request|calendar.*invite.*action required)"
-| fields _time, agent_hostname, actor_effective_username, title, actor_process_image_name, action_process_image_name
+| filter event_type = ENUM.STORY
+| filter title ~= "(?i)(cash flow.*AP.*AR|GV Advisors|investment.*funding|meetInvitation|SPEED International Logistics|TR Purchase order|Secured Share Point|OPEN DOCUMENT NOW|password.*expir|voicemail|email quarantine|eFax|construction bid|customervoice\.microsoft\.com|adobe.*acrobat.*sign|docusign.*verify|payroll adjustment|onedrive.*shared|sharepoint.*access request)"
+| fields _time, agent_hostname, actor_effective_username, title
+| bin _time span = 30m
+| join type = inner conflict_strategy = both (
+    dataset = xdr_data
+    | filter event_type = ENUM.NETWORK
+    | filter dns_query_name ~= "(?i)(adobe|page-adobe|calendar_invite|docusign|page-docusign|quarantine|fax|onedrive|page-password|sharepoint|voicemail|index)-[a-z0-9]{3}\..*-s-account\.workers\.dev"
+    | fields _time, agent_hostname, dns_query_name, actor_process_image_name
+    | bin _time span = 30m
+) as dns dns.agent_hostname = agent_hostname and dns._time = _time
+| fields _time, agent_hostname, actor_effective_username,
+         title, dns.dns_query_name, dns.actor_process_image_name
