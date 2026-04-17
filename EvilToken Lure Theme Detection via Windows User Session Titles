@@ -15,5 +15,4 @@ dataset = xdr_data
     | fields _time, agent_hostname, dns_query_name, actor_process_image_name
     | bin _time span = 30m
 ) as dns dns.agent_hostname = agent_hostname and dns._time = _time
-| fields _time, agent_hostname, actor_effective_username,
-         title, dns.dns_query_name, dns.actor_process_image_name
+| fields _time, agent_hostname, actor_effective_username, title, dns.dns_query_name, dns.actor_process_image_name
