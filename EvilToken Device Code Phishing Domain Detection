@@ -3,8 +3,7 @@
 // https://coralogix.com/blog/evil-token-ai-enabled-device-code-phishing-campaign/
 
 
-dataset = xdr_data
+dataset = xdr_data 
 | filter event_type in (ENUM.NETWORK, ENUM.STORY)
-| filter dns_query_name ~= "(?i)(ms-teamsmeeting\.top|microsoft365onlineoffice\.com|microsoftonlineoffice365\.com|microsoftofficeonline365\.com|filesharebysecureoffice365\.com|office365documentbysecuredportal\.com|documentsecuredbyoffice365\.com|sharepoint\.serverportalreview\.com|mscontactmembersheardliners\.com|verifyoff36s5hareddocauthby\.biz|authverfyupdatebydoc\.biz|onlinedocumentreviewandsign\.com|documentsalived\.com|assetstrust\.cfd|coremessagesecure1x\.com|accountmessage\.com|secure-encryptions\.cc|webviewdoc\.com|celestineholdings\.com|nikadent\.icu|viesonlinecheck1\.com|bookingservicestwo\.sbs|democrakidsradio\.org|sedoasiis\.com|noboundseyetech\.com|newmarys\.com|concordisseniorliving\.net|mbreysinc\.com|powwowavants\.cc|bluemangolove\.com|natmanco\.com|schulzscpa\.com|apparelgate\.co\.uk|ctcafinancial\.com|yakaclicker\.com|danaevasilis\.gr|galileu10\.com\.br|genixnet\.com|kcurb\.com|fredericopovoa\.com\.br|villagegreenretirement\.com|facilcomputer\.com|softvillasolutions\.com|thesocialne\.com|industherm\.info|graph-microsoft\.com)"
-    or dns_query_name ~= "(?i)(adobe|page-adobe|calendar_invite|docusign|page-docusign|quarantine|fax|onedrive|page-password|sharepoint|voicemail|index)-[a-z0-9]{3}\..*-s-account\.workers\.dev"
+| filter dns_query_name ~= "(?i)(flow-open|note-access|drive-mail|store-open|mail-link|form-cloud|vault-cloud|page-sync|file-base|net-web|data-form|sync-vault|file-doc|access-file|data-doc|drive-edge|access-base|cloud-link|view-sync|share-portal|sync-store|open-share|app-edge|data-drive|flow-store|link-app|file-share|view-open|net-open|base-mail|file-drive|sync-link|core-portal|portal-cloud|sync-page|view-portal|vault-access|box-note|form-doc|cloud-access|hub-app|doc-open|sync-portal|file-sync|cloud-view|doc-note|hub-flow|page-mail|form-hub).*workers\.dev"
 | fields _time, agent_hostname, actor_effective_username, actor_process_image_name, dns_query_name, action_remote_ip, actor_process_command_line
