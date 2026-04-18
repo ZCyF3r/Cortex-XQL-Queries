@@ -1,4 +1,4 @@
-// EvilToken Malicious IP Detection
+// EvilToken Malicious IP Detection with CMSI Session Replay Signal
 // DigitalOcean, PacketHub and Cloudflare IPs from Coralogix EvilToken article
 // https://coralogix.com/blog/evil-token-ai-enabled-device-code-phishing-campaign/
 
