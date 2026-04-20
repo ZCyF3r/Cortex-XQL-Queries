@@ -1,10 +1,25 @@
 // Kali365 Device Code Phishing Domain Detection
-// Detects endpoints connecting to suspected Kali365 phishing infrastructure
+// Covers all confirmed domain families and workers.dev delivery patterns
+// Updated April 20, 2026 - kali365.xyz domain rotation + sharepoint-msviewer.com spear phishing
+// v1: loadingdocuments.uk | v2: duemineral.uk | v3: kali365.xyz (current)
 
 
-dataset = xdr_data 
+dataset = xdr_data
 | filter event_type in (ENUM.NETWORK, ENUM.STORY)
-| filter dns_query_name ~= "(?i)(flow-open|note-access|drive-mail|store-open|mail-link|form-cloud|vault-cloud|page-sync|file-base|net-web|data-form|sync-vault|file-doc|access-file|data-doc|drive-edge|access-base|cloud-link|view-sync|share-portal|sync-store|open-share|app-edge|data-drive|flow-store|link-app|file-share|view-open|net-open|base-mail|file-drive|sync-link|core-portal|portal-cloud|sync-page|view-portal|vault-access|box-note|form-doc|cloud-access|hub-app|doc-open|sync-portal|file-sync|cloud-view|doc-note|hub-flow|page-mail|form-hub|portal-share).*workers\.dev"
+// Kali365 core infrastructure - all domain families
+| filter dns_query_name contains "kali365.xyz"
     or dns_query_name contains "duemineral.uk"
     or dns_query_name contains "loadingdocuments.uk"
-| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, dns_query_name, action_remote_ip, actor_process_command_line
+    or dns_query_name contains "sharepoint-msviewer.com"
+// Workers.dev lure-type named subdomains (original pattern)
+    or dns_query_name ~= "(?i)(flow-open|note-access|drive-mail|store-open|mail-link|form-cloud|vault-cloud|page-sync|file-base|net-web|data-form|sync-vault|file-doc|access-file|data-doc|drive-edge|access-base|cloud-link|view-sync|share-portal|sync-store|open-share|app-edge|data-drive|flow-store|link-app|file-share|view-open|net-open|base-mail|file-drive|sync-link|core-portal|portal-cloud|sync-page|view-portal|vault-access|box-note|form-doc|cloud-access|hub-app|doc-open|sync-portal|file-sync|cloud-view|doc-note|hub-flow|page-mail|form-hub|portal-share|core-mail|vault-web|base-flow|secure-link|core-flow).*workers\.dev"
+// Workers.dev random 5-4-4 character naming (evolved pattern April 20 2026)
+    or dns_query_name ~= "(?i)[a-z]{5}-[a-z]{4}-[a-z0-9]{4}\.(mary-3fb|c-cmd509g3|c-qtkfck53|c-kzevzz5a|p-1razygxw|p-8kehah0a|p-b8eaz6oe|p-rrw76os2|royalbase3|p-l3bhkqec|p-y10utwre|p-qtlv10l7)\.workers\.dev"
+// Cloudflare Pages phishing domains
+    or dns_query_name contains "sharepoint-81c.pages.dev"
+    or dns_query_name contains "sharepoint-63m.pages.dev"
+    or dns_query_name contains "tryingdocusign.pages.dev"
+| fields _time, agent_hostname, actor_effective_username,
+         actor_process_image_name, dns_query_name,
+         action_remote_ip, actor_process_command_line
+| sort desc _time
