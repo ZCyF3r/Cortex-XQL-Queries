@@ -1,4 +1,4 @@
-// Power automate suspicious flow creation with malicious connector
+// Power Automate Suspicious Flow Creation with Malicious Connector
 // Detects new or edited flows connecting to external exfiltration services
 
 
