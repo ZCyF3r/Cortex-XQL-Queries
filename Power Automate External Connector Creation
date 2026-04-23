@@ -1,0 +1,12 @@
+// Power Automate External Connector Creation
+// Detects PutConnection events which establish connectors to external services
+
+
+dataset = saas_audit_logs
+| filter service_type in ("PowerPlatform", "MicrosoftFlow")
+| filter operation_name_orig = "PutConnection"
+| alter ConnectorName = arrayindex(regextract(raw_log, "\"Name\":\s*\"powerplatform.analytics.resource.connector.name\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter ConnectorID = arrayindex(regextract(raw_log, "\"Name\":\s*\"powerplatform.analytics.resource.connection.id\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter tunnels_anonymous = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous")
+| alter tunnels_type = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type")
+| fields _time, identity_name, ConnectorName, ConnectorID, operation_name_orig, operation_status, caller_ip, caller_ip_asn, caller_ip_geolocation, tunnels_anonymous, tunnels_type, project, raw_log
