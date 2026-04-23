@@ -1,0 +1,13 @@
+// Power automate suspicious flow creation with malicious connector
+// Detects new or edited flows connecting to external exfiltration services
+
+
+dataset = saas_audit_logs
+| filter service_type in ("PowerPlatform", "MicrosoftFlow")
+| filter operation_name_orig in ("CreateFlow", "EditFlow")
+| alter FlowName = json_extract_scalar(raw_log, "$.FlowConnectorNames")
+| alter FlowURL = json_extract_scalar(raw_log, "$.FlowDetailsUrl")
+| alter tunnels_anonymous = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous")
+| alter tunnels_type = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type")
+| filter FlowURL ~= "(?i)(webhook|gmail|dropbox|google.drive|googledrive|slack|rss|custom.connector|http.request|http.webhook)"
+| fields FlowName, FlowURL, identity_name, operation_name_orig, operation_status, caller_ip, caller_ip_asn, caller_ip_geolocation, tunnels_anonymous, tunnels_type, raw_log
