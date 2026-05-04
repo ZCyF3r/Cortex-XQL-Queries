@@ -24,11 +24,6 @@ dataset = msft_o365_azure_ad_raw
 
 
 
-// Device Code Phishing - Full Kill Chain Correlation
-// Phase 1: Unmanaged/non-compliant device + suspicious UA + device code flow to Microsoft Office
-// Phase 2: Cmsi:Cmsi token replay confirming stolen token is being used
-// Both conditions must be true for same user within 2 hour window
-// MITRE ATT&CK: T1528, T1621, T1078.004
 dataset = msft_azure_ad_raw
 | alter Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
 | alter Managed = json_extract_scalar(deviceDetail, "$.isManaged")
@@ -54,8 +49,8 @@ dataset = msft_azure_ad_raw
         "IsCompliantAndManaged\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
     | filter request_type contains "Cmsi"
     | alter cmsi_time = _time
-    | alter cmsi_ip = ipAddress
-    | alter cmsi_upn = userPrincipalName
+    | alter cmsi_ip = ActorIpAddress
+    | alter cmsi_upn = UserId
 ) as cmsi cmsi.cmsi_upn = UPN
 | filter cmsi_time > device_code_time
     and cmsi_time <= device_code_time + 7200000
