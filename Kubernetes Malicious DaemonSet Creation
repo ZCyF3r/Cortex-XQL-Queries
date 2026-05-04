@@ -1,8 +1,6 @@
 // Kubernetes Malicious DaemonSet Creation
 // Detects DaemonSet creation via kubectl - DaemonSets run on every node
 // Attackers use DaemonSet for persistence & cluster wide credential harvesting
-// https://safedep.io/trivy-teampcp-supply-chain-compromise/
-// https://arstechnica.com/security/2026/03/self-propagating-malware-poisons-open-source-software-and-wipes-iran-based-machines/
 
 
 dataset = xdr_data
@@ -13,7 +11,7 @@ dataset = xdr_data
 // Create/Apply Operation
 | alter is_create = if(
     actor_process_image_command_line ~= "(create|apply)", "true", "false")
-// Malicious Daemonset names frrom Trivy supply chain attack
-| alter malicious_daemonset = if(
-    actor_process_image_command_line ~= "(?i)(host-provisioner-std|host-provisioner-iran)", "true", "false")
+// Filter for Malicious Daemonset names
+//| alter malicious_daemonset = if(
+//    actor_process_image_command_line ~= "(?i)(host-provisioner-std|host-provisioner-iran)", "true", "false")
 | fields _time, agent_hostname, actor_effective_username, is_create, malicious_daemonset, actor_process_image_name, action_process_image_name, actor_process_image_command_line, action_process_image_command_line, actor_process_image_path
