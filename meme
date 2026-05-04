@@ -1,0 +1,29 @@
+dataset = msft_azure_ad_raw
+| filter originalTransferMethod = "deviceCodeFlow"
+| alter device_code_time = _time,
+        device_code_ip = ipAddress,
+        device_code_ua = userAgent,
+        upn = userPrincipalName
+| fields device_code_time, device_code_ip, device_code_ua,
+         upn, resourceDisplayName, location
+
+| join type = inner (
+    dataset = msft_o365_azure_ad_raw
+    | alter request_type = arrayindex(regextract(extendedProperties,
+        "\"Name\":\\s*\"RequestType\",\\s*\"Value\":\\s*\"([^\"]+)\""), 0)
+    | filter request_type contains "Cmsi"
+    | alter cmsi_time = _time,
+            cmsi_ip = ipAddress,
+            cmsi_upn = userPrincipalName
+    | fields cmsi_time, cmsi_ip, cmsi_upn,
+             request_type, errorNumber, logonError
+) as cmsi on cmsi.cmsi_upn = upn
+
+| filter cmsi.cmsi_time > device_code_time
+    and cmsi.cmsi_time <= device_code_time + 7200000
+
+| fields device_code_time, cmsi.cmsi_time, upn,
+         device_code_ip, cmsi.cmsi_ip, device_code_ua,
+         cmsi.request_type, resourceDisplayName,
+         location, cmsi.errorNumber, cmsi.logonError
+| sort desc device_code_time
