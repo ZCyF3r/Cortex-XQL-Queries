@@ -18,3 +18,50 @@ dataset = msft_o365_azure_ad_raw
 | alter IsCompliance = arrayindex(regextract(extendedProperties, "IsCompliant\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | alter Compliance_Managed = arrayindex(regextract(extendedProperties, "IsCompliantAndManaged\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | filter request_type contains "cmsi"
+
+
+
+
+
+
+// Device Code Phishing - Full Kill Chain Correlation
+// Phase 1: Unmanaged/non-compliant device + suspicious UA + device code flow to Microsoft Office
+// Phase 2: Cmsi:Cmsi token replay confirming stolen token is being used
+// Both conditions must be true for same user within 2 hour window
+// MITRE ATT&CK: T1528, T1621, T1078.004
+dataset = msft_azure_ad_raw
+| alter Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
+| alter Managed = json_extract_scalar(deviceDetail, "$.isManaged")
+| alter Browser = json_extract_scalar(deviceDetail, "$.browser")
+| alter device_code_ua = userAgent
+| alter device_code_time = _time
+| alter device_code_ip = ipAddress
+| alter UPN = userPrincipalName
+| filter originalTransferMethod = "deviceCodeFlow"
+| filter Managed = "false"
+| filter Compliance = "false"
+| filter device_code_ua contains "python-requests"
+    or device_code_ua contains "-live"
+| filter appDisplayName = "Microsoft Office"
+| filter signInTokenProtectionStatus = "unbound"
+| join type = inner (
+    dataset = msft_o365_azure_ad_raw
+    | alter request_type = arrayindex(regextract(extendedProperties,
+        "RequestType\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+    | alter IsCompliance = arrayindex(regextract(extendedProperties,
+        "IsCompliant\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+    | alter Compliance_Managed = arrayindex(regextract(extendedProperties,
+        "IsCompliantAndManaged\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+    | filter request_type contains "Cmsi"
+    | alter cmsi_time = _time
+    | alter cmsi_ip = ipAddress
+    | alter cmsi_upn = userPrincipalName
+) as cmsi cmsi.cmsi_upn = UPN
+| filter cmsi_time > device_code_time
+    and cmsi_time <= device_code_time + 7200000
+| fields device_code_time, cmsi_time, UPN,
+         device_code_ip, cmsi_ip, device_code_ua,
+         appDisplayName, Compliance, Managed, Browser,
+         signInTokenProtectionStatus, request_type,
+         IsCompliance, Compliance_Managed
+| sort desc device_code_time
