@@ -1,3 +1,8 @@
+Device Code Phishing
+// Query 1: Unmanaged/non-compliant device + suspicious UA + device code flow
+// Query 2: Upstream login pattern - MFA interrupt followed by success (victim completing auth)
+// Query 3: Cmsi:Cmsi token replay confirming stolen token is being replayed
+
 dataset = msft_azure_ad_raw
 | alter Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
 | alter Managed = json_extract_scalar(deviceDetail, "$.isManaged")
