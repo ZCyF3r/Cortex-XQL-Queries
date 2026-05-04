@@ -1,28 +1,20 @@
 dataset = msft_azure_ad_raw
-| filter originalTransferMethod = "deviceCodeFlow"
-| fields _time, userPrincipalName, ipAddress, userAgent,
-         resourceDisplayName, location
-| alter device_code_time = _time
-| alter device_code_ip = ipAddress
+| alter Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
+| alter Managed = json_extract_scalar(deviceDetail, "$.isManaged")
+| alter Browser = json_extract_scalar(deviceDetail, "$.browser")
 | alter device_code_ua = userAgent
+| alter UPN = userPrincipalName 
+| filter originalTransferMethod = "deviceCodeFlow"
+| filter Managed = "false"
+| filter Compliance = "false"
+| filter device_code_ua contains "python-requests"
+    or device_code_ua contains "-live"
+| filter appDisplayName = "Microsoft Office"
+| filter signInTokenProtectionStatus = "unbound"
 
-// Join to Dataset 2 — Cmsi:Cmsi session replay events for same user
-| join type = inner (
-    dataset = msft_o365_azure_ad_raw
-    | alter request_type = arrayindex(regextract(extendedProperties,
-        "\"Name\":\\s*\"RequestType\",\\s*\"Value\":\\s*\"([^\"]+)\""), 0)
-    | filter request_type contains "Cmsi"
-    | fields _time, userPrincipalName, request_type,
-             ipAddress, errorNumber, logonError, userAgent
-    | alter cmsi_time = _time
-    | alter cmsi_ip = ipAddress
-) userPrincipalName = userPrincipalName
 
-// Cmsi must occur AFTER device code auth within 2 hour window
-| filter cmsi_time > device_code_time
-    and cmsi_time <= device_code_time + 7200000
-
-| fields device_code_time, cmsi_time, userPrincipalName,
-         device_code_ip, cmsi_ip, device_code_ua,
-         request_type, resourceDisplayName,
-         location, errorNumber, logonError
+dataset = msft_o365_azure_ad_raw 
+| alter request_type = arrayindex(regextract(extendedProperties, "RequestType\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter IsCompliance = arrayindex(regextract(extendedProperties, "IsCompliant\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter Compliance_Managed = arrayindex(regextract(extendedProperties, "IsCompliantAndManaged\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| filter request_type contains "cmsi"
