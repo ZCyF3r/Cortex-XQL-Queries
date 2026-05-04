@@ -55,11 +55,5 @@ dataset = msft_azure_ad_raw
     | alter cmsi_upn = UserId
 ) as cmsi cmsi.cmsi_upn = UPN
 
-| fields device_code_time, login_time, cmsi_time, UPN,
-         device_code_ip, ClientIPs, cmsi_ip,
-         device_code_ua, appDisplayName,
-         Compliance, Managed, Browser,
-         signInTokenProtectionStatus,
-         ErrorNumbers, Operations, Results, event_count,
-         request_type, IsCompliance, Compliance_Managed
+| fields device_code_time, login_time, cmsi_time, UPN, device_code_ip, ClientIPs, cmsi_ip, device_code_ua, appDisplayName, Compliance, Managed, Browser, signInTokenProtectionStatus, ErrorNumbers, Operations, Results, event_count, request_type, IsCompliance, Compliance_Managed
 | sort desc device_code_time
