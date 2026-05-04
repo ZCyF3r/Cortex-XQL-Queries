@@ -60,3 +60,36 @@ dataset = msft_azure_ad_raw
          signInTokenProtectionStatus, request_type,
          IsCompliance, Compliance_Managed
 | sort desc device_code_time
+
+
+
+
+
+
+
+
+dataset = msft_o365_azure_ad_raw
+| alter request_type = arrayindex(regextract(extendedProperties,
+    "RequestType\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| filter request_type contains "Cmsi"
+| alter cmsi_upn = UserId
+| fields _time, cmsi_upn, request_type, ActorIpAddress
+| limit 10
+
+
+
+
+dataset = msft_azure_ad_raw
+| alter Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
+| alter Managed = json_extract_scalar(deviceDetail, "$.isManaged")
+| alter device_code_ua = userAgent
+| alter UPN = userPrincipalName
+| filter originalTransferMethod = "deviceCodeFlow"
+| filter Managed = "false"
+| filter Compliance = "false"
+| filter device_code_ua contains "python-requests"
+    or device_code_ua contains "-live"
+| filter appDisplayName = "Microsoft Office"
+| filter signInTokenProtectionStatus = "unbound"
+| fields _time, UPN, device_code_ua, Compliance, Managed
+| limit 10
