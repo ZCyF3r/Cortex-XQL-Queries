@@ -93,3 +93,21 @@ dataset = msft_azure_ad_raw
 | filter signInTokenProtectionStatus = "unbound"
 | fields _time, UPN, device_code_ua, Compliance, Managed
 | limit 10
+
+
+
+
+
+dataset = msft_o365_azure_ad_raw
+| alter request_type = arrayindex(regextract(extendedProperties,
+    "RequestType\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| filter request_type contains "Cmsi"
+| fields _time, UserId
+| limit 5
+
+
+dataset = msft_azure_ad_raw
+| filter originalTransferMethod = "deviceCodeFlow"
+| alter UPN = userPrincipalName
+| fields _time, UPN
+| limit 5
