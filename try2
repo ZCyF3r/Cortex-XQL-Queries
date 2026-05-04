@@ -1,9 +1,3 @@
-// Device Code Phishing - Full Kill Chain Correlation
-// Phase 1: Unmanaged/non-compliant device + suspicious UA + device code flow
-// Phase 2: Upstream login pattern - MFA interrupt followed by success (victim completing auth)
-// Phase 3: Cmsi:Cmsi token replay confirming stolen token is being replayed
-// All conditions must be true for same user
-// MITRE ATT&CK: T1528, T1621, T1078.004
 dataset = msft_azure_ad_raw
 | alter Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
 | alter Managed = json_extract_scalar(deviceDetail, "$.isManaged")
@@ -40,7 +34,6 @@ dataset = msft_azure_ad_raw
     | alter login_time = _time
     | alter login_upn = UserId
 ) as logins logins.login_upn = UPN
-| filter timestamp_diff(login_time, device_code_time, "SECOND") <= 86400
 
 // Join 2 — Cmsi:Cmsi token replay for same user
 | join type = inner (
@@ -56,8 +49,6 @@ dataset = msft_azure_ad_raw
     | alter cmsi_ip = ActorIpAddress
     | alter cmsi_upn = UserId
 ) as cmsi cmsi.cmsi_upn = UPN
-| filter cmsi_time > device_code_time
-    and timestamp_diff(cmsi_time, device_code_time, "SECOND") <= 86400
 
 | fields device_code_time, login_time, cmsi_time, UPN,
          device_code_ip, ClientIPs, cmsi_ip,
