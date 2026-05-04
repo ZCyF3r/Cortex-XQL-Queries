@@ -11,7 +11,6 @@ dataset = msft_azure_ad_raw
 | filter Compliance = "false"
 | filter device_code_ua contains "python-requests"
     or device_code_ua contains "-live"
-//| filter appDisplayName = "Microsoft Office"
 | filter signInTokenProtectionStatus = "unbound"
 | join type = inner (
     dataset = msft_o365_azure_ad_raw
@@ -26,8 +25,6 @@ dataset = msft_azure_ad_raw
     | alter cmsi_ip = ActorIpAddress
     | alter cmsi_upn = UserId
 ) as cmsi cmsi.cmsi_upn = UPN
-| filter cmsi_time > device_code_time
-    and timestamp_diff(cmsi_time, device_code_time, "SECOND") <= 86400
 | fields device_code_time, cmsi_time, UPN,
          device_code_ip, cmsi_ip, device_code_ua,
          appDisplayName, Compliance, Managed, Browser,
