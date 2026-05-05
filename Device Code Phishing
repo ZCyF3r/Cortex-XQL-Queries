@@ -1,7 +1,6 @@
-Device Code Phishing
-// Query 1: Unmanaged/non-compliant device + suspicious UA + device code flow
-// Query 2: Upstream login pattern - MFA interrupt followed by success (victim completing auth)
-// Query 3: Cmsi:Cmsi token replay confirming stolen token is being replayed
+// Device Code Phishing
+// Unmanaged/non-compliant device + suspicious UA + device code flow
+// Cmsi:Cmsi token replay confirming stolen token is being replayed
 
 dataset = msft_azure_ad_raw
 | alter Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
@@ -18,29 +17,7 @@ dataset = msft_azure_ad_raw
     or device_code_ua contains "-live"
 | filter signInTokenProtectionStatus = "unbound"
 
-// Join 1 — upstream login pattern for same user
-| join type = inner (
-    dataset = msft_o365_azure_ad_raw
-    | fields _time, UserId, Operation, ResultStatus, ErrorNumber, ClientIP
-    | bin _time span = 10m
-    | comp values(ErrorNumber) as ErrorNumbers,
-             values(Operation) as Operations,
-             values(ResultStatus) as Results,
-             values(ClientIP) as ClientIPs,
-             count() as event_count
-             by _time, UserId
-    | filter ErrorNumbers ~= "50074"
-        and ErrorNumbers ~= "50199"
-        and ErrorNumbers ~= "^0$"
-    | filter Operations ~= "UserLoggedIn"
-        and Operations ~= "UserLoginFailed"
-    | filter Results ~= "Success"
-        and not (Results ~= "Failed")
-    | alter login_time = _time
-    | alter login_upn = UserId
-) as logins logins.login_upn = UPN
-
-// Join 2 — Cmsi:Cmsi token replay for same user
+// Cmsi:Cmsi token replay for same user
 | join type = inner (
     dataset = msft_o365_azure_ad_raw
     | alter request_type = arrayindex(regextract(extendedProperties,
