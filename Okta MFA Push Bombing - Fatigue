@@ -19,5 +19,5 @@ dataset = okta_sso_raw
     values(client_country) as countries,
     values(outcome_reason) as denial_resons
     by _time, actor_upn, actor_name
-| filter total_pushes <= 3
+| filter total_pushes >= 5
 | sort desc total_pushes
