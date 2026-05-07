@@ -1,5 +1,5 @@
-// 
-// 
+// User & Admin Phishing Submission Analysis
+// Tracks phishing email submissions from users & admins to Microsoft for analysis. Captures verdicts, sender details, & delivery info.
 
 dataset = saas_audit_logs
 //| filter identity_name ~= ""
