@@ -12,17 +12,12 @@ dataset = okta_sso_raw
 | alter client_os = json_extract_scalar(client, "$.userAgent.os")
 | alter client_country = json_extract_scalar(client, "$.geographicalContext.country")
 | alter client_city = json_extract_scalar(client, "$.geographicalContext.city")
-| alter auth_provider = json_extract_scalar(authenticationContext, "$.authenticationProvider")
-| alter credential_type = json_extract_scalar(authenticationContext, "$.credentialType")
-| alter target_str = to_string(`target`)
-| alter target_name = json_extract_scalar(target_str, "$[0].displayName")
-| alter target_upn = json_extract_scalar(target_str, "$[0].alternateId")
 | bin _time span = 1h
-| comp count() as total_pushes, 
+| comp count() as total_pushes,
     values(displayMessage) as push_events, 
     values(client_ip) as source_ips, 
     values(client_country) as countries,
     values(outcome_reason) as denial_resons
     by _time, actor_upn, actor_name
-| filter total_pushes >= 5
+| filter total_pushes <= 3
 | sort desc total_pushes
