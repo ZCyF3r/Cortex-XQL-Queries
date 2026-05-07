@@ -1,4 +1,5 @@
-
+// Okta MFA Push Bombing / Fatigue Detection
+// Detects repeated push denials for the same user indicating an active MFA fatigue attack
 
 dataset = okta_sso_raw 
 | filter displayMessage in("User rejected Okta push verify", "A push was sent to user for verification")
