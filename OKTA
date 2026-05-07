@@ -11,3 +11,6 @@ dataset = okta_sso_raw
 | alter client_city = json_extract_scalar(client, "$.geographicalContext.city")
 | alter auth_provider = json_extract_scalar(authenticationContext, "$.authenticationProvider")
 | alter credential_type = json_extract_scalar(authenticationContext, "$.credentialType")
+| alter target_str = to_string(`target`)
+| alter target_name = json_extract_scalar(target_str, "$[0].displayName")
+| alter target_upn = json_extract_scalar(target_str, "$[0].alternateId")
