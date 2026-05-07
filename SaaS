@@ -3,9 +3,9 @@
 
 dataset = saas_audit_logs
 //| filter identity_name ~= ""
-| filter operation_name_orig in("AttackSimUserSubmission", "UserSubmission")
+| filter operation_name_orig in("AttackSimUserSubmission", "UserSubmission", "AdminSubmission")
 | filter service_type = "SecurityComplianceCenter"
-| alter Verdict = arrayindex(regextract(raw_log, "OriginalVerdict\",\s*\"Value\":\s*\"([^\"]+)\""), 0) 
+| alter Verdict = arrayindex(regextract(raw_log, "OriginalVerdict\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | alter Rescan_Verdict = arrayindex(regextract(raw_log, "RescanVerdict\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | alter Recipients = json_extract_scalar(raw_log, "$.Recipients")
 | alter SubjectName = json_extract_scalar(raw_log, "$.Subject")
@@ -13,7 +13,7 @@ dataset = saas_audit_logs
 | alter SubmissionName = json_extract_scalar(raw_log, "$.SubmitterDisplayName")
 | alter Sender1 = json_extract_scalar(raw_log, "$.P1Sender")
 | alter Sender2 = json_extract_scalar(raw_log, "$.P2Sender")
-| alter Email_Destination = json_extract_scalar(raw_log, "$.DeliveryMessageInfo[].Destination")
-| alter Final_Verdict = json_extract_scalar(raw_log, "$.DeliveryMessageInfo[].FinalFilterVerdict")
+| alter Email_Destination = json_extract_scalar(raw_log, "$.DeliveryMessageInfo.Destination")
+| alter Final_Verdict = json_extract_scalar(raw_log, "$.DeliveryMessageInfo.FinalFilterVerdict")
 | alter SenderIP = json_extract_scalar(raw_log, "$.SenderIP")
-| fields _time, identity_name, operation_name_orig, Verdict, Rescan_Verdict, SubjectName, Content, SubmissionName, Sender1, Sender2, Email_Destination, Final_Verdict, SenderIP
+| fields _time, identity_name, operation_name_orig, Verdict, Rescan_Verdict, SubjectName, Content, SubmissionName, Sender1, Sender2, Email_Destination, Final_Verdict, SenderIP, raw_log
