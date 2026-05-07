@@ -1,3 +1,6 @@
+// Okta MFA Factor Enrollment & Deactivation
+// Detects MFA factor enrollment, activation, update and reset events which may indicate an attacker adding their own factor post-compromise or removing an existing factor to weaken account security
+
 dataset = okta_sso_raw 
 | filter displayMessage in("Send user MFA reset notification email", "Reset factor for user", "Activate factor for user", "Update factor for user")
 | alter actor_name = json_extract_scalar(actor, "$.displayName")
