@@ -1,4 +1,4 @@
-// Okta - Sensitive OAuth Activity Detection
+// Okta Sensitive OAuth Activity Detection
 // Detects OAuth client secret access, token revocation, and implicit flow requests
 
 dataset = okta_sso_raw 
@@ -21,11 +21,7 @@ dataset = okta_sso_raw
 | alter request_uri = json_extract_scalar(debugContext, "$.debugData.requestUri")
 | alter OAuth_url = json_extract_scalar(debugContext, "$.debugData.url")
 | alter grant_type = json_extract_scalar(debugContext, "$.debugData.grantType")
-| fields _time, eventtype, displaymessage,
-         actor_name, actor_upn,
-         target_name, target_upn,
-         grant_type, granted_scope, requested_scope,
-         redirect_uri, request_uri, OAuth_url,
-         outcome_result, outcome_reason,
-         client_ip, client_browser, client_os,
-         client_country, client_city
+//| filter granted_scope ~= "(admin|write|all)"
+//| filter actor_upn = ""
+//| filter target_name = ""
+| fields _time, eventtype, displaymessage, actor_name, actor_upn, target_name, target_upn, grant_type, granted_scope, requested_scope, redirect_uri, request_uri, OAuth_url, outcome_result, outcome_reason, client_ip, client_browser, client_os, client_country, client_city
