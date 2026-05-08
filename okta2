@@ -1,0 +1,23 @@
+// 
+// 
+
+dataset = okta_sso_raw 
+| filter displayMessage in("OAuth2 authorization implicit access token request", "OAuth2 authorization implicit id token request", "OAuth2 token revocation request", "Read OAuth client's secret(s).")
+| alter actor_name = json_extract_scalar(actor, "$.displayName")
+| alter actor_upn = json_extract_scalar(actor, "$.alternateId")
+| alter outcome_result = json_extract_scalar(outcome, "$.result")
+| alter outcome_reason = json_extract_scalar(outcome, "$.reason")
+| alter client_ip = json_extract_scalar(client, "$.ipAddress")
+| alter client_browser = json_extract_scalar(client, "$.userAgent.browser")
+| alter client_os = json_extract_scalar(client, "$.userAgent.os")
+| alter client_country = json_extract_scalar(client, "$.geographicalContext.country")
+| alter client_city = json_extract_scalar(client, "$.geographicalContext.city")
+| alter target_str = to_string(`target`)
+| alter target_name = json_extract_scalar(target_str, "$[0].displayName")
+| alter target_upn = json_extract_scalar(target_str, "$[0].alternateId")
+| alter granted_scope = json_extract_scalar(debugContext, "$.debugData.grantedScopes")
+| alter requested_scope = json_extract_scalar(debugContext, "$.debugData.requestedScopes")
+| alter redirect_uri = json_extract_scalar(debugContext, "$.debugData.redirectUri")
+| alter request_uri = json_extract_scalar(debugContext, "$.debugData.requestUri")
+| alter OAuth_url = json_extract_scalar(debugContext, "$.debugData.url")
+| alter grant_type = json_extract_scalar(debugContext, "$.debugData.grantType")
