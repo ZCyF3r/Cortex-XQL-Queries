@@ -1,5 +1,5 @@
 // Okta Impossible Travel Detection
-// 
+// Detects the same user authenticating from two different countries within a 2 hour window
 
 dataset = okta_sso_raw 
 | filter displayMessage = "User login to Okta"
