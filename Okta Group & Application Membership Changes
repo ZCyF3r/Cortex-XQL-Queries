@@ -1,5 +1,5 @@
-// 
-// 
+// Okta Group & Application Membership Changes
+// Detects users being added to groups or applications which may grant elevated privileges
 
 dataset = okta_sso_raw 
 | filter displayMessage in("Add user to group membership", "Add user to application membership", "Add assigned application to group")
