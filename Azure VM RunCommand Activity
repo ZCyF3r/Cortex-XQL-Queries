@@ -1,7 +1,6 @@
 // Azure VM RunCommand Activity
-// 
-// 
-// 
+// RunCommand allows execution of scripts on VMs without RDP/SSH access
+// WRITE/ACTION = attacker executing commands | DELETE = post-execution cleanup
 
 
 dataset = cloud_audit_logs 
