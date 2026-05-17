@@ -4,3 +4,14 @@
 // 
 
 
+dataset = cloud_audit_logs 
+| filter cloud_provider = ENUM.Azure
+| filter operation_name_orig in(
+    "MICROSOFT.COMPUTE/VIRTUALMACHINES/RUNCOMMAND/WRITE",
+    "MICROSOFT.COMPUTE/VIRTUALMACHINES/RUNCOMMAND/ACTION",
+    "MICROSOFT.COMPUTE/VIRTUALMACHINES/RUNCOMMAND/DELETE",
+    "MICROSOFT.COMPUTE/VIRTUALMACHINES/RUNCOMMAND/READ"
+)
+| filter identity_name != null and identity_name != ""
+| filter operation_status_orig in("Accepted.Accepted", "Succeeded.", "Started.")
+| fields _time, identity_name, identity_sub_type, operation_name_orig, operation_status_orig, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, user_agent, region, raw_log
