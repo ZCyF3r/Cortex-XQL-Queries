@@ -1,5 +1,6 @@
-// 
-// 
+// Tycoon2FA Known Infrastructure Detection
+// AS45102 = Alibaba Cloud (active April 10 2026+) | AS9009 = M247 | AS214238 = HOST TELECOM
+// Specific IPs: 47.90.180.205 (token acquisition) | 47.252.11.99 (refresh token reuse)
 // 
 // 
 
