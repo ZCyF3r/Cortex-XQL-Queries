@@ -1,4 +1,4 @@
-// Suspicious extension installed on Azure VM
+// Suspicious extension on Azure VM
 
 // CustomScriptExtension - Execute scripts on VM
 // RunCommandHandlerWindows/Linux - RCE capability
