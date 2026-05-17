@@ -20,5 +20,9 @@ dataset = msft_azure_ad_raw
 | filter Managed = "false"
 | filter Compliance = "false"
 | filter device_code_ua ~= "(?i)(^axios/1\.[0-9]|^node$|^undici$)"
+| filter appId in (
+    "4765445b-32c6-49b0-83e6-1d93765276ca",
+    "29d9ed98-a469-4536-ade2-f981bc1d605e"
+)
 | filter signInTokenProtectionStatus = "unbound"
 | fields _time, userPrincipalName, userDisplayName, Managed, Compliance, Browser, ipAddress, asn, device_code_ua, appId, originalTransferMethod, signInTokenProtectionStatus, resourceDisplayName
