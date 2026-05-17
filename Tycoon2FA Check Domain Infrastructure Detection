@@ -1,7 +1,7 @@
-// 
-// 
-// 
-// 
+// Tycoon2FA Check Domain Infrastructure Detection
+// Tycoon2FA check domains used for anti-bot verification during attack chain
+// https://www.bleepingcomputer.com/news/security/tycoon2fa-hijacks-microsoft-365-accounts-via-device-code-phishing/
+// https://github.com/eSentire/iocs/blob/main/Tycoon2FA/Tycoon2fa-iocs-03-23-2026.txt
 
 
 dataset = xdr_data
