@@ -1,5 +1,12 @@
+// 
+// 
+// 
+// 
+
+
 dataset = xdr_data
 | filter event_type in (ENUM.NETWORK, ENUM.STORY)
 // Specific confirmed Tycoon2FA check domains
 | filter dns_query_name ~= "(?i)(craifishi\.business|yedrene\.best|fesxtmc\.com|sistaidru\.com|shoupeatai\.com|cretrousteafi\.icu|shailoyio\.com|yljdimage\.com|traibiru\.world|alnaharegypt\.com|kouvadre\.ink|civushea\.sbs|cewiobu\.center|tehipio\.ink|rifoupoumeshoo\.club|widoupoo\.network|jadubo\.courses|petristifrouja\.bar|toushatou\.beauty|cethaicro\.co\.za|vaikaza\.sa\.com|dralilai\.beauty|yioso\.beer|thougai\.beer|reafraiyousteaga\.qpon|stadrourea\.ru|shoomoweajai\.cyou|teashaboulouve\.qpon|shustoufraithookea\.qpon|roowothonio\.cyou|thobewoofricrou\.qpon|crimiwa\.sa\.com|noyaidetipio\.qpon|tracroo\.it\.com|nigafo\.download|goowevea\.digital)"
-  or dns_query_name ~= "(?i)(botchain|cyberia|deeplink|barfi|bytecore|synthex|cortex|quantum|inflect|tamatar|kanjari|taata|shapaki|lani|chod)"
+| fields _time, agent_hostname, actor_effective_username, dns_query_name, action_remote_ip, action_remote_port
+| sort desc _time
