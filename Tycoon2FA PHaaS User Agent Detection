@@ -1,0 +1,18 @@
+// 
+// 
+
+
+dataset = msft_azure_ad_raw
+| alter Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
+| alter Managed = json_extract_scalar(deviceDetail, "$.isManaged")
+| alter Browser = json_extract_scalar(deviceDetail, "$.browser")
+| alter device_code_ua = userAgent
+| alter device_code_time = _time
+| alter device_code_ip = ipAddress
+| alter UPN = userPrincipalName
+| filter originalTransferMethod = "deviceCodeFlow"
+| filter Managed = "false"
+| filter Compliance = "false"
+| filter device_code_ua ~= "(?i)(^axios/1\.[0-9]|^node$|^undici$)"
+| filter signInTokenProtectionStatus = "unbound"
+| fields _time, userPrincipalName, userDisplayName, Managed, Compliance, Browser, device_code_ua, appId, originalTransferMethod, signInTokenProtectionStatus, resourceDisplayName 
