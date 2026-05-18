@@ -7,7 +7,13 @@ dataset = saas_audit_logs
 | filter operation_name_orig = "CallParticipantDetail"
 | alter UserType = json_extract_scalar(raw_log, "$.Attendees[0].RecipientType")
 | alter UserName = json_extract_scalar(raw_log, "$.Attendees[0].DisplayName")
+| alter UserObjectID = json_extract_scalar(raw_log, "$.Attendees[0].UserObjectId")
+| alter UPN = json_extract_scalar(raw_log, "$.Attendees[0].UPN")
+| alter Artifact_Session_Start = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactShareSessions[0].StartTimestamp")
+| alter Artifact_Session_End = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactShareSessions[0].EndTimestamp")
+| alter Artifact_Share_ID = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactShareSessions[0].ScreenShareId")
+| alter Artifact_Name = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactSharedName")
 | alter CallID = json_extract_scalar(raw_log, "$.CallId")
 | alter CallStatus = json_extract_scalar(raw_log, "$.ItemName")
-//| filter identity_name = "<Identity>"
-| fields _time, identity_name, operation_name_orig, UserType, UserName, CallID, CallStatus, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, raw_log
+//| filter identity_name = ""
+| fields _time, service_type, operation_name_orig, UserType, UserName, UserObjectID, UPN, Artifact_Name, Artifact_Share_ID, Artifact_Session_Start, Artifact_Session_End, CallID, CallStatus, raw_log
