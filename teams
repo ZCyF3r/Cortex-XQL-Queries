@@ -16,4 +16,5 @@ dataset = saas_audit_logs
 | alter CallID = json_extract_scalar(raw_log, "$.CallId")
 | alter CallStatus = json_extract_scalar(raw_log, "$.ItemName")
 //| filter identity_name = ""
+| filter Artifact_Name = "screenShared"
 | fields _time, service_type, operation_name_orig, UserType, UserName, UserObjectID, UPN, Artifact_Name, Artifact_Share_ID, Artifact_Session_Start, Artifact_Session_End, CallID, CallStatus, raw_log
