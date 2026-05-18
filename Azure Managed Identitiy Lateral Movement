@@ -1,0 +1,24 @@
+// Azure Managed Identity Lateral Movement
+// 
+
+
+dataset = cloud_audit_logs 
+| filter cloud_provider = ENUM.Azure
+| filter identity_invoked_by_sub_type contains "Identity"
+    and identity_sub_type contains "Identity"
+// Exclude legit Azure infra ASNs
+| filter caller_ip_asn_org != null
+    and caller_ip_asn_org !~= "(?i)(microsoft|azure)"
+// Exclude RFC1918 private IP space for legit calls
+| filter caller_ip !~= "(?i)(^10.\|^172\.(1[6-9]|2[0-9]|3[0-1])\.|^192\.168\.)"
+| filter caller_ip != "::1"
+    and caller_ip != null
+// Target Ops
+| alter attack_stage = if(
+    operation_name_orig ~= "(?i)(keyvault|key.*vault)", "Key Vault Accessed",
+    operation_name_orig ~= "(?i)(storage|blob|queue|table|fileshare)", "Storage Access",
+    operation_name_orig ~= "(?i)(virtualmachines/runcommand|extensions/write)", "VM Code Execution",
+    operation_name_orig ~= "(?i)(roleassignment|authorization)", "Privilege Escalation",
+    operation_name_orig ~= "(?i)(microsoft.graph|directory)", "Directory Enum"
+)
+| fields _time, identity_name, identity_invoked_by_name, identity_type, identity_sub_type, operation_name_orig, operation_status_orig, attack_stage, referenced_resource_name, user_agent, caller_ip, caller_ip_geolocation, region, raw_log
