@@ -15,6 +15,8 @@ dataset = saas_audit_logs
 | alter Artifact_Session_Start = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactShareSessions[0].StartTimestamp")
 | alter Artifact_Session_End = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactShareSessions[0].EndTimestamp")
 | alter Artifact_Share_ID = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactShareSessions[0].ScreenShareId")
+| alter JoinTime = json_extract_scalar(raw_log, "$.JoinTime")
+| alter LeaveTime = json_extract_scalar(raw_log, "$.LeaveTime")
 | alter Artifact_Name = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactSharedName")
 | alter CallID = json_extract_scalar(raw_log, "$.CallId")
 | alter CallStatus = json_extract_scalar(raw_log, "$.ItemName")
@@ -23,4 +25,4 @@ dataset = saas_audit_logs
 | filter identity_name ~= "(?i)\.(top|xyz|club|buzz|icu|cyou|sbs|live|online|site|fun|store|vip|work|rest|space|link|click|gq|ml|tk|cf|monster|cfd|beauty|hair|makeup|quest|lol|mom|uno|vodka|beer|kim|loan|win|bid|trade|accountant|faith|science|date|cricket|download|racing|review|country|stream|gdn|party|promo)"
     or identity_name ~= "(?i)(microsoft|helpdesk|help\.desk|it\.support|tech\.support|it\.team|service\.desk|administrator|admin\.team|security\.team|security\.alert|support\.team|apple|google|amazon|paypal|bank|fraud|alert|urgent|account\.security|verification|official)"
 //| filter UserName ~= "(?i)(IT Support|Helpdesk|Help Desk|Corporate|Service Desk|Tech Support|IT Team|IT Department|Security|Admin|Administrator|Password|Account|Support|Compliance|Cyber|SOC|Incident|Notification|Alert|Verify|Verification|Reset|MFA|Authentication)"
-| fields _time, identity_name, UserName, service_type, operation_name_orig, UserType, UserObjectID, UPN, Artifact_Name, Artifact_Share_ID, Artifact_Session_Start, Artifact_Session_End, CallID, CallStatus, raw_log
+| fields _time, identity_name, UserName, service_type, operation_name_orig, UserType, UserObjectID, UPN, JoinTime, LeaveTime, Artifact_Name, Artifact_Share_ID, Artifact_Session_Start, Artifact_Session_End, CallID, CallStatus, raw_log
