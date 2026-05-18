@@ -1,5 +1,6 @@
-// 
-// 
+// Microsoft Teams External Vishing & Impersonation Detection
+// Detects external calls involving screen sharing and impersonation of trusted entities
+// Screen share during external call = high risk credential theft / RAT installation vector
 
 
 dataset = saas_audit_logs
