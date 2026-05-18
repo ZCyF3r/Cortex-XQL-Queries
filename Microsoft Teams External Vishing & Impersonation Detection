@@ -1,6 +1,7 @@
 // Microsoft Teams External Vishing & Impersonation Detection
 // Detects external calls involving screen sharing and impersonation of trusted entities
 // Screen share during external call = high risk credential theft / RAT installation vector
+// Includes filtering for Free/abused TLDs, Cheap/throwaway TLDs, Phishing-common TLDs, High-risk specialty TLDs, & Tycoon2FA/Kali365 observed TLDs
 
 
 dataset = saas_audit_logs
