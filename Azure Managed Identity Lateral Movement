@@ -1,5 +1,8 @@
 // Azure Managed Identity Lateral Movement
-// 
+// Detects managed identity tokens being used from non-Azure IP space indicating
+// token theft via IMDS endpoint (169.254.169.254) and external replay
+// Legitimate managed identity calls originate from Azure infrastructure IPs
+// External/non-RFC1918 caller IPs = stolen token replayed from attacker infrastructure
 
 
 dataset = cloud_audit_logs 
