@@ -1,5 +1,5 @@
 dataset = saas_audit_logs 
-| filter operation_name_orig in("MessagesListed", "TeamsSessionStarted", "TranscriptsExported", "RecordingsExported", "MessagesExported")
+| filter operation_name_orig in("ChatRetrieved", "MessagesListed", "TeamsSessionStarted", "TranscriptsExported", "RecordingsExported", "MessagesExported")
 | filter service_type = "MicrosoftTeams"
 // 
 | alter TeamsSessionDevice = json_extract_scalar(raw_log, "$.ObjectId")
@@ -17,7 +17,7 @@ dataset = saas_audit_logs
 | alter tunnels_type = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
 //
 | alter ua_risk = if(
-    user_agent ~= "(?i)(python-requests|azios|go-http|curl|wget|powershell|httpx|aiohttp|node)", "HIGH"
+    user_agent ~= "(?i)(python-requests|axios|go-http|curl|wget|powershell|httpx|aiohttp|node)", "HIGH"
     , user_agent ~= "(?i)(graph|postman|thunder|insomnia)", "MEDIUM", "NONE"
 )
 | filter identity_name = ""
