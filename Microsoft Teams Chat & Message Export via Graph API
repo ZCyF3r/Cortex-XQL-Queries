@@ -7,10 +7,10 @@
 dataset = saas_audit_logs 
 | filter operation_name_orig in("ChatRetrieved", "MessagesListed", "TeamsSessionStarted", "TranscriptsExported", "RecordingsExported", "MessagesExported")
 | filter service_type = "MicrosoftTeams"
-// 
+// Teams Session Activity
 | alter TeamsSessionDevice = json_extract_scalar(raw_log, "$.ObjectId")
 | alter TeamsSessionDeviceIP = json_extract_scalar(raw_log, "$.ClientId")
-// 
+// Listed Messages Activtiy
 | alter CommType = json_extract_scalar(raw_log, "$.CommunicationType")
 | alter ChannelGuid = json_extract_scalar(raw_log, "$.ChannelGuid")
 | alter TeamName = json_extract_scalar(raw_log, "$.TeamName")
@@ -18,10 +18,10 @@ dataset = saas_audit_logs
 | alter TargetUserId = json_extract_scalar(raw_log, "$.TargetUserId")
 | alter ChatThreadID = json_extract_scalar(raw_log, "$.ChatThreadId")
 | alter DeviceID = json_extract_scalar(raw_log, "$.DeviceId")
-//
+// VPN Activity
 | alter if_tunnels_anonymous = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous")
 | alter tunnels_type = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
-//
+// Risky User Agent Activity
 | alter ua_risk = if(
     user_agent ~= "(?i)(python-requests|axios|go-http|curl|wget|powershell|httpx|aiohttp|node)", "HIGH"
     , user_agent ~= "(?i)(graph|postman|thunder|insomnia)", "MEDIUM", "NONE"
