@@ -4,16 +4,10 @@
 // Custom app creation outside dev teams indicates potential C2 bot or data exfil app
 // MITRE: T1059.009 - Cloud API, T1543 - Create or Modify System Process
 
+
 dataset = saas_audit_logs
 | filter service_type = "MicrosoftTeams"
-| filter operation_name_orig in (
-    "AppInstalled",
-    "AppCreated",
-    "AppShared",
-    "AppUpgraded",
-    "BotAddedToTeam",
-    "TabAdded"
-)
+| filter operation_name_orig in ("AppInstalled","AppCreated","AppShared","AppUpgraded","BotAddedToTeam","TabAdded")
 | alter addon_name = json_extract_scalar(raw_log, "$.AddonName")
 | alter addon_guid = json_extract_scalar(raw_log, "$.AddonGuid")
 | alter addon_type = json_extract_scalar(raw_log, "$.AddonType")
@@ -31,21 +25,14 @@ dataset = saas_audit_logs
     operation_name_orig = "BotAddedToTeam"
         and addon_name != null, "HIGH",
     operation_name_orig = "AppShared", "MEDIUM",
-    operation_name_orig = "TabAdded", "MEDIUM",
-    "LOW"
+    operation_name_orig = "TabAdded", "MEDIUM", "LOW"
 )
 // Flag suspicious app names indicating impersonation or malicious tooling
 | alter name_risk = if(
     addon_name ~= "(?i)(password|credential|vault|harvest|exfil|tunnel|proxy|backdoor|rat|remote|shell|cmd|powershell|invoke|bypass|hook|intercept|capture|keylog|steal)",
     "SUSPICIOUS_NAME", "OK"
 )
-| fields _time, identity_name, operation_name_orig,
-         addon_name, addon_guid, addon_type,
-         app_external_id, azure_ad_app_id,
-         app_distribution_mode, team_name,
-         team_guid, target_user, risk_level,
-         name_risk, caller_ip, caller_ip_geolocation,
-         caller_ip_asn_org, user_agent, raw_log
+| fields _time, identity_name, operation_name_orig, addon_name, addon_guid, addon_type, app_external_id, azure_ad_app_id, app_distribution_mode, team_name, team_guid, target_user, risk_level, name_risk, caller_ip, caller_ip_geolocation, caller_ip_asn_org, user_agent, raw_log
 | sort desc _time
 //| filter risk_level = "HIGH"
 //| filter name_risk = "SUSPICIOUS_NAME"
