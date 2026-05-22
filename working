@@ -1,0 +1,3 @@
+dataset = saas_audit_logs 
+| filter operation_name_orig in("ChatRetrieved", "MessagesListed", "TeamsSessionStarted", "TranscriptsExported", "RecordingsExported", "MessagesExported")
+| filter identity_name = ""
