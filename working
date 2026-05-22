@@ -20,5 +20,5 @@ dataset = saas_audit_logs
     user_agent ~= "(?i)(python-requests|azios|go-http|curl|wget|powershell|httpx|aiohttp|node)", "HIGH"
     , user_agent ~= "(?i)(graph|postman|thunder|insomnia)", "MEDIUM", "NONE"
 )
-| filter identity_name = "thudspeth@ochsner.org"
+| filter identity_name = ""
 | fields _time, identity_name, operation_name_orig, TeamsSessionDevice, TeamsSessionDeviceIP, CommType, ChannelGuid, TeamName, ItemName, TargetUserId, ChatThreadID, DeviceID, if_tunnels_anonymous, tunnels_type, ua_risk, user_agent, raw_log 
