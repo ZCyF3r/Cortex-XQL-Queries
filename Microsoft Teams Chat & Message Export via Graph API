@@ -1,11 +1,11 @@
-// 
-// 
-// 
-// 
+// Microsoft Teams Chat & Message Export via Graph API
+// Detects export of Teams messages, transcripts, recordings and chat retrieval
+// Graph API exports typically use automation UAs - python-requests, axios, go-http
+// Post-compromise attackers use stolen tokens to silently export chat history
 
 
 dataset = saas_audit_logs 
-| filter operation_name_orig in("MessagesListed", "TeamsSessionStarted", "TranscriptsExported", "RecordingsExported", "MessagesExported")
+| filter operation_name_orig in("ChatRetrieved", "MessagesListed", "TeamsSessionStarted", "TranscriptsExported", "RecordingsExported", "MessagesExported")
 | filter service_type = "MicrosoftTeams"
 // 
 | alter TeamsSessionDevice = json_extract_scalar(raw_log, "$.ObjectId")
