@@ -1,5 +1,6 @@
-// 
-// 
+// Microsoft Teams App Catalog Publication & Update Detection
+// Detects apps published or updated in the Teams app catalog which could indicate malicious app deployment or supply chain tampering via catalog abuse
+// T1195.002 - Supply Chain Compromise | T1543 - Create or Modify System Process
 
 
 dataset = saas_audit_logs 
