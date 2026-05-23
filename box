@@ -3,7 +3,6 @@
 dataset = saas_audit_logs 
 | filter product = "BOX"
 | filter operation_name_orig = "UPLOAD"
-//| filter identity_name ~= ""
 | alter SourceFileName = json_extract_scalar(raw_log, "$.source.item_name")
 | alter SourceFileID = json_extract_scalar(raw_log, "$.source.item_id")
 | alter SourceFileType = json_extract_scalar(raw_log, "$.source.item_type")
@@ -23,4 +22,6 @@ dataset = saas_audit_logs
 | alter FilePath = json_extract_scalar(raw_log, "$.additional_details.file_path")
 | alter FileHash = json_extract_scalar(raw_log, "$.additional_details.file_hash")
 | alter FileHashType = json_extract_scalar(raw_log, "$.additional_details.hash_type")
+//| filter identity_name ~= ""
+//| filter FileSize >= <>
 | fields _time, identity_name, operation_name_orig, SourceFileName, SourceFileID, SourceFileType, SourceParentName, SourceParentID, SourceParentType, FileOwnedByName, FileOwnedByLogin, FileCreatedByName, FileCreatedByLogin, CreationTime, FileSize, FilePath, FileHash, FileHashType, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
