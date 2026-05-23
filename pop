@@ -17,4 +17,5 @@ dataset = saas_audit_logs
 //| filter identity_name = ""
 //    or identity_name ~= "(?i)#ext#"
 | filter CommType = "OneOnOne"
+| filter ExternalLink ~= "(?i)\.(ru|es|li|dev|digital|business|contractors|ceo|company|top|xyz|club|buzz|icu|cyou|sbs|live|online|site|fun|store|vip|work|rest|space|link|click|gq|ml|tk|cf|ga|monster|cfd|beauty|hair|quest|lol|uno|beer|kim|loan|win|bid|trade|accountant|faith|science|date|cricket|download|racing|review|stream|cam|party|promo|sa\.com|it\.com)"
 | fields _time, operation_name_orig, ChatThreadID, CommType, DeviceID, MessageID, ExternalLink, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
