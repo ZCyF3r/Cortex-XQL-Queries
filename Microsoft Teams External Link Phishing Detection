@@ -1,7 +1,6 @@
-// 
-// 
-// 
-// 
+// Microsoft Teams External Link Phishing Detection
+// Detects malicious URLs sent via Teams direct messages targeting users with known phishing TLDs, PhaaS infrastructure, and device code lure paths
+// T1566.002 - Spearphishing Link | T1204.001 - User Execution: Malicious Link
 
 
 dataset = saas_audit_logs 
