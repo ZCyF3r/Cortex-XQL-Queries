@@ -1,0 +1,27 @@
+
+
+dataset = saas_audit_logs 
+| filter product = "BOX"
+| filter operation_name_orig = "UPLOAD"
+//| filter identity_name ~= ""
+//| filter If_SharedObjectPassword = ""
+| alter SourceFileName = json_extract_scalar(raw_log, "$.source.item_name")
+| alter SourceFileID = json_extract_scalar(raw_log, "$.source.item_id")
+| alter SourceFileType = json_extract_scalar(raw_log, "$.source.item_type")
+| alter SourceParentName = json_extract_scalar(raw_log, "$.source.parent.name")
+| alter SourceParentID = json_extract_scalar(raw_log, "$.source.parent.id")
+| alter SourceParentType = json_extract_scalar(raw_log, "$.source.parent.type")
+| alter FileOwnedByUser = json_extract_scalar(raw_log, "$.source.owned_by.type")
+| alter FileOwnedByID = json_extract_scalar(raw_log, "$.source.owned_by.id")
+| alter FileOwnedByName = json_extract_scalar(raw_log, "$.source.owned_by.name")
+| alter FileOwnedByLogin = json_extract_scalar(raw_log, "$.source.owned_by.login")
+| alter FileCreatedByUser = json_extract_scalar(raw_log, "$.created_by.type")
+| alter FileCreatedByID = json_extract_scalar(raw_log, "$.created_by.id")
+| alter FileCreatedByName = json_extract_scalar(raw_log, "$.created_by.name")
+| alter FileCreatedByLogin = json_extract_scalar(raw_log, "$.created_by.login")
+| alter CreationTime = json_extract_scalar(raw_log, "$.created_at")
+| alter FileSize = json_extract_scalar(raw_log, "$.additional_details.size")
+| alter FilePath = json_extract_scalar(raw_log, "$.additional_details.file_path")
+| alter FileHash = json_extract_scalar(raw_log, "$.additional_details.file_hash")
+| alter FileHashType = json_extract_scalar(raw_log, "$.additional_details.hash_type")
+| fields _time, identity_name, operation_name_orig, SourceFileName, SourceFileID, SourceFileType, SourceParentName, SourceParentID, SourceParentType, FileOwnedByName, FileOwnedByLogin, FileCreatedByName, FileCreatedByLogin, CreationTime, FileSize, FilePath, FileHash, FileHashType, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
