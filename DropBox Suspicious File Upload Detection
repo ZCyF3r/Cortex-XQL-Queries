@@ -1,4 +1,6 @@
-
+// DropBox Suspicious File Upload Detection
+// Detects suspicious file uploads to Box indicating potential data staging, tool upload, or exfiltration via shared folders
+// T1530 - Data from Cloud Storage, T1048 - Exfiltration Over Web Service
 
 
 dataset = saas_audit_logs 
