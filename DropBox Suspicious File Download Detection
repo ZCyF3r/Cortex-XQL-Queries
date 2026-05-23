@@ -1,4 +1,4 @@
-// Box Suspicious File Download Detection
+// DropBox Suspicious File Download Detection
 // Detects file downloads from Box which could indicate potential data exfiltration by insiders or compromised accounts
 // T1530 - Data from Cloud Storage, T1048 - Exfiltration Over Web Service
 
