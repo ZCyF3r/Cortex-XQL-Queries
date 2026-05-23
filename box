@@ -1,0 +1,9 @@
+dataset = saas_audit_logs
+| filter product = "BOX"
+| filter operation_name_orig in (
+    "SHARE",
+    "COLLABORATION_INVITE",
+    "COLLABORATION_ACCEPT",
+    "ITEM_SHARED_UPDATE",
+    "COLLABORATION_ROLE_CHANGE"
+)
