@@ -1,5 +1,6 @@
 
 
+
 dataset = saas_audit_logs 
 | filter product = "BOX"
 | filter operation_name_orig = "UPLOAD"
@@ -23,8 +24,12 @@ dataset = saas_audit_logs
 | alter FileHash = json_extract_scalar(raw_log, "$.additional_details.file_hash")
 | alter FileHashType = json_extract_scalar(raw_log, "$.additional_details.hash_type")
 //| filter identity_name ~= ""
+// Large file size - bulk data sstaged for exfil
 //| filter FileSize >= <>
+// Sensitive file types - DB dumps, archives, cred files
 //| filter SourceFileName ~= "(?i)\.(zip|7z|tar|gz|rar|bak|sql|db|kdbx|pfx|pem|key|config|json|csv|xlsx|pst)"
+// Upload from unusual ASN
 //| filter caller_ip_asn_org !~= "(?i)(microsoft|amazon|google|cloudflare|akamai)"
+// Upload by non-owner - uploading to someone else's box folder
 //| filter FileCreatedByLogin != FileOwnedByLogin
 | fields _time, identity_name, operation_name_orig, SourceFileName, SourceFileID, SourceFileType, SourceParentName, SourceParentID, SourceParentType, FileOwnedByName, FileOwnedByLogin, FileCreatedByName, FileCreatedByLogin, CreationTime, FileSize, FilePath, FileHash, FileHashType, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
