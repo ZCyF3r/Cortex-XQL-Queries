@@ -1,5 +1,35 @@
-
 dataset = saas_audit_logs 
 | filter product = "BOX"
+| filter operation_name_orig = "DOWNLOAD"
+| alter SourceFileName = json_extract_scalar(raw_log, "$.source.item_name")
+| alter SourceFileID = json_extract_scalar(raw_log, "$.source.item_id")
+| alter SourceFileType = json_extract_scalar(raw_log, "$.source.item_type")
+//
+| alter SourceParentName = json_extract_scalar(raw_log, "$.source.parent.name")
+| alter SourceParentID = json_extract_scalar(raw_log, "$.source.parent.id")
+| alter SourceParentType = json_extract_scalar(raw_log, "$.source.parent.type")
+//
+| alter FileOwnedByUser = json_extract_scalar(raw_log, "$.source.owned_by.type")
+| alter FileOwnedByID = json_extract_scalar(raw_log, "$.source.owned_by.id")
+| alter FileOwnedByName = json_extract_scalar(raw_log, "$.source.owned_by.name")
+| alter FileOwnedByLogin = json_extract_scalar(raw_log, "$.source.owned_by.login")
+//
+| alter FileCreatedByUser = json_extract_scalar(raw_log, "$.created_by.type")
+| alter FileCreatedByID = json_extract_scalar(raw_log, "$.created_by.id")
+| alter FileCreatedByName = json_extract_scalar(raw_log, "$.created_by.name")
+| alter FileCreatedByLogin = json_extract_scalar(raw_log, "$.created_by.login")
+//
+| alter CreationTime = json_extract_scalar(raw_log, "$.created_at")
+| alter FileSize = json_extract_scalar(raw_log, "$.additional_details.size")
+| alter SharedObjectID = json_extract_scalar(raw_log, "$.additional_details.security_information.accessFromSharedObject.sharedId")
+| alter SharedObjectName = json_extract_scalar(raw_log, "$.additional_details.security_information.accessFromSharedObject.sharedName")
+| alter If_SharedObjectPassword = json_extract_scalar(raw_log, "$.additional_details.security_information.accessFromSharedObject.passwordSet")
+| alter SharedObjectAccessLevel = json_extract_scalar(raw_log, "$.additional_details.security_information.accessFromSharedObject.accessLevel")
+| alter SharedObjectCreationTime = json_extract_scalar(raw_log, "$.additional_details.security_information.accessFromSharedObject.createdAt")
+//
+| alter FilePath = json_extract_scalar(raw_log, "$.additional_details.file_path")
+| alter FileHash = json_extract_scalar(raw_log, "$.additional_details.file_hash")
+| alter FileHashType = json_extract_scalar(raw_log, "$.additional_details.hash_type")
 
-CONTENT_ACCESS DOWNLOAD PREVIEW EDIT SHIELD_SHARED_LINK_ACCESS_BLOCKED METADATA_INSTANCE_CREATE COPY UPLOAD UNLOCK
+
+
