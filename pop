@@ -14,5 +14,7 @@ dataset = saas_audit_logs
 | alter ExternalLink = json_extract_scalar(raw_log, "$.MessageLinks[0].Url")
 | filter ExternalLink != null
     and ExternalLink != ""
-| filter identity_name = ""
+//| filter identity_name = ""
+//    or identity_name ~= "(?i)#ext#"
+| filter CommType = "OneOnOne"
 | fields _time, operation_name_orig, ChatThreadID, CommType, DeviceID, MessageID, ExternalLink, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
