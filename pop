@@ -1,0 +1,18 @@
+// 
+// 
+// 
+// 
+
+
+dataset = saas_audit_logs 
+| filter service_type = "MicrosoftTeams"
+| filter operation_name_orig = "MessageSent"
+| alter ChatThreadID = json_extract_scalar(raw_log, "$.ChatThreadId")
+| alter CommType = json_extract_scalar(raw_log, "$.CommunicationType")
+| alter DeviceID = json_extract_scalar(raw_log, "$.DeviceId")
+| alter MessageID = json_extract_scalar(raw_log, "$.MessageId")
+| alter ExternalLink = json_extract_scalar(raw_log, "$.MessageLinks[0].Url")
+| filter ExternalLink != null
+    and ExternalLink != ""
+| filter identity_name = ""
+| fields _time, operation_name_orig, ChatThreadID, CommType, DeviceID, MessageID, ExternalLink, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
