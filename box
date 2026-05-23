@@ -4,7 +4,6 @@ dataset = saas_audit_logs
 | filter product = "BOX"
 | filter operation_name_orig = "UPLOAD"
 //| filter identity_name ~= ""
-//| filter If_SharedObjectPassword = ""
 | alter SourceFileName = json_extract_scalar(raw_log, "$.source.item_name")
 | alter SourceFileID = json_extract_scalar(raw_log, "$.source.item_id")
 | alter SourceFileType = json_extract_scalar(raw_log, "$.source.item_type")
