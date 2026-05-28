@@ -19,7 +19,7 @@ dataset = saas_audit_logs
 | alter OsName = arrayindex(regextract(raw_log, "\"Key\":\s*\"OsName\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | alter Country = arrayindex(regextract(raw_log, "\"Key\":\s*\"Country\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | alter ClientName = arrayindex(regextract(raw_log, "\"Key\":\s*\"ClientName\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
-// Filter specifically for Skype consumer accounts
+// Filter specifically for Skype accounts
 //| filter identity_name ~= "(?i)^\.cid\.[a-z0-9]+"
 //| filter identity_name = ""
 | fields _time, identity_name, ReceipentName, ReceipentUPN, operation_name_orig, CommType, ChatThreadID, MessageID, ExternalLink, Time_Zone, OsName, OsVersion, Country, ClientName, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
