@@ -1,0 +1,33 @@
+// Scattered Spider / Muddled Libra Tunneling Tool DNS Detection
+// Detects DNS queries to confirmed Scattered Spider tunneling and RMM infrastructure
+// Ngrok and Tailscale used to establish covert persistent connectivity
+// FleetDeck, ScreenConnect, TacticalRMM used for remote access and lateral movement
+// References: CISA AA23-320A (Updated July 2025), FBI/CISA Joint Advisory
+// MITRE: T1572 - Protocol Tunneling, T1219 - Remote Access Software
+
+
+dataset = xdr_data
+| filter event_type in (ENUM.NETWORK, ENUM.STORY)
+// Tunneling tools
+| filter dns_query_name ~= "(?i)(ngrok\.io|ngrok\.com|tunnel\.us\.ngrok\.com|connect\.ngrok-agent\.com)"
+    or dns_query_name ~= "(?i)(tailscale\.com|login\.tailscale\.com|controlplane\.tailscale\.com|derp\.tailscale\.com)"
+// RMM tools confirmed by CISA/FBI
+    or dns_query_name ~= "(?i)(fleetdeck\.io|app\.fleetdeck\.io)"
+    or dns_query_name ~= "(?i)(tactical\.rmm|api\.tactical\.rmm|tacticalrmm\.com)"
+    or dns_query_name ~= "(?i)(level\.io|app\.level\.io)"
+    or dns_query_name ~= "(?i)(pulseway\.com|my\.pulseway\.com)"
+    or dns_query_name ~= "(?i)(screenconnect\.com|instance\.screenconnect\.com)"
+    or dns_query_name ~= "(?i)(splashtop\.com|my\.splashtop\.com|relay\.splashtop\.com)"
+// Additional confirmed tools
+    or dns_query_name ~= "(?i)(rustdesk\.com|rs\.rustdesk\.com)"
+    or dns_query_name ~= "(?i)(atera\.com|app\.atera\.com)"
+    or dns_query_name ~= "(?i)(remcos|remoteutilities\.com)"
+| alter tool_category = if(
+    dns_query_name ~= "(?i)(ngrok|tailscale)", "Tunneling",
+    dns_query_name ~= "(?i)(fleetdeck|tactical\.rmm|level\.io|pulseway|screenconnect|splashtop|rustdesk|atera|remcos)", "RMM",
+    "Other"
+)
+//| filter agent_hostname ~= ""
+//| filter tool_category = "Tunneling"
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, actor_process_command_line, dns_query_name, action_remote, tool_category
+| sort desc _time
