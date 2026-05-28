@@ -1,0 +1,30 @@
+Title       : Excessive OneDrive/SharePoint File Sync Detection
+// Description : Detects high volume file sync downloads via SkyDriveSync client
+//               indicating potential bulk exfiltration of SharePoint/OneDrive content
+//               Attackers sync entire libraries to local machine post-compromise
+// MITRE       : T1530 - Data from Cloud Storage, T1048 - Exfiltration Over Web Service
+
+dataset = saas_audit_logs
+| filter service_type in ("OneDrive", "SharePoint")
+| filter operation_name_orig = "FileSyncDownloadedFull"
+| filter user_agent contains "Microsoft SkyDriveSync"
+| alter FileName = json_extract_scalar(raw_log, "$.SourceFileName")
+| alter FileExtension = json_extract_scalar(raw_log, "$.SourceFileExtension")
+| alter FilePath = json_extract_scalar(raw_log, "$.SourceRelativeUrl")
+| alter SiteURL = json_extract_scalar(raw_log, "$.SiteUrl")
+| alter FileSize = json_extract_scalar(raw_log, "$.FileSizeBytes")
+| alter DeviceName = json_extract_scalar(raw_log, "$.DeviceDisplayName")
+| alter ClientIP = json_extract_scalar(raw_log, "$.ClientIP")
+| bin _time span = 1h
+| comp count() as sync_count,
+         values(FileName) as files_synced,
+         values(FileExtension) as extensions,
+         values(SiteURL) as sites_accessed,
+         values(DeviceName) as devices
+         by _time, identity_name, ClientIP,
+            caller_ip_asn_org, caller_ip_geolocation,
+            user_agent
+| filter sync_count >= 50
+| sort desc sync_count
+//| filter identity_name ~= ""
+//| filter sync_count >= 500
