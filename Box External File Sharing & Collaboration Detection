@@ -1,0 +1,49 @@
+// Box External File Sharing & Collaboration Detection
+// Detects suspicious sharing activity including open link creation, external collaboration invites, role escalation and sharing policy weakening
+// MITRE T1567 - Exfiltration Over Web Service, T1530 - Data from Cloud Storage
+
+dataset = saas_audit_logs
+| filter product = "BOX"
+| filter operation_name_orig in (
+    "SHARE",
+    "COLLABORATION_INVITE",
+    "COLLABORATION_ACCEPT",
+    "ITEM_SHARED_UPDATE",
+    "COLLABORATION_ROLE_CHANGE"
+)
+| alter SourceFileName = json_extract_scalar(raw_log, "$.source.item_name")
+| alter SourceFileType = json_extract_scalar(raw_log, "$.source.item_type")
+| alter SourceParentName = json_extract_scalar(raw_log, "$.source.parent.name")
+| alter FileOwnedByLogin = json_extract_scalar(raw_log, "$.source.owned_by.login")
+| alter FileOwnedByName = json_extract_scalar(raw_log, "$.source.owned_by.name")
+| alter CreatedByLogin = json_extract_scalar(raw_log, "$.created_by.login")
+| alter CreatedByName = json_extract_scalar(raw_log, "$.created_by.name")
+// COLLABORATION_INVITE fields
+| alter Collab_Role = json_extract_scalar(raw_log, "$.additional_details.role")
+| alter Collab_ID = json_extract_scalar(raw_log, "$.additional_details.collab_id")
+| alter Is_Admin_Action = json_extract_scalar(raw_log, "$.additional_details.is_performed_by_admin")
+| alter Invite_Message = json_extract_scalar(raw_log, "$.additional_details.invitation_message")
+// SHARE fields
+| alter New_Visibility = json_extract_scalar(raw_log, "$.additional_details.sharedLinkSettings.newVisibilityStatus")
+| alter New_Password_Protected = json_extract_scalar(raw_log, "$.additional_details.sharedLinkSettings.newIsPasswordProtected")
+| alter New_Can_Edit = json_extract_scalar(raw_log, "$.additional_details.sharedLinkSettings.newCanEdit")
+| alter New_Can_Download = json_extract_scalar(raw_log, "$.additional_details.sharedLinkSettings.newCanDownload")
+// ITEM_SHARED_UPDATE fields
+| alter Old_Visibility = json_extract_scalar(raw_log, "$.additional_details.sharedLinkSettings.oldVisibilityStatus")
+| alter Old_Password_Protected = json_extract_scalar(raw_log, "$.additional_details.sharedLinkSettings.oldIsPasswordProtected")
+| alter Old_Expiry_Set = json_extract_scalar(raw_log, "$.additional_details.sharedLinkSettings.oldIsExpirationDateSet")
+| alter New_Expiry_Set = json_extract_scalar(raw_log, "$.additional_details.sharedLinkSettings.newIsExpirationDateSet")
+// Risk scoring
+| alter sharing_risk = if(
+    New_Visibility = "open" and New_Password_Protected = "false", "HIGH",
+    Collab_Role in ("co-owner", "editor") and Is_Admin_Action = "false", "HIGH",
+    Old_Visibility != New_Visibility and New_Visibility = "open", "HIGH",
+    Old_Expiry_Set = "true" and New_Expiry_Set = "false", "MEDIUM",
+    New_Visibility = "company", "LOW",
+    "INFO"
+)
+| fields _time, identity_name, operation_name_orig, SourceFileName, SourceFileType, SourceParentName, FileOwnedByLogin, FileOwnedByName, CreatedByLogin, CreatedByName, Collab_Role, Collab_ID, Is_Admin_Action, Invite_Message, New_Visibility, New_Password_Protected, New_Can_Edit, New_Can_Download, Old_Visibility, Old_Password_Protected, Old_Expiry_Set, New_Expiry_Set, sharing_risk, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
+| sort desc _time
+//| filter identity_name ~= ""
+//| filter sharing_risk = "HIGH"
+//| filter Collab_Role = "co-owner"
