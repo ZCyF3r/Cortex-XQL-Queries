@@ -42,8 +42,8 @@ dataset = saas_audit_logs
     New_Visibility = "company", "LOW",
     "INFO"
 )
-| fields _time, identity_name, operation_name_orig, SourceFileName, SourceFileType, SourceParentName, FileOwnedByLogin, FileOwnedByName, CreatedByLogin, CreatedByName, Collab_Role, Collab_ID, Is_Admin_Action, Invite_Message, New_Visibility, New_Password_Protected, New_Can_Edit, New_Can_Download, Old_Visibility, Old_Password_Protected, Old_Expiry_Set, New_Expiry_Set, sharing_risk, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
-| sort desc _time
 //| filter identity_name ~= ""
 //| filter sharing_risk = "HIGH"
 //| filter Collab_Role = "co-owner"
+| fields _time, identity_name, operation_name_orig, SourceFileName, SourceFileType, SourceParentName, FileOwnedByLogin, FileOwnedByName, CreatedByLogin, CreatedByName, Collab_Role, Collab_ID, Is_Admin_Action, Invite_Message, New_Visibility, New_Password_Protected, New_Can_Edit, New_Can_Download, Old_Visibility, Old_Password_Protected, Old_Expiry_Set, New_Expiry_Set, sharing_risk, caller_ip, caller_ip_asn_org, caller_ip_geolocation, raw_log
+| sort desc _time
