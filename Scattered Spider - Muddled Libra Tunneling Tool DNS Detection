@@ -25,9 +25,9 @@ dataset = xdr_data
 | alter tool_category = if(
     dns_query_name ~= "(?i)(ngrok|tailscale)", "Tunneling",
     dns_query_name ~= "(?i)(fleetdeck|tactical\.rmm|level\.io|pulseway|screenconnect|splashtop|rustdesk|atera|remcos)", "RMM",
-    "Other"
+    "None"
 )
 //| filter agent_hostname ~= ""
 //| filter tool_category = "Tunneling"
-| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, actor_process_command_line, dns_query_name, action_remote, tool_category
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, actor_process_command_line, dns_query_name, action_remote_ip, tool_category
 | sort desc _time
