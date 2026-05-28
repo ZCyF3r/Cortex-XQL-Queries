@@ -20,8 +20,8 @@ dataset = saas_audit_logs
 | alter Artifact_Name = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactSharedName")
 | alter Artifact_Share_ID = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactShareSessions[0].ScreenShareId")
 // Filter specifically for Skype consumer accounts
-| filter identity_name ~= "(?i)^live\.cid\.[a-z0-9]+"
-    or identity_name contains "live.cid."
+| filter identity_name ~= "(?i)^\.cid\.[a-z0-9]+"
+    or identity_name contains ".cid."
 // Elevate risk if screen share or link involved
 | alter risk_level = if(
     Artifact_Name = "screenShared", "CRITICAL",
