@@ -1,0 +1,41 @@
+// Malicious Skype Federation Contact in Microsoft Teams
+// Detects Skype consumer accounts contacting Teams users via legacy
+// Skype federation - free anonymous accounts used for vishing and phishing
+// MITRE T1566 - Phishing, T1598 - Gather Victim Info via Phishing
+
+dataset = saas_audit_logs
+| filter service_type = "MicrosoftTeams"
+| filter operation_name_orig in (
+    "MessageSent",
+    "ChatCreated",
+    "CallParticipantDetail"
+)
+| alter ChatThreadID = json_extract_scalar(raw_log, "$.ChatThreadId")
+| alter CommType = json_extract_scalar(raw_log, "$.CommunicationType")
+| alter MessageID = json_extract_scalar(raw_log, "$.MessageId")
+| alter ExternalLink = json_extract_scalar(raw_log, "$.MessageLinks[0].Url")
+| alter UserType = json_extract_scalar(raw_log, "$.Attendees[0].RecipientType")
+| alter UserName = json_extract_scalar(raw_log, "$.Attendees[0].DisplayName")
+| alter Artifact_Name = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactSharedName")
+| alter Artifact_Share_ID = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactShareSessions[0].ScreenShareId")
+// Filter specifically for Skype consumer accounts
+| filter identity_name ~= "(?i)^live:\.cid\.[a-z0-9]+"
+    or identity_name contains "live:.cid."
+// Elevate risk if screen share or link involved
+| alter risk_level = if(
+    Artifact_Name = "screenShared", "CRITICAL",
+    ExternalLink != null and ExternalLink != "", "HIGH",
+    operation_name_orig = "CallParticipantDetail", "MEDIUM",
+    operation_name_orig = "MessageSent", "MEDIUM",
+    "LOW"
+)
+| fields _time, identity_name, operation_name_orig,
+         CommType, ChatThreadID, MessageID,
+         ExternalLink, UserType, UserName,
+         Artifact_Name, Artifact_Share_ID,
+         risk_level, caller_ip,
+         caller_ip_asn_org, caller_ip_geolocation,
+         raw_log
+| sort desc _time
+//| filter risk_level = "CRITICAL"
+//| filter operation_name_orig = "MessageSent"
