@@ -19,6 +19,11 @@ dataset = saas_audit_logs
 | alter UserName = json_extract_scalar(raw_log, "$.Attendees[0].DisplayName")
 | alter Artifact_Name = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactSharedName")
 | alter Artifact_Share_ID = json_extract_scalar(raw_log, "$.ArtifactsShared[0].ArtifactShareSessions[0].ScreenShareId")
+| alter TimeZone = arrayindex(regextract(raw_log, "\"Key\":\s*\"TimeZone\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter OsVersion = arrayindex(regextract(raw_log, "\"Key\":\s*\"OsVersion\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter OsName = arrayindex(regextract(raw_log, "\"Key\":\s*\"OsName\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter Country = arrayindex(regextract(raw_log, "\"Key\":\s*\"Country\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter ClientName = arrayindex(regextract(raw_log, "\"Key\":\s*\"ClientName\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 // Filter specifically for Skype consumer accounts
 | filter identity_name ~= "(?i)^\.cid\.[a-z0-9]+"
     or identity_name contains ".cid."
