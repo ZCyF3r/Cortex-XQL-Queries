@@ -1,0 +1,11 @@
+// 
+// 
+
+
+dataset = google_workspace_user_acounts_raw
+| alter UPN = json_extract_scalar(actor, "$.email")
+| alter events_str = to_string(`events`)
+| alter event_name = arrayindex(regextract(events_str, "\"name\":\s*\"([^\"]+)\""), 0)
+| alter External_UPN = arrayindex(regextract(events_str, "\"name\":\s*\"email_forwarding_destination_address\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| filter event_name = "email_forwarding_out_of_domain"
+| fields _time, event_name, UPN, External_UPN, ipAddress, networkInfo, resourceDetails, events, actor
