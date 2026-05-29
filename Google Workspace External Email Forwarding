@@ -9,5 +9,20 @@ dataset = google_workspace_user_accounts_raw
 | alter event_name = arrayindex(regextract(events_str, "\"name\":\s*\"([^\"]+)\""), 0)
 | alter External_UPN = arrayindex(regextract(events_str, "\"name\":\s*\"email_forwarding_destination_address\",\s*\"value\":\s*\"([^\"]+)\""), 0)
 | filter event_name = "email_forwarding_out_of_domain"
+//| filter UPN = ""
+//| filter External_UPN ~= "(?i)(@gmail|@yahoo|@hotmail|@outlook|@proton|@tutanota|@guerrilla|@temp-mail|@mailinator)"
+| fields _time, event_name, UPN, External_UPN, ipAddress, networkInfo, resourceDetails, events, actor
+
+
+
+
+
+dataset = google_workspace_login_raw 
+| alter UPN = json_extract_scalar(actor, "$.email")
+| alter events_str = to_string(`events`)
+| alter event_name = arrayindex(regextract(events_str, "\"name\":\s*\"([^\"]+)\""), 0)
+| alter External_UPN = arrayindex(regextract(events_str, "\"name\":\s*\"email_forwarding_destination_address\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| filter event_name = "email_forwarding_out_of_domain"
+//| filter UPN = ""
 //| filter External_UPN ~= "(?i)(@gmail|@yahoo|@hotmail|@outlook|@proton|@tutanota|@guerrilla|@temp-mail|@mailinator)"
 | fields _time, event_name, UPN, External_UPN, ipAddress, networkInfo, resourceDetails, events, actor
