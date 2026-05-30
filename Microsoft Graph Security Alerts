@@ -1,0 +1,41 @@
+// Microsoft Graph Security Alerts
+// Surfaces high and critical alerts across all Microsoft Defender products with full evidence enrichment for immediate triage and investigation
+// Covers MDE, MDI, MDCA, MDO, Entra ID Protection via Graph Security API
+
+
+dataset = msft_graph_security_alerts_raw
+| alter evidence_str = to_string(`Evidence`)
+// User Account Evidence
+| alter Account_UPN = coalesce(json_extract_scalar(evidence_str, "$.userPrincipalName"), json_extract_scalar(evidence_str, "$.upn"), json_extract_scalar(evidence_str, "$.accountName"))
+| alter Account_DisplayName = coalesce(json_extract_scalar(evidence_str, "$.displayName"), json_extract_scalar(evidence_str, "$.accountName"))
+| alter Account_SID = json_extract_scalar(evidence_str, "$.userSid")
+| alter AzureAD_UserID = json_extract_scalar(evidence_str, "$.azureAdUserId")
+| alter Domain_Name = json_extract_scalar(evidence_str, "$.domainName")
+| alter Tenant_ID = json_extract_scalar(evidence_str, "$.tenantId")
+// File Evidence
+| alter File_Name = coalesce(json_extract_scalar(evidence_str, "$.fileName"), json_extract_scalar(evidence_str, "$.name"))
+| alter File_Path = json_extract_scalar(evidence_str, "$.filePath")
+| alter File_SHA256 = json_extract_scalar(evidence_str, "$.sha256")
+| alter File_SHA1 = json_extract_scalar(evidence_str, "$.sha1")
+| alter File_Publisher = json_extract_scalar(evidence_str, "$.filePublisher")
+| alter File_Signer = json_extract_scalar(evidence_str, "$.signer")
+| alter File_Size = json_extract_scalar(evidence_str, "$.fileSize")
+// Network Evidence
+| alter IP_Address = coalesce(json_extract_scalar(evidence_str, "$.ipAddress"), json_extract_scalar(evidence_str, "$.publicIpAddress"))
+| alter Device_Name = coalesce(json_extract_scalar(evidence_str, "$.deviceDnsName"), json_extract_scalar(evidence_str, "$.deviceName"))
+// Location Evidence
+| alter Country = json_extract_scalar(evidence_str, "$.countryName")
+| alter State = json_extract_scalar(evidence_str, "$.state")
+| alter City = json_extract_scalar(evidence_str, "$.city")
+| alter Latitude = json_extract_scalar(evidence_str, "$.latitude")
+| alter Longitude = json_extract_scalar(evidence_str, "$.longitude")
+// Alert Verdict
+| alter Verdict = json_extract_scalar(evidence_str, "$.verdict")
+| alter Evidence_CreatedTime = json_extract_scalar(evidence_str, "$.createdTime")
+// Scope to high severity alerts only
+//| filter severity in ("high", "critical")
+//| filter serviceSource = "defenderForIdentity"
+//| filter Account_UPN ~= ""
+//| filter Device_Name ~= ""
+| fields _time, Title, category, severity, serviceSource, productName, detectionsource, alertweburl, Account_UPN, Account_DisplayName, Account_SID, AzureAD_UserID, Domain_Name, Tenant_ID, File_Name, File_Path, File_SHA256, File_SHA1, File_Publisher, File_Signer,  File_Size, IP_Address,  Device_Name, Country, State,  City, Latitude, Longitude,  Verdict, Evidence_CreatedTime,  alertpolicyid, alertweburl
+| sort desc _time
