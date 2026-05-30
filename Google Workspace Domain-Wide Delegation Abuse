@@ -11,10 +11,6 @@ dataset = google_workspace_admin_console_raw
     API_Scopes ~= "(?i)(admin.directory|mail\.google|drive|gmail|calendar|contacts|admin\.reports|admin\.datatransfer|cloudplatformprojects|iam|compute)",
     "CRITICAL", "HIGH"
 )
-| fields _time, UPN, event_name,
-         Domain_Name, API_Client_Name,
-         API_Scopes, scope_risk,
-         ipAddress
-| sort desc _time
 //| filter UPN ~= ""
 //| filter scope_risk = "CRITICAL"
+| fields _time, UPN, event_name, Domain_Name, API_Client_Name, API_Scopes, scope_risk, ipAddress
