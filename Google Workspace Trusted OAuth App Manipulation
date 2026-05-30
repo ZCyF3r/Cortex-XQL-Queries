@@ -1,0 +1,31 @@
+dataset = google_workspace_admin_console_raw
+| alter UPN = json_extract_scalar(actor, "$.email")
+| alter events_str = to_string(`events`)
+| alter event_name = arrayindex(regextract(events_str, "\"name\":\s*\"([^\"]+)\""), 0)
+// ADD_TO_TRUSTED_OAUTH2_APPS fields
+| alter Org_Unit = arrayindex(regextract(events_str, "\"name\":\s*\"ORG_UNIT_NAME\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| alter App_Name = arrayindex(regextract(events_str, "\"name\":\s*\"OAUTH2_APP_NAME\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| alter App_ID = arrayindex(regextract(events_str, "\"name\":\s*\"OAUTH2_APP_ID\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| alter App_Type = arrayindex(regextract(events_str, "\"name\":\s*\"OAUTH2_APP_TYPE\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+// CHANGE_APP_ACCESS fields
+| alter Old_Value = arrayindex(regextract(events_str, "\"name\":\s*\"OLD_VALUE\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| alter New_Value = arrayindex(regextract(events_str, "\"name\":\s*\"NEW_VALUE\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| filter event_name in (
+    "ADD_TO_TRUSTED_OAUTH2_APPS",
+    "ADD_TO_CAA_EXEMPT_OAUTH2_APPS",
+    "CHNAGE_APP_ACCESS"
+)
+// Risk scoring based on operation type
+| alter op_risk = if(
+    event_name = "ADD_TO_CAA_EXEMPT_OAUTH2_APPS", "CRITICAL",
+    event_name = "ADD_TO_TRUSTED_OAUTH2_APPS", "HIGH",
+    event_name = "CHNAGE_APP_ACCESS" and New_Value ~= "(?i)(trusted|allow|unrestricted)", "HIGH",
+    "MEDIUM"
+)
+//| filter UPN ~= ""
+//| filter op_risk = "CRITICAL"
+| fields _time, UPN, event_name,
+         Org_Unit, App_Name, App_ID,
+         App_Type, Old_Value, New_Value,
+         op_risk, ipAddress
+| sort desc _time
