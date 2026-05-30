@@ -1,0 +1,20 @@
+dataset = google_workspace_admin_console_raw
+| alter UPN = json_extract_scalar(actor, "$.email")
+| alter events_str = to_string(`events`)
+| alter event_name = arrayindex(regextract(events_str, "\"name\":\s*\"([^\"]+)\""), 0)
+| alter Domain_Name = arrayindex(regextract(events_str, "\"name\":\s*\"DOMAIN_NAME\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| alter API_Client_Name = arrayindex(regextract(events_str, "\"name\":\s*\"API_CLIENT_NAME\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| alter API_Scopes = arrayindex(regextract(events_str, "\"name\":\s*\"API_SCOPES\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| filter event_name = "AUTHORIZE_API_CLIENT_ACCESS"
+// Flag sensitive OAuth scopes indicating high privilege delegation
+| alter scope_risk = if(
+    API_Scopes ~= "(?i)(admin.directory|mail\.google|drive|gmail|calendar|contacts|admin\.reports|admin\.datatransfer|cloudplatformprojects|iam|compute)",
+    "CRITICAL", "HIGH"
+)
+| fields _time, UPN, event_name,
+         Domain_Name, API_Client_Name,
+         API_Scopes, scope_risk,
+         ipAddress
+| sort desc _time
+//| filter UPN ~= ""
+//| filter scope_risk = "CRITICAL"
