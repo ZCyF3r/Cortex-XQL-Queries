@@ -1,3 +1,8 @@
+// Google Workspace Domain-Wide Delegation Abuse Detection
+// Detects domain-wide delegation grants giving service accounts ability to impersonate any user in the domain. One of the most dangerous Google Workspace privileges. Any unauthorized grant = confirmed compromise.
+// MITRE T1134.001 - Token Impersonation, T1098 - Account Manipulation
+
+
 dataset = google_workspace_admin_console_raw
 | alter UPN = json_extract_scalar(actor, "$.email")
 | alter events_str = to_string(`events`)
