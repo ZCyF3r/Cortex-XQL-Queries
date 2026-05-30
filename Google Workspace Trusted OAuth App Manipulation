@@ -1,3 +1,9 @@
+Google Workspace Trusted OAuth App Manipulation Detection
+// Detects OAuth apps being added to trusted lists or CAA exemptions bypassing user consent screens and Context-Aware Access policies
+// CHANGE_APP_ACCESS tracks permission escalation for existing apps
+// MITRE T1528 - Steal Application Access Token, T1550.001 - Use Alternate Auth Material
+
+
 dataset = google_workspace_admin_console_raw
 | alter UPN = json_extract_scalar(actor, "$.email")
 | alter events_str = to_string(`events`)
