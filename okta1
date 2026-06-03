@@ -1,0 +1,32 @@
+// Okta Help-Desk Social Engineering -> Account Takeover Detection
+// MFA factor reset/deactivation followed by a successful login from the VICTIM within 120 minutes
+dataset = okta_sso_raw
+| filter eventType in ("user.mfa.factor.reset_all", "system.mfa.factor.deactivate", "user.mfa.factor.deactivate")
+| alter reset_time      = _time
+| alter helpdesk_name   = json_extract_scalar(actor, "$.displayName")
+| alter helpdesk_upn    = json_extract_scalar(actor, "$.alternateId")
+| alter reset_ip        = json_extract_scalar(client, "$.ipAddress")
+| alter target_str      = to_string(`target`)
+| alter victim_upn      = json_extract_scalar(target_str, "$[0].alternateId")
+| alter victim_name     = json_extract_scalar(target_str, "$[0].displayName")
+| fields reset_time, eventType, displayMessage, helpdesk_name, helpdesk_upn, reset_ip, victim_upn, victim_name
+| join type = inner (
+        dataset = okta_sso_raw
+        | filter eventType = "user.session.start"
+        | alter login_outcome = json_extract_scalar(outcome, "$.result")
+        | filter login_outcome = "SUCCESS"
+        | alter login_time    = _time
+        | alter login_user    = json_extract_scalar(actor, "$.alternateId")
+        | alter login_ip      = json_extract_scalar(client, "$.ipAddress")
+        | alter login_country = json_extract_scalar(client, "$.geographicalContext.country")
+        | alter login_city    = json_extract_scalar(client, "$.geographicalContext.city")
+        | alter login_os      = json_extract_scalar(client, "$.userAgent.os")
+        | alter login_browser = json_extract_scalar(client, "$.userAgent.browser")
+        | fields login_time, login_user, login_ip, login_country, login_city, login_os, login_browser
+   ) as login login.login_user = victim_upn
+| filter timestamp_diff(login.login_time, reset_time, "MINUTE") > 0
+       and timestamp_diff(login.login_time, reset_time, "MINUTE") <= 120
+| fields reset_time, login.login_time, helpdesk_name, helpdesk_upn, reset_ip,
+         victim_upn, victim_name, login.login_ip, login.login_country, login.login_city,
+         login.login_os, login.login_browser
+| sort desc reset_time
