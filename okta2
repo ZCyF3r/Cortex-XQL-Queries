@@ -2,32 +2,33 @@
 // Confirmed-breach chain: AD-agent password reset -> attacker enrolls their OWN MFA factor + device
 // for a single user in one window. Surfaces distinct externalSessionId & dtHash — a new session/device
 // hash is the attacker's, distinct from the victim's.
+
+
+// Okta Help-Desk Social Engineering / Account Takeover Detection
+// Confirmed-breach chain: AD-agent password reset -> attacker enrolls their OWN MFA factor + device for a single user in one window. Surfaces distinct externalSessionId & dtHash — a new session/device hash is the attacker's, distinct from the victim's.
+
+
 dataset = okta_sso_raw
-| filter eventType in (
-        "system.agent.ad.reset_user_password",   // AD-agent password reset (the help-desk action)
-        "user.account.reset_password",            // non-AD reset path, included for coverage
-        "user.mfa.factor.activate",               // attacker enrolling their own authenticator
-        "device.user.add",                        // attacker's device being added
-        "device.enrollment.create",               // new device enrollment
-        "device.lifecycle.activate"               // device activated
-  )
-| alter actor_name          = json_extract_scalar(actor, "$.displayName")
-| alter actor_upn           = json_extract_scalar(actor, "$.alternateId")
-| alter outcome_result      = json_extract_scalar(outcome, "$.result")
-| alter client_ip           = json_extract_scalar(client, "$.ipAddress")
-| alter client_os           = json_extract_scalar(client, "$.userAgent.os")
-| alter client_browser      = json_extract_scalar(client, "$.userAgent.browser")
-| alter client_country      = json_extract_scalar(client, "$.geographicalContext.country")
-| alter client_city         = json_extract_scalar(client, "$.geographicalContext.city")
-| alter target_str          = to_string(`target`)
-| alter target_upn          = json_extract_scalar(target_str, "$[0].alternateId")
-| alter target_name         = json_extract_scalar(target_str, "$[0].displayName")
-// the two fields you asked for: externalSessionId from authenticationContext, dtHash from debugContext
+| filter eventType in ("system.agent.ad.reset_user_password", "user.account.reset_password", "user.mfa.factor.activate", "device.user.add", "device.enrollment.create", "device.lifecycle.activate")
+| alter actor_name = json_extract_scalar(actor, "$.displayName")
+| alter actor_upn = json_extract_scalar(actor, "$.alternateId")
+| alter outcome_result = json_extract_scalar(outcome, "$.result")
+| alter client_ip = json_extract_scalar(client, "$.ipAddress")
+| alter client_os  = json_extract_scalar(client, "$.userAgent.os")
+| alter client_browser = json_extract_scalar(client, "$.userAgent.browser")
+| alter client_country = json_extract_scalar(client, "$.geographicalContext.country")
+| alter client_city = json_extract_scalar(client, "$.geographicalContext.city")
+| alter IsProxy = json_extract_scalar(securityContext, "$.isProxy")
+| alter AsOrg = json_extract_scalar(securityContext, "$.asOrg")
+| alter ISP = json_extract_scalar(securityContext, "$.isp")
+| alter ASN = json_extract_scalar(securityContext, "$.asNumber")
+| alter From_Proxy = if(IsProxy ="true", 1, 0)
+| alter target_str = to_string(`target`)
+| alter target_upn = json_extract_scalar(target_str, "$[0].alternateId")
+| alter target_name = json_extract_scalar(target_str, "$[0].displayName")
 | alter external_session_id = json_extract_scalar(authenticationContext, "$.externalSessionId")
-| alter dt_hash             = json_extract_scalar(debugContext, "$.debugData.dtHash")
-// unify the victim: the password-reset event carries the victim in target[]; the rest carry it in actor
+| alter dt_hash = json_extract_scalar(debugContext, "$.debugData.dtHash")
 | alter subject_upn = if(eventType in ("system.agent.ad.reset_user_password", "user.account.reset_password"), target_upn, actor_upn)
-// category flags
 | alter is_pwd_reset     = if(eventType in ("system.agent.ad.reset_user_password", "user.account.reset_password"), 1, 0)
 | alter is_factor_enroll = if(eventType = "user.mfa.factor.activate", 1, 0)
 | alter is_device_enroll = if(eventType in ("device.user.add", "device.enrollment.create", "device.lifecycle.activate"), 1, 0)
@@ -43,6 +44,5 @@ dataset = okta_sso_raw
        values(client_country) as countries,
        values(eventType) as events_observed
     by _time, subject_upn
-// core signature: a reset PLUS the attacker enrolling a factor and/or device in the same window
 | filter pwd_resets >= 1 and (factor_enrollments >= 1 or device_enrollments >= 1)
 | sort desc factor_enrollments
