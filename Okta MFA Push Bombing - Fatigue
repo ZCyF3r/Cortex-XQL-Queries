@@ -1,23 +1,40 @@
-// Okta MFA Push Bombing / Fatigue Detection
-// Detects repeated push denials for the same user indicating an active MFA fatigue attack
+// Okta MFA Push Bombing / Fatigue
+// Burst of push prompts to one user in a short window, split into sent / denied / approved.
+// pushes_sent >= 5 with pushes_approved >= 1 = user likely caved. Proxy/VPN + geo of the triggering logins surfaced.
 
-dataset = okta_sso_raw 
-| filter displayMessage in("User rejected Okta push verify", "A push was sent to user for verification")
+
+dataset = okta_sso_raw
+| filter displayMessage in ("A push was sent to user for verification", "User rejected Okta push verify", "User approved Okta push verify")
 | alter actor_name = json_extract_scalar(actor, "$.displayName")
 | alter actor_upn = json_extract_scalar(actor, "$.alternateId")
 | alter outcome_result = json_extract_scalar(outcome, "$.result")
 | alter outcome_reason = json_extract_scalar(outcome, "$.reason")
 | alter client_ip = json_extract_scalar(client, "$.ipAddress")
-| alter client_browser = json_extract_scalar(client, "$.userAgent.browser")
 | alter client_os = json_extract_scalar(client, "$.userAgent.os")
+| alter client_browser = json_extract_scalar(client, "$.userAgent.browser")
 | alter client_country = json_extract_scalar(client, "$.geographicalContext.country")
 | alter client_city = json_extract_scalar(client, "$.geographicalContext.city")
-| bin _time span = 1h
-| comp count() as total_pushes,
-    values(displayMessage) as push_events, 
-    values(client_ip) as source_ips, 
-    values(client_country) as countries,
-    values(outcome_reason) as denial_resons
+| alter IsProxy = json_extract_scalar(securityContext, "$.isProxy")
+| alter AsOrg = json_extract_scalar(securityContext, "$.asOrg")
+| alter ISP = json_extract_scalar(securityContext, "$.isp")
+| alter ASN = json_extract_scalar(securityContext, "$.asNumber")
+| alter From_Proxy = if(IsProxy = "true", 1, 0)
+| alter is_push_sent     = if(displayMessage = "A push was sent to user for verification", 1, 0)
+| alter is_push_denied   = if(displayMessage = "User rejected Okta push verify", 1, 0)
+| alter is_push_approved = if(displayMessage = "User approved Okta push verify", 1, 0)
+| bin _time span = 10m
+| comp sum(is_push_sent) as pushes_sent,
+       sum(is_push_denied) as pushes_denied,
+       sum(is_push_approved) as pushes_approved,
+       sum(From_Proxy) as proxy_events,
+       count_distinct(client_ip) as distinct_ips,
+       count_distinct(client_country) as distinct_countries,
+       values(client_ip) as source_ips,
+       values(client_country) as countries,
+       values(IsProxy) as proxy_flags,
+       values(AsOrg) as AsOrg,
+       values(ISP) as ISP,
+       values(outcome_reason) as reasons
     by _time, actor_upn, actor_name
-| filter total_pushes >= 5
-| sort desc total_pushes
+| filter pushes_sent >= 5
+| sort desc pushes_sent
