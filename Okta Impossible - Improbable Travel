@@ -1,6 +1,5 @@
-// Okta Impossible / Improbable Travel (distance-aware, VPN-filtered)
-// Same user, geographically spread logins in a tight window. Surfaces lat/lon min-max as a distance
-// proxy (no trig in XQL = no true haversine) and excludes proxy/VPN, the dominant FP source.
+// Okta Impossible / Improbable Travel
+// Same user, geographically spread logins in a tight window. Surfaces lat/lon min-max as a distance proxy and excludes proxy/VPN.
 
 
 dataset = okta_sso_raw
@@ -18,8 +17,8 @@ dataset = okta_sso_raw
 | alter ASN = json_extract_scalar(securityContext, "$.asNumber")
 | filter outcome_result = "SUCCESS" and client_country != null
 | filter IsProxy != "true"
-//| filter AsOrg not in ("Your Corp ISP", "Your VPN Provider")
-//| filter not incidr(client_ip, "203.0.113.0/24")
+//| filter AsOrg not in ("Corp ISP", "VPN")
+//| filter not incidr(client_ip, "")
 | bin _time span = 1h
 | comp count() as login_count,
        count_distinct(client_country) as country_count,
