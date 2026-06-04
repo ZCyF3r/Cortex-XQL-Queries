@@ -20,9 +20,9 @@ dataset = okta_sso_raw
 | alter ASN = json_extract_scalar(securityContext, "$.asNumber")
 | alter From_Proxy = if(IsProxy = "true", 1, 0)
 | filter session_id != null
-//| filter AsOrg not in()
-//| filter client_country not in()
-//| filter client_ip not incidr()
+//| filter AsOrg not in("")
+//| filter client_country not in("")
+//| filter client_ip not incidr(client_ip, "")
 | comp count() as session_events,
        count_distinct(client_ip) as distinct_ips,
        count_distinct(client_country) as distinct_countries,
@@ -40,5 +40,5 @@ dataset = okta_sso_raw
        values(AsOrg) as AsOrg,
        values(IsProxy) as proxy_flags
     by session_id, actor_upn, actor_name
-| filter distinct_countries > 1 or distinct_device_hashes > 1 or distinct_os > 1
+| filter distinct_device_hashes > 1 or (distinct_asns > 1 and distinct_countries > 1)
 | sort desc distinct_countries
