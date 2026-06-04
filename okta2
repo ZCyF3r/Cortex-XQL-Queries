@@ -33,7 +33,7 @@ dataset = okta_sso_raw
 | alter is_factor_enroll = if(eventType = "user.mfa.factor.activate", 1, 0)
 | alter is_device_enroll = if(eventType in ("device.user.add", "device.enrollment.create", "device.lifecycle.activate"), 1, 0)
 | bin _time span = 1h
-| comp sum(is_pwd_reset) as pwd_resets,
+ comp sum(is_pwd_reset) as pwd_resets,
        sum(is_factor_enroll) as factor_enrollments,
        sum(is_device_enroll) as device_enrollments,
        count_distinct(external_session_id) as distinct_sessions,
@@ -42,7 +42,10 @@ dataset = okta_sso_raw
        values(dt_hash) as device_hashes,
        values(client_ip) as source_ips,
        values(client_country) as countries,
-       values(eventType) as events_observed
+       values(eventType) as events_observed,
+       values(IsProxy) as proxy_flags,
+       values(AsOrg) as AsOrg,
+       values(ISP) as ISP
     by _time, subject_upn
 | filter pwd_resets >= 1 and (factor_enrollments >= 1 or device_enrollments >= 1)
 | sort desc factor_enrollments
