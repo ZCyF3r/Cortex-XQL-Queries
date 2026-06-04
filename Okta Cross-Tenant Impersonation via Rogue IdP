@@ -1,6 +1,8 @@
-// Okta Cross-Tenant Impersonation via Rogue IdP — IdP lifecycle surveillance
+// Okta Cross-Tenant Impersonation via Rogue IdP
 // Any create/modify of an inbound Identity Provider. Near-zero baseline: review EVERY row.
 // Attacker with admin adds an IdP they control, then federates in AS your users.
+
+
 dataset = okta_sso_raw
 | filter eventType in (
         "system.idp.lifecycle.create",
