@@ -1,4 +1,4 @@
-// Okta Help-Desk Social Engineering / Account Takeover Detection
+// Okta Help-Desk Social Engineering / Account Takeover
 // AD-agent password reset -> attacker enrolls their OWN MFA factor + device for a single user in one window. Surfaces distinct externalSessionId & dtHash — a new session/device hash is the attacker's, distinct from the victim's.
 
 
