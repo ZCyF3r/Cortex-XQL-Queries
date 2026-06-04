@@ -1,0 +1,34 @@
+// Okta Impossible / Improbable Travel (distance-aware, VPN-filtered)
+// Same user, geographically spread logins in a tight window. Surfaces lat/lon min-max as a distance
+// proxy (no trig in XQL = no true haversine) and excludes proxy/VPN, the dominant FP source.
+
+
+dataset = okta_sso_raw
+| filter displayMessage = "User login to Okta"
+| alter actor_upn = json_extract_scalar(actor, "$.alternateId")
+| alter actor_name = json_extract_scalar(actor, "$.displayName")
+| alter outcome_result = json_extract_scalar(outcome, "$.result")
+| alter client_ip = json_extract_scalar(client, "$.ipAddress")
+| alter client_country = json_extract_scalar(client, "$.geographicalContext.country")
+| alter client_city = json_extract_scalar(client, "$.geographicalContext.city")
+| alter lat = to_number(json_extract_scalar(client, "$.geographicalContext.geolocation.lat"))
+| alter lon = to_number(json_extract_scalar(client, "$.geographicalContext.geolocation.lon"))
+| alter IsProxy = json_extract_scalar(securityContext, "$.isProxy")
+| alter AsOrg = json_extract_scalar(securityContext, "$.asOrg")
+| alter ASN = json_extract_scalar(securityContext, "$.asNumber")
+| filter outcome_result = "SUCCESS" and client_country != null
+| filter IsProxy != "true"
+//| filter AsOrg not in ("Your Corp ISP", "Your VPN Provider")
+//| filter not incidr(client_ip, "203.0.113.0/24")
+| bin _time span = 1h
+| comp count() as login_count,
+       count_distinct(client_country) as country_count,
+       min(lat) as min_lat, max(lat) as max_lat,
+       min(lon) as min_lon, max(lon) as max_lon,
+       values(client_country) as countries,
+       values(client_city) as cities,
+       values(client_ip) as source_ips,
+       values(AsOrg) as networks
+    by _time, actor_upn, actor_name
+| filter country_count >= 2
+| sort desc country_count
