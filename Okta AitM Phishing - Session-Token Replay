@@ -1,0 +1,46 @@
+// Okta AitM Phishing / Session-Token Replay
+// One Okta session (externalSessionId) used from multiple origins = stolen post-MFA cookie being replayed. Triggers on DEVICE-IDENTITY divergence within a single session (dtHash / OS / country), not mere multi-IP.
+
+
+dataset = okta_sso_raw
+| filter eventType in (
+        "user.session.start",
+        "user.authentication.sso",
+        "user.authentication.auth_via_mfa",
+        "user.authentication.verify",
+        "user.authentication.auth"
+  )
+| alter actor_upn      = json_extract_scalar(actor, "$.alternateId")
+| alter actor_name     = json_extract_scalar(actor, "$.displayName")
+| alter session_id     = json_extract_scalar(authenticationContext, "$.externalSessionId")
+| alter dt_hash        = json_extract_scalar(debugContext, "$.debugData.dtHash")
+| alter client_ip      = json_extract_scalar(client, "$.ipAddress")
+| alter client_os      = json_extract_scalar(client, "$.userAgent.os")
+| alter client_browser = json_extract_scalar(client, "$.userAgent.browser")
+| alter client_country = json_extract_scalar(client, "$.geographicalContext.country")
+| alter client_city    = json_extract_scalar(client, "$.geographicalContext.city")
+| alter IsProxy        = json_extract_scalar(securityContext, "$.isProxy")
+| alter AsOrg          = json_extract_scalar(securityContext, "$.asOrg")
+| alter ISP            = json_extract_scalar(securityContext, "$.isp")
+| alter ASN            = json_extract_scalar(securityContext, "$.asNumber")
+| alter From_Proxy     = if(IsProxy = "true", 1, 0)
+| filter session_id != null
+| comp count() as session_events,
+       count_distinct(client_ip) as distinct_ips,
+       count_distinct(client_country) as distinct_countries,
+       count_distinct(ASN) as distinct_asns,
+       count_distinct(dt_hash) as distinct_device_hashes,
+       count_distinct(client_os) as distinct_os,
+       count_distinct(client_browser) as distinct_browsers,
+       sum(From_Proxy) as proxy_events,
+       values(client_ip) as ips,
+       values(client_country) as countries,
+       values(ASN) as asns,
+       values(dt_hash) as device_hashes,
+       values(client_os) as os_list,
+       values(client_browser) as browser_list,
+       values(AsOrg) as AsOrg,
+       values(IsProxy) as proxy_flags
+    by session_id, actor_upn, actor_name
+| filter distinct_countries > 1 or distinct_device_hashes > 1 or distinct_os > 1
+| sort desc distinct_countries
