@@ -1,0 +1,13 @@
+// Google Workspace identity using a security investigation tool
+// 
+
+
+dataset = google_workspace_admin_console_raw 
+| alter UPN = json_extract_scalar(actor, "$.email")
+| alter events_str = to_string(`events`)
+| alter event_name = arrayindex(regextract(events_str, "\"name\":\s*\"([^\"]+)\""), 0)
+| alter Investigation_Data_Source = arrayindex(regextract(events_str, "\"name\":\s*\"INVESTIGATION_DATA_SOURCE\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| alter Investigation_Query = arrayindex(regextract(events_str, "\"name\":\s*\"INVESTIGATION_QUERY\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| filter event_name = "SECURITY_INVESTIGATION_QUERY"
+| filter UPN = "gwedgeworthadmin@alsde.edu"
+| fields _time, UPN, event_name, Investigation_Data_Source, Investigation_Query, ipAddress
