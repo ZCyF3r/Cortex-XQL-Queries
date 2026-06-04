@@ -1,0 +1,39 @@
+// Okta Group & Application Membership Changes (type-safe, privileged-scope ready)
+// Resolves user/group/app by target TYPE (array order isn't guaranteed), not by position.
+
+
+dataset = okta_sso_raw
+| filter displayMessage in ("Add user to group membership", "Add user to application membership", "Add assigned application to group")
+| alter actor_name = json_extract_scalar(actor, "$.displayName")
+| alter actor_upn = json_extract_scalar(actor, "$.alternateId")
+| alter outcome_result = json_extract_scalar(outcome, "$.result")
+| alter outcome_reason = json_extract_scalar(outcome, "$.reason")
+| alter client_ip = json_extract_scalar(client, "$.ipAddress")
+| alter client_browser = json_extract_scalar(client, "$.userAgent.browser")
+| alter client_os = json_extract_scalar(client, "$.userAgent.os")
+| alter client_country = json_extract_scalar(client, "$.geographicalContext.country")
+| alter client_city = json_extract_scalar(client, "$.geographicalContext.city")
+| alter auth_provider = json_extract_scalar(authenticationContext, "$.authenticationProvider")
+| alter credential_type = json_extract_scalar(authenticationContext, "$.credentialType")
+| alter target_str = to_string(`target`)
+| alter t0_type = json_extract_scalar(target_str, "$[0].type")
+| alter t0_name = json_extract_scalar(target_str, "$[0].displayName")
+| alter t0_alt  = json_extract_scalar(target_str, "$[0].alternateId")
+| alter t1_type = json_extract_scalar(target_str, "$[1].type")
+| alter t1_name = json_extract_scalar(target_str, "$[1].displayName")
+| alter t1_alt  = json_extract_scalar(target_str, "$[1].alternateId")
+| alter added_user     = if(t0_type = "User", t0_name, if(t1_type = "User", t1_name, null))
+| alter added_user_upn = if(t0_type = "User", t0_alt,  if(t1_type = "User", t1_alt,  null))
+| alter group_name     = if(t0_type = "UserGroup", t0_name, if(t1_type = "UserGroup", t1_name, null))
+| alter app_name       = if(t0_type = "AppInstance", t0_name, if(t1_type = "AppInstance", t1_name, null))
+| alter app_request_uri = json_extract_scalar(debugContext, "$.debugData.requestUri")
+| alter app_url = json_extract_scalar(debugContext, "$.debugData.url")
+// TURN THIS INTO A DETECTION (not just an audit feed) — fill with your real admin group names:
+//| filter group_name in ("Global Administrators", "Super Admins", "Okta Administrators")
+| fields _time, eventType, displayMessage, actor_name, actor_upn,
+         added_user, added_user_upn, group_name, app_name,
+         t0_type, t0_name, t1_type, t1_name,
+         app_request_uri, app_url, outcome_result, outcome_reason,
+         client_ip, client_browser, client_os, client_country, client_city,
+         auth_provider, credential_type, severity
+| sort desc _time
