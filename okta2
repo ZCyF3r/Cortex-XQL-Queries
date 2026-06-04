@@ -1,11 +1,5 @@
 // Okta Help-Desk Social Engineering / Account Takeover Detection
-// Confirmed-breach chain: AD-agent password reset -> attacker enrolls their OWN MFA factor + device
-// for a single user in one window. Surfaces distinct externalSessionId & dtHash — a new session/device
-// hash is the attacker's, distinct from the victim's.
-
-
-// Okta Help-Desk Social Engineering / Account Takeover Detection
-// Confirmed-breach chain: AD-agent password reset -> attacker enrolls their OWN MFA factor + device for a single user in one window. Surfaces distinct externalSessionId & dtHash — a new session/device hash is the attacker's, distinct from the victim's.
+// AD-agent password reset -> attacker enrolls their OWN MFA factor + device for a single user in one window. Surfaces distinct externalSessionId & dtHash — a new session/device hash is the attacker's, distinct from the victim's.
 
 
 dataset = okta_sso_raw
@@ -33,7 +27,7 @@ dataset = okta_sso_raw
 | alter is_factor_enroll = if(eventType = "user.mfa.factor.activate", 1, 0)
 | alter is_device_enroll = if(eventType in ("device.user.add", "device.enrollment.create", "device.lifecycle.activate"), 1, 0)
 | bin _time span = 1h
- comp sum(is_pwd_reset) as pwd_resets,
+| comp sum(is_pwd_reset) as pwd_resets,
        sum(is_factor_enroll) as factor_enrollments,
        sum(is_device_enroll) as device_enrollments,
        count_distinct(external_session_id) as distinct_sessions,
