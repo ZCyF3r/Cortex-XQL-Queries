@@ -1,0 +1,59 @@
+// Okta Credential Stuffing / Password Spray Detection (comprehensive)
+// All primary-auth FAILURE paths per source IP/ASN per window + native corroboration
+// (account lockouts, ThreatInsight detections, blocked requests). Surfaces landed successes & proxy origin.
+dataset = okta_sso_raw
+| filter eventType in (
+        "user.session.start",
+        "user.authentication.auth",
+        "user.authentication.auth_via_AD_agent",
+        "user.authentication.auth_via_IDP",
+        "user.authentication.auth_via_radius",
+        "user.authentication.auth_via_social",
+        "user.account.lock",
+        "security.threat.detected",
+        "security.request.blocked"
+  )
+| alter actor_upn      = json_extract_scalar(actor, "$.alternateId")
+| alter actor_name     = json_extract_scalar(actor, "$.displayName")
+| alter outcome_result = json_extract_scalar(outcome, "$.result")
+| alter outcome_reason = json_extract_scalar(outcome, "$.reason")
+| alter client_ip      = json_extract_scalar(client, "$.ipAddress")
+| alter client_os      = json_extract_scalar(client, "$.userAgent.os")
+| alter client_country = json_extract_scalar(client, "$.geographicalContext.country")
+| alter client_city    = json_extract_scalar(client, "$.geographicalContext.city")
+| alter IsProxy        = json_extract_scalar(securityContext, "$.isProxy")
+| alter AsOrg          = json_extract_scalar(securityContext, "$.asOrg")
+| alter ISP            = json_extract_scalar(securityContext, "$.isp")
+| alter ASN            = json_extract_scalar(securityContext, "$.asNumber")
+| alter From_Proxy     = if(IsProxy = "true", 1, 0)
+| alter is_primary_auth = if(eventType in ("user.session.start", "user.authentication.auth", "user.authentication.auth_via_AD_agent", "user.authentication.auth_via_IDP", "user.authentication.auth_via_radius", "user.authentication.auth_via_social"), 1, 0)
+| alter is_fail    = if(is_primary_auth = 1 and outcome_result = "FAILURE", 1, 0)
+| alter is_success = if(is_primary_auth = 1 and outcome_result = "SUCCESS", 1, 0)
+| alter is_lockout = if(eventType = "user.account.lock", 1, 0)
+| alter is_threat  = if(eventType = "security.threat.detected", 1, 0)
+| alter is_blocked = if(eventType = "security.request.blocked", 1, 0)
+| alter failed_user  = if(is_fail = 1, actor_upn, null)
+| alter success_user = if(is_success = 1, actor_upn, null)
+| alter locked_user  = if(is_lockout = 1, actor_upn, null)
+| alter threat_desc  = if(is_threat = 1, displayMessage, null)
+| bin _time span = 1h
+| comp sum(is_fail) as failed_attempts,
+       sum(is_success) as successful_logins,
+       sum(is_lockout) as lockouts,
+       sum(is_threat) as threatinsight_hits,
+       sum(is_blocked) as blocked_requests,
+       sum(From_Proxy) as proxy_events,
+       count_distinct(failed_user) as distinct_users_failed,
+       count_distinct(success_user) as distinct_users_succeeded,
+       count_distinct(locked_user) as distinct_users_locked,
+       values(failed_user) as targeted_users,
+       values(success_user) as compromised_users,
+       values(outcome_reason) as failure_reasons,
+       values(threat_desc) as threat_detections,
+       values(client_country) as countries,
+       values(IsProxy) as proxy_flags,
+       values(AsOrg) as AsOrg,
+       values(ISP) as ISP
+    by _time, client_ip, ASN
+| filter distinct_users_failed >= 10 or threatinsight_hits >= 1 or distinct_users_locked >= 5
+| sort desc distinct_users_failed
