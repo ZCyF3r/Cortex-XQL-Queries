@@ -15,7 +15,7 @@ dataset = cloud_audit_logs
 | alter service_account = json_extract_scalar(raw_log, "$.protoPayload.request.spec.serviceAccountName")
 | alter run_as_user = json_extract_scalar(raw_log, "$.protoPayload.request.spec.securityContext.runAsUser")
 | alter run_as_group = json_extract_scalar(raw_log, "$.protoPayload.request.spec.securityContext.runAsGroup")
-// Extract container-level security context
+// Extract container level security context
 | alter container_image = json_extract_scalar(raw_log, "$.protoPayload.request.spec.containers[0].image")
 | alter container_name = json_extract_scalar(raw_log, "$.protoPayload.request.spec.containers[0].name")
 | alter allow_priv_esc = json_extract_scalar(raw_log, "$.protoPayload.request.spec.containers[0].securityContext.allowPrivilegeEscalation")
