@@ -1,0 +1,37 @@
+// Kubernetes Privileged Pod & Container Escape
+// Detects pod creation with dangerous security settings including hostNetwork, privilege escalation, running as root, and capability abuse
+// MITRE T1611 - Escape to Host, T1610 - Deploy Container
+
+
+dataset = cloud_audit_logs
+| filter resource_type_orig = "k8s.io"
+| filter operation_name_orig = "io.k8s.core.v1.pods.create"
+// Extract identity and authorization
+| alter principal = json_extract_scalar(raw_log, "$.protoPayload.authenticationInfo.principalEmail")
+| alter auth_granted = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].granted")
+| alter auth_resource = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].resource")
+// Extract pod spec security settings
+| alter host_network = json_extract_scalar(raw_log, "$.protoPayload.request.spec.hostNetwork")
+| alter service_account = json_extract_scalar(raw_log, "$.protoPayload.request.spec.serviceAccountName")
+| alter run_as_user = json_extract_scalar(raw_log, "$.protoPayload.request.spec.securityContext.runAsUser")
+| alter run_as_group = json_extract_scalar(raw_log, "$.protoPayload.request.spec.securityContext.runAsGroup")
+// Extract container-level security context
+| alter container_image = json_extract_scalar(raw_log, "$.protoPayload.request.spec.containers[0].image")
+| alter container_name = json_extract_scalar(raw_log, "$.protoPayload.request.spec.containers[0].name")
+| alter allow_priv_esc = json_extract_scalar(raw_log, "$.protoPayload.request.spec.containers[0].securityContext.allowPrivilegeEscalation")
+| alter capabilities_drop = json_extract(raw_log, "$.protoPayload.request.spec.containers[0].securityContext.capabilities.drop")
+// Flag dangerous configurations
+| filter host_network = "true"
+    or allow_priv_esc = "true"
+    or run_as_user = "0"
+// Risk scoring
+| alter risk_level = if(
+    host_network = "true" and allow_priv_esc = "true", "CRITICAL",
+    host_network = "true", "HIGH",
+    allow_priv_esc = "true" and run_as_user = "0", "HIGH",
+    allow_priv_esc = "true", "MEDIUM",
+    "INFO"
+)
+//| filter risk_level in ("CRITICAL", "HIGH")
+//| filter principal ~= ""
+| fields _time, principal, operation_name_orig, auth_granted, auth_resource, container_name, container_image, service_account, host_network, allow_priv_esc, run_as_user, run_as_group, capabilities_drop, risk_level, referenced_resource_name, caller_ip, caller_ip_geolocation
