@@ -1,4 +1,4 @@
-// Kubernetes Privileged Pod & Container Escape
+// Kubernetes Privileged Pod & Container Escape (Management Plane)
 // Detects pod creation with dangerous security settings including hostNetwork, privilege escalation, running as root, and capability abuse
 // MITRE T1611 - Escape to Host, T1610 - Deploy Container
 
