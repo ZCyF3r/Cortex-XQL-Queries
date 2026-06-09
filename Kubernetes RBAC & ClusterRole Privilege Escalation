@@ -1,0 +1,24 @@
+// Kubernetes RBAC & ClusterRole Privilege Escalation
+// Detects creation or modification of ClusterRoles, ClusterRoleBindings, and RoleBindings which are used for privilege escalation in K8s
+// MITRE T1078.001 - Default Accounts, T1098 - Account Manipulation
+
+
+dataset = cloud_audit_logs
+| filter resource_type_orig = "k8s.io"
+| filter operation_name_orig ~= "(?i)(clusterrole|rolebinding|clusterrolebinding)\.(create|update|patch)"
+| alter principal = json_extract_scalar(raw_log, "$.protoPayload.authenticationInfo.principalEmail")
+| alter auth_granted = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].granted")
+| alter auth_resource = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].resource")
+// Extract role details from request
+| alter role_name = json_extract_scalar(raw_log, "$.protoPayload.request.metadata.name")
+| alter role_namespace = json_extract_scalar(raw_log, "$.protoPayload.request.metadata.namespace")
+| alter role_ref = json_extract_scalar(raw_log, "$.protoPayload.request.roleRef.name")
+// Flag cluster-admin bindings
+| alter is_cluster_admin = if(
+    role_ref = "cluster-admin", "CRITICAL",
+    role_ref ~= "(?i)(admin|edit|system)", "HIGH",
+    "MEDIUM"
+)
+//| filter is_cluster_admin = "CRITICAL"
+//| filter principal ~= ""
+| fields _time, principal, operation_name_orig, role_name, role_namespace, role_ref, is_cluster_admin, auth_granted, auth_resource, referenced_resource_name, caller_ip, caller_ip_geolocation, caller_ip_asn_org
