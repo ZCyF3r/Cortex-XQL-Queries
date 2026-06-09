@@ -1,7 +1,6 @@
-// Title       : Microsoft Graph Security Alerts - Cross Product Detection Triage
-// Description : Surfaces alerts across all Microsoft Defender products with full
-//               evidence enrichment using arraymap extraction across all evidence types
-//               Covers MDE, MDI, MDCA, MDO, Entra ID Protection via Graph Security API
+// Microsoft Graph Security Alerts for Cross Product Detection
+// Surfaces alerts across all Microsoft Defender products with full evidence enrichment using arraymap extraction across all evidence types
+// Covers MDE, MDI, MDCA, MDO, Entra ID Protection via Graph Security API
 
 dataset = msft_graph_security_alerts_raw
 | alter evidence_objects = json_extract_array(`evidence`, "$")
