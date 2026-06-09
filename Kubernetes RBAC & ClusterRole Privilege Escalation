@@ -1,4 +1,4 @@
-// Kubernetes RBAC & ClusterRole Privilege Escalation
+// Kubernetes RBAC & ClusterRole Privilege Escalation (Management Plane)
 // Detects creation or modification of ClusterRoles, ClusterRoleBindings, and RoleBindings which are used for privilege escalation in K8s
 // MITRE T1078.001 - Default Accounts, T1098 - Account Manipulation
 
