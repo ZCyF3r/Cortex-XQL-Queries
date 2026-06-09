@@ -1,4 +1,4 @@
-// Kubernetes Suspicious Namespace & Node Operations
+// Kubernetes Suspicious Namespace & Node Operations (Management Plane)
 // Detects creation of new namespaces and nodes via API server
 // MITRE T1610 - Deploy Container, T1496 - Resource Hijacking
 
@@ -10,7 +10,6 @@ dataset = cloud_audit_logs
 | alter auth_granted = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].granted")
 | alter auth_resource = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].resource")
 | alter resource_name = json_extract_scalar(raw_log, "$.protoPayload.request.metadata.name")
-// Flag operation type
 | alter op_type = if(
     operation_name_orig contains "delete", "DESTROY",
     operation_name_orig contains "create", "CREATE",
