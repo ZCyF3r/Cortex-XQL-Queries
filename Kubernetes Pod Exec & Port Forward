@@ -1,0 +1,22 @@
+// Kubernetes Pod Exec & Port Forward Detection
+// Detects kubectl exec and port-forward operations via the K8s API server
+// Exec = interactive shell access to running container
+// Port-forward = tunnel into pod network bypassing network policies
+// MITRE T1609 - Container Administration Command, T1572 - Protocol Tunneling
+
+
+dataset = cloud_audit_logs
+| filter resource_type_orig = "k8s.io"
+| filter operation_name_orig in ("io.k8s.core.v1.pods.exec.create", "io.k8s.core.v1.pods.portforward.create", "io.k8s.core.v1.pods.attach.create")
+| alter principal = json_extract_scalar(raw_log, "$.protoPayload.authenticationInfo.principalEmail")
+| alter auth_granted = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].granted")
+| alter auth_resource = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].resource")
+| alter op_type = if(
+    operation_name_orig contains "exec", "EXEC",
+    operation_name_orig contains "portforward", "PORT_FORWARD",
+    operation_name_orig contains "attach", "ATTACH",
+    "OTHER"
+)
+//| filter principal ~= ""
+//| filter op_type = "EXEC"
+| fields _time, principal, operation_name_orig, op_type, auth_granted, auth_resource, referenced_resource_name, caller_ip, caller_ip_geolocation, caller_ip_asn_org
