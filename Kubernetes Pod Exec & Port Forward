@@ -1,4 +1,4 @@
-// Kubernetes Pod Exec & Port Forward Detection
+// Kubernetes Pod Exec & Port Forward Detection (Management Plane)
 // Detects kubectl exec and port-forward operations via the K8s API server
 // Exec = interactive shell access to running container
 // Port-forward = tunnel into pod network bypassing network policies
