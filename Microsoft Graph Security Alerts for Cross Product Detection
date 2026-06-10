@@ -6,48 +6,59 @@
 dataset = msft_graph_security_alerts_raw
 | alter evidence_objects = json_extract_array(`evidence`, "$")
 // Device Evidence
-| alter device_names = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.deviceDnsName")), "@element" != null)
-| alter device_os = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.osPlatform")), "@element" != null)
-| alter device_version = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.version")), "@element" != null)
-| alter device_risk = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.riskScore")), "@element" != null)
+| alter DeviceName = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.deviceDnsName")), "@element" != null)
+| alter DeviceOS = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.osPlatform")), "@element" != null)
+| alter DeviceVersion = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.version")), "@element" != null)
+| alter DeviceRisk = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.riskScore")), "@element" != null)
 // User Evidence
-| alter logged_on_user = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.loggedOnUsers[0].accountName")), "@element" != null)
-| alter user_upns = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.userPrincipalName")), "@element" != null)
-| alter user_domains = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.domainName")), "@element" != null)
-| alter user_sids = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.userSid")), "@element" != null)
-| alter azure_ad_user_ids = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.azureAdUserId")), "@element" != null)
+| alter LoggedOnUser = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.loggedOnUsers[0].accountName")), "@element" != null)
+| alter displayName = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.displayName")), "@element" != null)
+| alter UserUPN = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.userPrincipalName")), "@element" != null)
+| alter UserDomain = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.domainName")), "@element" != null)
+| alter UserSID = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.userSid")), "@element" != null)
+| alter AADids = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.azureAdUserId")), "@element" != null)
 // IP Evidence
-| alter ip_addresses = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.ipAddress")), "@element" != null)
-| alter ip_countries = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.countryLetterCode")), "@element" != null)
+| alter IPaddress = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.ipAddress")), "@element" != null)
+| alter Country = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.countryLetterCode")), "@element" != null)
+| alter State = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.location.state")), "@element" != null)
+| alter City = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.location.city")), "@element" != null)
 // Process Evidence
-| alter process_cmds = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.processCommandLine")), "@element" != null)
-| alter process_created = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.processCreationDateTime")), "@element" != null)
+| alter ProcessCMD = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.processCommandLine")), "@element" != null)
+| alter ProcessCreation = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.processCreationDateTime")), "@element" != null)
 // File Evidence
-| alter file_names = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.fileName")), "@element" != null)
-| alter file_paths = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.filePath")), "@element" != null)
-| alter file_sha256 = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.sha256")), "@element" != null)
-| alter file_sha1 = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.sha1")), "@element" != null)
-| alter file_publishers = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.filePublisher")), "@element" != null)
+| alter FileName = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.fileName")), "@element" != null)
+| alter FilePath = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.filePath")), "@element" != null)
+| alter Filesha256 = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.sha256")), "@element" != null)
+| alter Filesha1 = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.sha1")), "@element" != null)
+| alter FilePublisher = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.fileDetails.filePublisher")), "@element" != null)
 // URL Evidence
-| alter urls = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.url")), "@element" != null)
+| alter URLs = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.url")), "@element" != null)
 // Analyzed Message Evidence (Email)
-| alter mail_subjects = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.subject")), "@element" != null)
-| alter mail_senders = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.senderEmail")), "@element" != null)
-| alter mail_recipients = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.recipientEmailAddress")), "@element" != null)
+| alter MailSubject = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.subject")), "@element" != null)
+| alter MailSender = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.senderEmail")), "@element" != null)
+| alter MailRecipient = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.recipientEmailAddress")), "@element" != null)
 | alter mail_delivery_action = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.deliveryAction")), "@element" != null)
 | alter mail_delivery_location = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.deliveryLocation")), "@element" != null)
 // Mailbox Evidence
-| alter mailbox_addresses = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.primaryAddress")), "@element" != null)
+| alter MailboxAddresses = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.primaryAddress")), "@element" != null)
 // Network Connection Evidence
-| alter net_dest_ips = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.destinationAddress")), "@element" != null)
-| alter net_dest_ports = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.destinationPort")), "@element" != null)
-| alter net_source_ips = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.sourceAddress")), "@element" != null)
+| alter DestinationIPs = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.destinationAddress")), "@element" != null)
+| alter DestinationPorts = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.destinationPort")), "@element" != null)
+| alter SourceIPs = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.sourceAddress")), "@element" != null)
 // Azure Resource Evidence
-| alter azure_resource_ids = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.resourceId")), "@element" != null)
-| alter azure_resource_types = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.resourceType")), "@element" != null)
+| alter AzureResourceIDs = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.resourceId")), "@element" != null)
+| alter AzureResourceTypes = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.resourceType")), "@element" != null)
 // Mail Cluster Evidence
 | alter mail_cluster_by = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.clusterBy")), "@element" != null)
 | alter mail_cluster_count = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.messageCount")), "@element" != null)
+// Cloud App Evidence
+| alter InstanceName = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.instanceName")), "@element" != null)
+| alter SaaSid = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.saasAppId")), "@element" != null)
+// Cloud Logon Session Evidence
+| alter SessionID = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.sessionId")), "@element" != null)
+| alter UserAgent = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAgent")), "@element" != null)
+| alter CloudSessCreatedTime = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.account.createdDateTime")), "@element" != null)
+| alter TenantId = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.account.userAccount.tenantId")), "@element" != null)
 // Evidence count for triage prioritization
 | alter evidence_count = array_length(evidence_objects)
 //| filter severity in ("high", "critical")
@@ -58,4 +69,4 @@ dataset = msft_graph_security_alerts_raw
 //| filter array_length(process_cmds) > 0
 //| filter title = "'"
 //| filter incidentId = ""
-| fields _time, title, category, severity, status, classification, determination, serviceSource, productName, incidentId, description, alertweburl, evidence_count, logged_on_user, user_upns, user_domains, user_sids, azure_ad_user_ids, device_names, device_os, device_version, device_risk, ip_addresses, ip_countries, process_cmds, process_created, file_names, file_paths, file_sha256, file_sha1, file_publishers, urls, net_dest_ips, net_dest_ports, net_source_ips, mail_subjects, mail_senders, mail_recipients, mail_delivery_action, mail_delivery_location, mailbox_addresses, azure_resource_ids, azure_resource_types, mail_cluster_by, mail_cluster_count, evidence 
+| fields _time, title, category, severity, status, classification, determination, serviceSource, productName, incidentId, description, alertweburl, evidence_count, LoggedOnUser, UserUPN, UserDomain, UserSID, AADids, DeviceName, DeviceOS, DeviceVersion, DeviceRisk, IPaddress, Country, State, City, SessionID, UserAgent, tenantId, ProcessCMD, ProcessCreation, FileName, FilePath, Filesha256, Filesha1, FilePublisher, urls, DestinationIPs, DestinationPorts, SourceIPs, MailSubject, MailSender, MailRecipient, mail_delivery_action, mail_delivery_location, MailboxAddresses, AzureResourceIDs, AzureResourceTypes, mail_cluster_by, mail_cluster_count, evidence 
