@@ -2,13 +2,16 @@
 // Surfaces alerts across all Microsoft Defender products with full evidence enrichment using arraymap extraction across all evidence types
 // Covers MDE, MDI, MDCA, MDO, Entra ID Protection via Graph Security API
 
+
 dataset = msft_graph_security_alerts_raw
 | alter evidence_objects = json_extract_array(`evidence`, "$")
 // Device Evidence
 | alter device_names = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.deviceDnsName")), "@element" != null)
 | alter device_os = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.osPlatform")), "@element" != null)
+| alter device_version = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.version")), "@element" != null)
 | alter device_risk = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.riskScore")), "@element" != null)
 // User Evidence
+| alter logged_on_user = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.loggedOnUsers[0].accountName")), "@element" != null)
 | alter user_upns = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.userPrincipalName")), "@element" != null)
 | alter user_domains = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.domainName")), "@element" != null)
 | alter user_sids = arrayfilter(arraymap(evidence_objects, json_extract_scalar("@element", "$.userAccount.userSid")), "@element" != null)
@@ -53,4 +56,6 @@ dataset = msft_graph_security_alerts_raw
 //| filter array_length(user_upns) > 0
 //| filter array_length(file_sha256) > 0
 //| filter array_length(process_cmds) > 0
-| fields _time, title, category, severity, status, classification, determination, serviceSource, productName, incidentId, description, alertweburl, evidence_count, user_upns, user_domains, user_sids, azure_ad_user_ids, device_names, device_os, device_risk, ip_addresses, ip_countries, process_cmds, process_created, file_names, file_paths, file_sha256, file_sha1, file_publishers, urls, net_dest_ips, net_dest_ports, net_source_ips, mail_subjects, mail_senders, mail_recipients, mail_delivery_action, mail_delivery_location, mailbox_addresses, azure_resource_ids, azure_resource_types, mail_cluster_by, mail_cluster_count
+//| filter title = "'"
+//| filter incidentId = ""
+| fields _time, title, category, severity, status, classification, determination, serviceSource, productName, incidentId, description, alertweburl, evidence_count, logged_on_user, user_upns, user_domains, user_sids, azure_ad_user_ids, device_names, device_os, device_version, device_risk, ip_addresses, ip_countries, process_cmds, process_created, file_names, file_paths, file_sha256, file_sha1, file_publishers, urls, net_dest_ips, net_dest_ports, net_source_ips, mail_subjects, mail_senders, mail_recipients, mail_delivery_action, mail_delivery_location, mailbox_addresses, azure_resource_ids, azure_resource_types, mail_cluster_by, mail_cluster_count, evidence 
