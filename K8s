@@ -1,9 +1,0 @@
-dataset = cloud_audit_logs
-| filter operation_name_orig = "io.k8s.core.v1.pods.create"
-| alter principal_email = json_extract_scalar(raw_log, "$.protoPayload.authenticationInfo.principalEmail")
-| alter method_name = json_extract_scalar(raw_log, "$.protoPayload.methodName")
-| alter request_spec = json_extract(raw_log, "$.protoPayload.request.spec")
-
-| alter auth_decision = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].granted")
-| alter auth_permission = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].permission")
-| alter auth_resource = json_extract_scalar(raw_log, "$.protoPayload.authorizationInfo[0].resource")
