@@ -1,6 +1,7 @@
-// General Suspicious Device Code Activity
-// 
-// 
+// General Device Code Phishing
+// Detects device code flow abuse targeting Microsoft Office and Authentication
+// Broker AppIds from unmanaged non-compliant devices with unbound tokens
+// MITRE T1528 - Steal Application Access Token, T1621 - MFA Request Generation
 
 
 dataset = msft_azure_ad_raw
