@@ -2,20 +2,21 @@
 // Detects high volume storage object listing and downloads indicating data exfiltration or reconnaissance of cloud storage contents
 // MITRE T1530 - Data from Cloud Storage, T1619 - Cloud Storage Object Discovery
 
+
 dataset = cloud_audit_logs
 | filter cloud_provider = ENUM.GCP
 | filter operation_name_orig in ("storage.objects.list", "storage.objects.get")
-| alter bucket_name = to_string(referenced_resource_name)
-| alter project_id = json_extract_scalar(raw_log, "$.resource.labels.project_id")
-| alter user_agent = json_extract_scalar(raw_log, "$.httpRequest.userAgent")
+| alter BucketName = to_string(referenced_resource_name)
+| alter ProjectID = json_extract_scalar(raw_log, "$.resource.labels.project_id")
+| alter UserAgent = json_extract_scalar(raw_log, "$.httpRequest.userAgent")
 | bin _time span = 1h
-| comp count() as total_ops,
+| comp count() as total_operations,
          values(operation_name_orig) as operations,
          values(caller_ip) as source_ips,
          values(caller_ip_geolocation) as geolocations,
          values(user_agent) as user_agents
-         by _time, identity_name, identity_type, bucket_name,
-            caller_ip_asn_org, project_id
-| filter total_ops >= 50
+         by _time, identity_name, identity_type, BucketName,
+            caller_ip_asn_org, ProjectID
+| filter total_operations >= 50
 //| filter identity_name ~= ""
 //| filter total_ops >= 500
