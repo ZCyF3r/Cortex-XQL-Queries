@@ -1,0 +1,13 @@
+// 
+// 
+
+
+dataset = xdr_data 
+| filter event_type in(ENUM.PROCESS, ENUM.FILE)
+| filter action_file_name = "(?i)(README-IF-YOU-SEE-THIS-YOUVE-BEEN-HACKED.TXT)"
+    or (action_process_image_name ~= "(?i)(meshagent|meshcentral)"
+    and action_process_image_path ~= "(?i)(/tmp|/dev/shm|/var/tmp|/home|/root|Downloads)")
+    or (action_process_image_name ~= "(?i)(meshagent|meshcentral)"
+    and actor_process_image_name ~= "(?i)(bash|sh|dash|curl|wget|python)")
+//| filter agent_hostname = ""
+| fields _time, agent_hostname, actor_effective_username, event_type, actor_process_image_name, actor_process_image_path, actor_process_command_line, action_process_image_name, action_process_image_path, action_process_image_command_line, action_file_name, action_file_path
