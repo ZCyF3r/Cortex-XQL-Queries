@@ -16,5 +16,5 @@ dataset = msft_azure_ad_raw
 | filter Managed = "false"
 | filter Compliance = "false"
 | filter signInTokenProtectionStatus = "unbound"
-| filter appId in("d3590ed6-52b3-4102-aeff-aad2292ab01c", "29d9ed98-a469-4536-ade2-f981bc1d605e")
+| filter appId in("d3590ed6-52b3-4102-aeff-aad2292ab01c", "29d9ed98-a469-4536-ade2-f981bc1d605e", "4765445b-32c6-49b0-83e6-1d93765276ca", "1b730954-1685-4b74-9bfd-dac224a7b894", "04b07795-8ddb-461a-bbee-02f9e1bf7b46")
 | fields _time, device_code_time, UPN, appId, Compliance, Managed, Browser, device_code_ip, device_code_ua, _device_id, originalTransferMethod, signInTokenProtectionStatus
