@@ -1,0 +1,20 @@
+// ShinyHunters PeopleSoft Campaign - Network IOC Detection
+// Detects connections to confirmed ShinyHunters infrastructure targeting Oracle PeopleSoft servers via gadget chain exploitation (June 2026)
+// azurenetfiles.net TLS cert previously linked to ShinyHunters operations
+// MITRE T1190 - Exploit Public-Facing Application, T1041 - Exfiltration Over C2
+
+
+dataset = xdr_data
+| filter event_type in (ENUM.NETWORK, ENUM.STORY)
+| filter action_remote_ip in (
+    "142.11.200.186",
+    "142.11.200.187",
+    "142.11.200.188",
+    "142.11.200.189",
+    "142.11.200.190",
+    "108.174.202.99",
+    "176.120.22.24"
+)
+    or dns_query_name contains "azurenetfiles.net"
+//| filter agent_hostname ~= ""
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, actor_process_command_line, dns_query_name, action_remote_ip, action_remote_port, action_local_port
