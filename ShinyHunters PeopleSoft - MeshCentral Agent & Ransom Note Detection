@@ -1,5 +1,7 @@
-// 
-// 
+// ShinyHunters PeopleSoft - MeshCentral Agent & Ransom Note Detection
+// Detects MeshCentral remote access agent deployment and ransom note file creation on compromised PeopleSoft servers
+// MeshCentral used as post-exploitation persistence mechanism
+// MITRE T1219 - Remote Access Software, T1486 - Data Encrypted for Impact
 
 
 dataset = xdr_data 
