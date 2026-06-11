@@ -23,7 +23,7 @@ dataset = okta_sso_raw
 | alter external_session_id = json_extract_scalar(authenticationContext, "$.externalSessionId")
 | alter dt_hash = json_extract_scalar(debugContext, "$.debugData.dtHash")
 | alter subject_upn = if(eventType in ("system.agent.ad.reset_user_password", "user.account.reset_password"), target_upn, actor_upn)
-| alter is_pwd_reset     = if(eventType in ("system.agent.ad.reset_user_password", "user.account.reset_password"), 1, 0)
+| alter is_pwd_reset = if(eventType in ("system.agent.ad.reset_user_password", "user.account.reset_password"), 1, 0)
 | alter is_factor_enroll = if(eventType = "user.mfa.factor.activate", 1, 0)
 | alter is_device_enroll = if(eventType in ("device.user.add", "device.enrollment.create", "device.lifecycle.activate"), 1, 0)
 | bin _time span = 1h
