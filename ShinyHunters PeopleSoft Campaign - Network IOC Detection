@@ -1,6 +1,7 @@
 // ShinyHunters PeopleSoft Campaign - Network IOC Detection
 // Detects connections to confirmed ShinyHunters infrastructure targeting Oracle PeopleSoft servers via gadget chain exploitation (June 2026)
 // azurenetfiles.net TLS cert previously linked to ShinyHunters operations
+// https://www.bleepingcomputer.com/news/security/oracle-peoplesoft-servers-hacked-in-shinyhunters-data-theft-attacks/
 // MITRE T1190 - Exploit Public-Facing Application, T1041 - Exfiltration Over C2
 
 
