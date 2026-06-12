@@ -1,0 +1,23 @@
+// 
+// 
+
+
+dataset = slack_slack_raw 
+| filter action in ("anomaly", "audit_logs_records_searched_anomaly")
+| alter UPN = json_extract_scalar(actor, "$.user.email")
+| alter DisplayName = json_extract_scalar(actor, "$.user.name")
+| alter UserId = json_extract_scalar(actor, "$.user.id")
+| alter TeamId = json_extract_scalar(actor, "$.user.team")
+| alter SlackType = json_extract_scalar(context, "$.location.type")
+| alter SlackId = json_extract_scalar(context, "$.location.id")
+| alter SlackDomain = json_extract_scalar(context, "$.location.domain")
+| alter ReqUserAgent = json_extract_scalar(context, "$.ua")
+| alter SrcIP = json_extract_scalar(context, "$.ip_address")
+| alter SessId = json_extract_scalar(context, "$.session_id")
+| alter anomly_JA3 = json_extract_scalar(details, "$.client_ja3_fingerprint")
+| alter anomly_IPdetails = json_extract_scalar_array(details, "$.ip_address_details")
+| alter anomly_location = json_extract_scalar(details, "$.location")
+| alter anomly_previous_IP = json_extract_scalar(details, "$.previous_ua")
+| alter anomly_previous_UA = json_extract_scalar(details, "$.previous_ip_address")
+| alter anomly_reason = json_extract_scalar_array(details, "$.reason")
+| fields _time, action, DisplayName, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, anomly_JA3, anomly_location, anomly_IPdetails, anomly_previous_IP, anomly_previous_UA, anomly_reason
