@@ -20,8 +20,8 @@ dataset = slack_slack_raw
 | alter NonSSO = json_extract_scalar(details, "$.non_sso_only")
 | alter SucceededUsers = json_extract_scalar_array(details, "$.succeeded_users")
 | alter FailedUsers = json_extract_scalar_array(details, "$.failed_users")
-| alter EnterpriseName = json_extract_scalar_array(entity, "$.enterprise.name") 
-| alter EnterpriseId = json_extract_scalar_array(entity, "$.enterprise.id") 
-| alter WorkSpaceName = json_extract_scalar_array(entity, "$.workspace.name") 
-| alter WorkSpaceId = json_extract_scalar_array(entity, "$.workspace.id")
+| alter EnterpriseName = json_extract_scalar(entity, "$.enterprise.name") 
+| alter EnterpriseId = json_extract_scalar(entity, "$.enterprise.id") 
+| alter WorkSpaceName = json_extract_scalar(entity, "$.workspace.name") 
+| alter WorkSpaceId = json_extract_scalar(entity, "$.workspace.id")
 | fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, MobileOnly, WebOnly, NonSSO, SucceededUsers, FailedUsers, EnterpriseName, EnterpriseId, WorkSpaceName, WorkSpaceId
