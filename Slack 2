@@ -35,4 +35,4 @@ dataset = slack_slack_raw
 | alter AppScopes = json_extract_scalar_array(entity, "$.app.scopes")
 //| filter UPN = ""
 //| filter InternalIntegration = ""
-| fields _time, action, DisplayName, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, InternalIntegration, AppOwnerId, TargetUserId, BotScopes, TokenRotationEnabled, PreviousScope, NewScope, GranularBotToken, AppId, AppName, IsDistributed, IsDirectoryApproved, IsWorkflowApp, AppScopes
+| fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, InternalIntegration, AppOwnerId, TargetUserId, BotScopes, TokenRotationEnabled, PreviousScope, NewScope, GranularBotToken, AppId, AppName, IsDistributed, IsDirectoryApproved, IsWorkflowApp, AppScopes
