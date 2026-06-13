@@ -1,0 +1,38 @@
+// 
+// 
+
+
+dataset = slack_slack_raw 
+| filter action in ("app_installed", "app_scopes_expanded", "app_collaborator_added")
+| alter UPN = json_extract_scalar(actor, "$.user.email")
+| alter DisplayName = json_extract_scalar(actor, "$.user.name")
+| alter UserId = json_extract_scalar(actor, "$.user.id")
+| alter TeamId = json_extract_scalar(actor, "$.user.team")
+| alter SlackType = json_extract_scalar(context, "$.location.type")
+| alter SlackId = json_extract_scalar(context, "$.location.id")
+| alter SlackDomain = json_extract_scalar(context, "$.location.domain")
+| alter ReqUserAgent = json_extract_scalar(context, "$.ua")
+| alter SrcIP = json_extract_scalar(context, "$.ip_address")
+| alter SessId = json_extract_scalar(context, "$.session_id")
+| alter InternalIntegration = json_extract_scalar(details, "$.is_internal_integration")
+// App Installed
+| alter AppOwnerId = json_extract_scalar(details, "$.app_owner_id")
+| alter BotScopes = json_extract_scalar_array(details, "$.bot_scopes")
+| alter TokenRotationEnabled = json_extract_scalar(details,"$.is_token_rotation_enabled_app")
+// App Scopes
+| alter PreviousScope = json_extract_scalar_array(details, "$.previous_scopes")
+| alter NewScope = json_extract_scalar_array(details, "$.new_scopes")
+| alter GranularBotToken = json_extract_scalar(details, "$.granular_bot_token")
+// App Collaborator
+| alter AppOwnerId = json_extract_scalar(details, "$.app_owner_id")
+| alter TargetUserId = json_extract_scalar(details, "$.target_user_id")
+// App Details
+| alter AppId = json_extract_scalar(entity, "$.app.id")
+| alter AppName = json_extract_scalar(entity, "$.app.name")
+| alter IsDistributed = json_extract_scalar(entity, "$.app.is_distributed")
+| alter IsDirectoryApproved = json_extract_scalar(entity, "$.app.is_directory_approved")
+| alter IsWorkflowApp = json_extract_scalar(entity, "$.app.is_workflow_app")
+| alter AppScopes = json_extract_scalar_array(entity, "$.app.scopes")
+//| filter UPN = ""
+//| filter InternalIntegration = ""
+| fields _time, action, DisplayName, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, InternalIntegration, AppOwnerId, TargetUserId, BotScopes, TokenRotationEnabled, PreviousScope, NewScope, GranularBotToken, AppId, AppName, IsDistributed, IsDirectoryApproved, IsWorkflowApp, AppScopes
