@@ -1,5 +1,6 @@
-// 
-// 
+// Slack Suspicious App Installation & Permission Escalation
+// Detects new app installations and OAuth scope expansions which can be used for persistent data access and exfiltration from Slack
+// MITRE T1528 - Steal Application Access Token, T1195.002 - Supply Chain Compromise
 
 
 dataset = slack_slack_raw 
