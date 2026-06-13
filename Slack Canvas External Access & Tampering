@@ -1,4 +1,4 @@
-// Slack Canvas External Access & Tampering Detection
+// Slack Canvas External Access & Tampering
 // Detects external users accessing internal canvases and suspicious canvas deletion or access level changes
 // Canvases can contain sensitive runbooks, credentials, and org data
 // MITRE T1530 - Data from Cloud Storage, T1213 - Data from Information Repositories
