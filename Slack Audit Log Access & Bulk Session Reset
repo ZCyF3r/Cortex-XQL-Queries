@@ -1,5 +1,6 @@
-// 
-// 
+// Slack Audit Log Access & Bulk Session Reset
+// Detects attackers searching audit logs to understand what was logged and bulk session resets which may indicate account takeover response or attacker evicting legitimate users from their sessions
+// MITRE T1562.008 - Disable Cloud Logs, T1531 - Account Access Removal
 
 
 dataset = slack_slack_raw 
@@ -24,4 +25,7 @@ dataset = slack_slack_raw
 | alter EnterpriseId = json_extract_scalar(entity, "$.enterprise.id") 
 | alter WorkSpaceName = json_extract_scalar(entity, "$.workspace.name") 
 | alter WorkSpaceId = json_extract_scalar(entity, "$.workspace.id")
+//| filter UPN = ""
+//| filter EnterpriseName = ""
+//| filter WorkSpaceName = ""
 | fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, MobileOnly, WebOnly, NonSSO, SucceededUsers, FailedUsers, EnterpriseName, EnterpriseId, WorkSpaceName, WorkSpaceId
