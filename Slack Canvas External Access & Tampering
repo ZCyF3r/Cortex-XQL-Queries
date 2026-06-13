@@ -1,5 +1,7 @@
-// 
-// 
+// Slack Canvas External Access & Tampering Detection
+// Detects external users accessing internal canvases and suspicious canvas deletion or access level changes
+// Canvases can contain sensitive runbooks, credentials, and org data
+// MITRE T1530 - Data from Cloud Storage, T1213 - Data from Information Repositories
 
 
 dataset = slack_slack_raw 
@@ -26,4 +28,8 @@ dataset = slack_slack_raw
 | alter CanvasName = json_extract_scalar(entity, "$.file.name")
 | alter CanvasFileType = json_extract_scalar(entity, "$.file.filetype")
 | alter CanvasTitle = json_extract_scalar(entity, "$.file.title")
+//| filter UPN = ""
+//| filter CanvasName = ""
+//| filter IsExternalEntity = "true"
+//| filter CanvasTitle = ""
 | fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, EntityType, EntityUserId, EntityTeam, IsExternalEntity, AccessLevel, CanvasType, CanvasId, CanvasName, CanvasTitle, CanvasFileType
