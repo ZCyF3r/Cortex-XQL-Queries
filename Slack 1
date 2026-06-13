@@ -20,4 +20,4 @@ dataset = slack_slack_raw
 | alter anomly_previous_IP = json_extract_scalar(details, "$.previous_ua")
 | alter anomly_previous_UA = json_extract_scalar(details, "$.previous_ip_address")
 | alter anomly_reason = json_extract_scalar_array(details, "$.reason")
-| fields _time, action, DisplayName, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, anomly_JA3, anomly_location, anomly_IPdetails, anomly_previous_IP, anomly_previous_UA, anomly_reason
+| fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, anomly_JA3, anomly_location, anomly_IPdetails, anomly_previous_IP, anomly_previous_UA, anomly_reason
