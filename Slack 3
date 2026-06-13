@@ -1,0 +1,29 @@
+// 
+// 
+
+
+dataset = slack_slack_raw 
+| filter action in ("canvas_access_added", "canvas_deleted", "canvas_created", "canvas_edited")
+| alter UPN = json_extract_scalar(actor, "$.user.email")
+| alter DisplayName = json_extract_scalar(actor, "$.user.name")
+| alter UserId = json_extract_scalar(actor, "$.user.id")
+| alter TeamId = json_extract_scalar(actor, "$.user.team")
+| alter SlackType = json_extract_scalar(context, "$.location.type")
+| alter SlackId = json_extract_scalar(context, "$.location.id")
+| alter SlackDomain = json_extract_scalar(context, "$.location.domain")
+| alter ReqUserAgent = json_extract_scalar(context, "$.ua")
+| alter SrcIP = json_extract_scalar(context, "$.ip_address")
+| alter SessId = json_extract_scalar(context, "$.session_id")
+// Canvas Access Added
+| alter EntityType = json_extract_scalar(details, "$.entity_type")
+| alter EntityUserId = json_extract_scalar(details, "$.user")
+| alter EntityTeam = json_extract_scalar(details, "$.entity_team")
+| alter IsExternalEntity = json_extract_scalar(details, "$.is_external_user")
+| alter AccessLevel = json_extract_scalar(details, "$.access_level")
+// Canvas Create, Edit, & Delete
+| alter CanvasType = json_extract_scalar(entity, "$.type")
+| alter CanvasId = json_extract_scalar(entity, "$.file.id")
+| alter CanvasName = json_extract_scalar(entity, "$.file.name")
+| alter CanvasFileType = json_extract_scalar(entity, "$.file.filetype")
+| alter CanvasTitle = json_extract_scalar(entity, "$.file.title")
+| fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, EntityType, EntityUserId, EntityTeam, IsExternalEntity, AccessLevel, CanvasType, CanvasId, CanvasName, CanvasTitle, CanvasFileType
