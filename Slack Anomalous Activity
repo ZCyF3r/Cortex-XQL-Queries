@@ -1,5 +1,6 @@
-// 
-// 
+// Slack Anomalous Activity
+// Surfaces Slack's own anomaly detection events including impossible travel, new device access, suspicious IP changes and behavioral anomalies
+// MITRE T1078 - Valid Accounts, T1539 - Steal Web Session Cookie
 
 
 dataset = slack_slack_raw 
