@@ -1,0 +1,27 @@
+// 
+// 
+
+
+dataset = slack_slack_raw 
+| filter action in ("audit_logs_records_searched", "bulk_session_reset_by_admin")
+| alter UPN = json_extract_scalar(actor, "$.user.email")
+| alter DisplayName = json_extract_scalar(actor, "$.user.name")
+| alter UserId = json_extract_scalar(actor, "$.user.id")
+| alter TeamId = json_extract_scalar(actor, "$.user.team")
+| alter SlackType = json_extract_scalar(context, "$.location.type")
+| alter SlackId = json_extract_scalar(context, "$.location.id")
+| alter SlackDomain = json_extract_scalar(context, "$.location.domain")
+| alter ReqUserAgent = json_extract_scalar(context, "$.ua")
+| alter SrcIP = json_extract_scalar(context, "$.ip_address")
+| alter SessId = json_extract_scalar(context, "$.session_id")
+// Bulk Session Reset
+| alter MobileOnly = json_extract_scalar(details, "$.mobile_only")
+| alter WebOnly = json_extract_scalar(details, "$.web_only")
+| alter NonSSO = json_extract_scalar(details, "$.non_sso_only")
+| alter SucceededUsers = json_extract_scalar_array(details, "$.succeeded_users")
+| alter FailedUsers = json_extract_scalar_array(details, "$.failed_users")
+| alter EnterpriseName = json_extract_scalar_array(entity, "$.enterprise.name") 
+| alter EnterpriseId = json_extract_scalar_array(entity, "$.enterprise.id") 
+| alter WorkSpaceName = json_extract_scalar_array(entity, "$.workspace.name") 
+| alter WorkSpaceId = json_extract_scalar_array(entity, "$.workspace.id")
+| fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, MobileOnly, WebOnly, NonSSO, SucceededUsers, FailedUsers, EnterpriseName, EnterpriseId, WorkSpaceName, WorkSpaceId
