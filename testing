@@ -1,0 +1,28 @@
+dataset = crowdstrike_falcon_event_raw
+| alter crwd_hostname = json_extract_scalar(device, "$.hostname")
+| alter crwd_local_ip = json_extract_scalar(device, "$.local_ip")
+| alter crwd_external_ip = json_extract_scalar(device, "$.external_ip")
+| alter crwd_device_id = json_extract_scalar(device, "$.device_id")
+| alter crwd_os = json_extract_scalar(device, "$.os_version")
+| alter crwd_platform = json_extract_scalar(device, "$.platform_name")
+| alter assoc_files_str = to_string(`associated_files`)
+| alter crwd_sha256 = arrayindex(regextract(assoc_files_str, "\"sha256\":\s*\"([^\"]+)\""), 0)
+| alter crwd_filepath = arrayindex(regextract(assoc_files_str, "\"filepath\":\s*\"([^\"]+)\""), 0)
+| alter crwd_time = _time
+| alter crwd_cmdline = CMDLine
+| alter crwd_filename = filename
+| alter crwd_host_normalized = lowercase(arrayindex(split(crwd_hostname, "."), 0))
+| join type = inner (
+    dataset = xdr_data
+    | filter event_type in (ENUM.PROCESS, ENUM.FILE)
+    | alter xdr_host_normalized = lowercase(agent_hostname)
+    | alter xdr_sha256 = action_file_sha256
+    | alter xdr_time = _time
+    | alter xdr_process = action_process_image_name
+    | alter xdr_cmdline = action_process_command_line
+    | alter xdr_filename = action_file_name
+    | alter xdr_user = actor_effective_username
+) as xdr xdr.xdr_host_normalized = crwd_host_normalized
+| filter timestamp_diff(crwd_time, xdr_time, "MINUTE") <= 5
+    and timestamp_diff(crwd_time, xdr_time, "MINUTE") >= -5
+| fields crwd_time, xdr_time, crwd_hostname, crwd_local_ip, crwd_external_ip, crwd_device_id, crwd_os, crwd_platform, crwd_filename, crwd_filepath, crwd_sha256, crwd_cmdline, xdr_process, xdr_filename, xdr_sha256, xdr_cmdline, xdr_user
