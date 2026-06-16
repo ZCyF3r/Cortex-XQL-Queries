@@ -18,6 +18,7 @@ dataset = saas_audit_logs
 | alter team_name = json_extract_scalar(raw_log, "$.TeamName")
 | alter target_user = json_extract_scalar(raw_log, "$.TargetUserId")
 | alter org_id = json_extract_scalar(raw_log, "$.OrgId")
+| alter DeviceID = json_extract_scalar(raw_log, "$.DeviceId")
 // Flag high risk distribution modes and operation types
 | alter risk_level = if(
     operation_name_orig = "AppCreated", "HIGH",
@@ -32,8 +33,6 @@ dataset = saas_audit_logs
 //    addon_name ~= "(?i)(password|credential|vault|harvest|exfil|tunnel|proxy|backdoor|rat|remote|shell|cmd|powershell|invoke|bypass|hook|intercept|capture|keylog|steal)",
 //    "SUSPICIOUS_NAME", "OK"
 //)
+//| filter identity_name = ""
 | fields _time, identity_name, operation_name_orig, addon_name, addon_guid, addon_type, app_external_id, azure_ad_app_id, app_distribution_mode, team_name, team_guid, target_user, risk_level, caller_ip, caller_ip_geolocation, caller_ip_asn_org, user_agent, raw_log
 | sort desc _time
-//| filter risk_level = "HIGH"
-//| filter name_risk = "SUSPICIOUS_NAME"
-//| filter identity_name ~= ""
