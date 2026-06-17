@@ -13,6 +13,7 @@ dataset = cloud_audit_logs
     "MICROSOFT.WEB/SITES/START/ACTION"
 )
 | filter identity_name != null and identity_name != ""
+//| filter identity_name ~= ""
 | alter resource_name = to_string(referenced_resource_name)
 | alter op_risk = if(
     operation_name_orig = "MICROSOFT.WEB/SITES/VPNSITES/WRITE", "Network Tunneling - Hybrid Connection",
@@ -20,5 +21,4 @@ dataset = cloud_audit_logs
     operation_name_orig = "MICROSOFT.WEB/SITES/START/ACTION", "Service Restart - Config Reload",
     "Other"
 )
-//| filter identity_name ~= ""
-| fields _time, identity_name, identity_invoked_by_name, identity_type, identity_sub_type,  operation_name_orig, op_risk, operation_status_orig,  resource_name, caller_ip,  caller_ip_geolocation, caller_ip_asn_org,  user_agent, region
+| fields _time, identity_name, identity_invoked_by_name, identity_type, identity_sub_type,  operation_name_orig, op_risk, operation_status_orig, operation_name, operation_status, resource_name, project, caller_ip,  caller_ip_geolocation, caller_ip_asn_org,  user_agent, region
