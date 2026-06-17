@@ -1,0 +1,24 @@
+// Azure App Service Deployment & Code Modification
+// Detects creation/modification of App Service resources and hostname bindings which can be used to deploy webshells or hijack the app domain
+// SITES/WRITE = app creation or code deployment
+// HOSTNAMEBINDINGS/WRITE = domain hijack or phishing infrastructure
+// MITRE T1505.003 - Web Shell, T1078.004 - Valid Accounts
+
+
+dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure
+| filter operation_name_orig in (
+    "MICROSOFT.WEB/SITES/WRITE",
+    "MICROSOFT.WEB/SITES/HOSTNAMEBINDINGS/WRITE",
+    "MICROSOFT.WEB/SITES/CERTIFICATES/WRITE"
+)
+| filter identity_name != null and identity_name != ""
+| alter resource_name = to_string(referenced_resource_name)
+| alter op_risk = if(
+    operation_name_orig = "MICROSOFT.WEB/SITES/HOSTNAMEBINDINGS/WRITE", "Domain Hijack / Phishing Infra",
+    operation_name_orig = "MICROSOFT.WEB/SITES/CERTIFICATES/WRITE", "Certificate Manipulation",
+    operation_name_orig = "MICROSOFT.WEB/SITES/WRITE", "App Creation / Code Deploy",
+    "Other"
+)
+//| filter identity_name ~= ""
+| fields _time, identity_name, identity_invoked_by_name, identity_type, identity_sub_type, operation_name_orig, op_risk, operation_status_orig, resource_name, caller_ip, caller_ip_geolocation, caller_ip_asn_org, user_agent, region
