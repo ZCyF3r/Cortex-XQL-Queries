@@ -9,7 +9,18 @@ dataset = saas_audit_logs
 | alter UserChatName = json_extract_scalar(raw_log, "$.Members[0].DisplayName")
 | alter UPN = json_extract_scalar(raw_log, "$.Members[1].UPN")
 | alter UserID = json_extract_scalar(raw_log, "$.UserId")
+| alter
+    caller_infrastructure = trim(json_extract(caller_ip_enrichment , "$.infrastructure"), "\""),
+    caller_behaviors = json_extract(caller_ip_enrichment , "$.behaviors"),
+    caller_client_proxies = json_extract(caller_ip_enrichment , "$.client_proxies"),
+    caller_tunnels_entries = json_extract(caller_ip_enrichment , "$.tunnels_entries"),
+    caller_tunnels_exits = json_extract(caller_ip_enrichment , "$.tunnels_exits"),
+    caller_tunnels_operator = json_extract(caller_ip_enrichment , "$.tunnels_operator"),
+    caller_tunnels_anonymous = json_extract(caller_ip_enrichment , "$.tunnels_anonymous"),
+    caller_tunnels_type = json_extract(caller_ip_enrichment , "$.tunnels_type"),
+    caller_tunnels_data = json_extract(caller_ip_enrichment , "$.tunnels_data"),
+    caller_risks = json_extract(caller_ip_enrichment , "$.risks")
 | filter sender_domain != "" and sender_domain != null
 | filter UserChatName ~= "(?i)^(?:\b(?:help(?:desk)?|it|service|support|tech|abuse|admin(?:istrator)?|account|alert|assistant|audit|authentication|azure|compliance|corporate|cyber|domain|duo|emergency|entra|finance|fraud|hr|human|identity|incident|legal|m365|mfa|microsoft|network|notification|okta|operations|password|payable|payroll|reset|security|sharepoint|soc|system|teams|threat|verif(?:y|ication))\b.*(?:admin(?:istrator)?|agent|bot|department|desk|resources|support|technician)?)"
     or UserID ~= "(?i)^(?:(?:\b(?:help|it|service|support|tech|abuse|admin(?:istrator)?|account|alert|assistant|audit|authentication|azure|compliance|corporate|cyber|domain|duo|emergency|entra|finance|fraud|hr|human|identity|incident|legal|m365|mfa|microsoft|network|notification|okta|operations|password|payable|payroll|reset|security|sharepoint|soc|system|teams|threat|verif(?:y|ication))[\._%+\-]?(?:desk|support|admin(?:istrator)?|agent|bot|resources|technician)?).*?@.+)"
-| fields _time, identity_name, UserChatName, UserID, sender_domain, UPN, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, raw_log
+| fields _time, identity_name, UserChatName, UserID, sender_domain, UPN, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, caller_infrastructure, caller_behaviors, caller_client_proxies, caller_tunnels_entries, caller_tunnels_exits, caller_tunnels_operator, caller_tunnels_anonymous, caller_tunnels_type, caller_tunnels_data, caller_risks, raw_log
