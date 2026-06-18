@@ -7,7 +7,8 @@ dataset = saas_audit_logs
 | filter operation_name_orig in("MessageSent", "ChatCreated")
 | alter sender_domain = arrayindex(regextract(identity_name, "@(.+)$"), 0)
 | alter UserChatName = json_extract_scalar(raw_log, "$.Members[0].DisplayName")
-| alter UPN = json_extract_scalar(raw_log, "$.Members[1].UPN")
+| alter InternalUPN = json_extract_scalar(raw_log, "$.Members[1].UPN")
+| alter InternalDisplayName = json_extract_scalar(raw_log, "$.Members[1].DisplayName")
 | alter UserID = json_extract_scalar(raw_log, "$.UserId")
 | alter
     caller_infrastructure = trim(json_extract(caller_ip_enrichment , "$.infrastructure"), "\""),
@@ -23,4 +24,4 @@ dataset = saas_audit_logs
 | filter sender_domain != "" and sender_domain != null
 | filter UserChatName ~= "(?i)^(?:\b(?:help(?:desk)?|it|service|support|tech|abuse|admin(?:istrator)?|account|alert|assistant|audit|authentication|azure|compliance|corporate|cyber|domain|duo|emergency|entra|finance|fraud|hr|human|identity|incident|legal|m365|mfa|microsoft|network|notification|okta|operations|password|payable|payroll|reset|security|sharepoint|soc|system|teams|threat|verif(?:y|ication))\b.*(?:admin(?:istrator)?|agent|bot|department|desk|resources|support|technician)?)"
     or UserID ~= "(?i)^(?:(?:\b(?:help|it|service|support|tech|abuse|admin(?:istrator)?|account|alert|assistant|audit|authentication|azure|compliance|corporate|cyber|domain|duo|emergency|entra|finance|fraud|hr|human|identity|incident|legal|m365|mfa|microsoft|network|notification|okta|operations|password|payable|payroll|reset|security|sharepoint|soc|system|teams|threat|verif(?:y|ication))[\._%+\-]?(?:desk|support|admin(?:istrator)?|agent|bot|resources|technician)?).*?@.+)"
-| fields _time, identity_name, UserChatName, UserID, sender_domain, UPN, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, caller_infrastructure, caller_behaviors, caller_client_proxies, caller_tunnels_entries, caller_tunnels_exits, caller_tunnels_operator, caller_tunnels_anonymous, caller_tunnels_type, caller_tunnels_data, caller_risks, raw_log
+| fields _time, identity_name, UserChatName, UserID, sender_domain, InternalUPN, InternalDisplayName, operation_name_orig, referenced_resource_name, caller_ip, caller_ip_asn, caller_ip_geolocation, caller_infrastructure, caller_behaviors, caller_client_proxies, caller_tunnels_entries, caller_tunnels_exits, caller_tunnels_operator, caller_tunnels_anonymous, caller_tunnels_type, caller_tunnels_data, caller_risks, raw_log
