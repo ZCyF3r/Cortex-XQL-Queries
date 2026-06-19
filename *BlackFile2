@@ -1,0 +1,38 @@
+
+ * Actor: BlackFile / Cordial Spider (CL-CRI-1116 / UNC6671)
+ * Behaviour: New MFA factor enrollment/activation originating from residential
+ * or commercial proxy infrastructure — post-AiTM phishing persistence mechanism.
+ * Proxies are used to bypass IP-based controls before registering a new
+ * authenticator, granting durable account access.
+
+
+dataset = okta_sso_raw
+| filter eventtype in (
+    "user.mfa.factor.activate",
+    "user.mfa.factor.update",
+    "user.mfa.factor.reset_all",
+    "user.mfa.factor.deactivate"
+  )
+| alter actor_upn = actor -> alternateId
+| alter actor_name = actor -> displayName
+| alter outcome_result = outcome -> result
+// Extract enrolled factor details from target array
+| alter factor_type = coalesce(
+    json_extract_scalar(target, "$[0].type"),
+    json_extract_scalar(target, "$[0].displayName")
+  )
+// Extract client network context
+| alter client_ip = client -> ipAddress
+| alter client_country = client -> geographicalContext.country
+| alter client_city = client -> geographicalContext.city
+| alter user_agent = client -> userAgent.rawUserAgent
+// Extract Okta security context for proxy/ASN evaluation
+| alter asn_org = securitycontext -> asOrg
+| alter asn = securitycontext -> asNumber
+| alter is_proxy = securitycontext -> isProxy
+// Filter: known BlackFile-associated proxy ASN orgs OR Okta proxy flag
+// Residential/commercial proxy networks used by BlackFile/Cordial Spider
+| filter (
+    asn_org ~= "mullvad|netnut|9proxy|infatica|nsocks|oxylabs|oxylab|datacamp|m247|packethub|clouvider|ipxo|proxyline|brightdata|luminati|smartproxy|soax|proxyrack|packetstream"
+  ) or is_proxy = "true"
+| fields _timeactor_upn, actor_name, outcome_result, factor_type, client_ip, client_country, client_city, asn, asn_org, is_proxy, user_agent
