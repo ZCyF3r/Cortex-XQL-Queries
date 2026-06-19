@@ -1,9 +1,5 @@
-/*
- * Detection: BlackFile/Cordial Spider MFA Enrollment via Proxy Infrastructure (Okta)
- * Behavior: Post-AiTM credential capture followed by rapid high-volume SaaS API/file
- *           operations across Microsoft 365 services within a compressed time window.
- * Actor: BlackFile / Cordial Spider
- * Services: SharePoint, OneDrive, MicrosoftTeams, Exchange
+// BlackFile\Cordial Spider MFA Enrollment via Proxy Infrastructure
+// Rapid high-volume SaaS API/file operations across Microsoft 365 services within a compressed time window from known proxy ASNs
 
 
 dataset = saas_audit_logs
@@ -29,11 +25,7 @@ dataset = saas_audit_logs
     count_distinct(operation_name_orig) as distinct_operations,
     count_distinct(source_file) as distinct_files,
     values(operation_name_orig) as operations_list,
-    values(service_type) as services_list,
-    earliest(_time) as window_start,
-    latest(_time) as window_end,
-    max(caller_ip_geolocation) as caller_ip_geolocation,
-    max(caller_ip_asn_org) as caller_ip_asn_org
+    values(service_type) as services_list
   by identity_name, time_bucket, caller_ip, caller_ip_asn_org
 | filter operation_count >= 50 and distinct_services >= 2
 | alter is_proxy_asn = if(
@@ -41,5 +33,4 @@ dataset = saas_audit_logs
     "TRUE",
     "FALSE"
   )
-| fields identity_name, time_bucket, window_start, window_end, caller_ip, caller_ip_asn_org, caller_ip_geolocation, is_proxy_asn, operation_count, distinct_services, distinct_operations, distinct_files, operations_list, services_list,
-| sort desc operation_count
+| fields identity_name, time_bucket, caller_ip, caller_ip_asn_org, is_proxy_asn, operation_count, distinct_services, distinct_operations, distinct_files, operations_list, services_list
