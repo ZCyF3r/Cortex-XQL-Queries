@@ -35,4 +35,4 @@ dataset = okta_sso_raw
 | filter (
     asn_org ~= "mullvad|netnut|9proxy|infatica|nsocks|oxylabs|oxylab|datacamp|m247|packethub|clouvider|ipxo|proxyline|brightdata|luminati|smartproxy|soax|proxyrack|packetstream"
   ) or is_proxy = "true"
-| fields _timeactor_upn, actor_name, outcome_result, factor_type, client_ip, client_country, client_city, asn, asn_org, is_proxy, user_agent
+| fields _time, actor_upn, actor_name, outcome_result, factor_type, client_ip, client_country, client_city, asn, asn_org, is_proxy, user_agent
