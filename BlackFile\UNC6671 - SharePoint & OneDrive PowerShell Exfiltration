@@ -1,0 +1,35 @@
+// BlackFile\UNC6671 - SharePoint & OneDrive PowerShell Exfiltration
+// Detects programmatic file downloads from SharePoint and OneDrive using PowerShell, PnP, Graph SDK, or python automation rather than browser access
+// Confirmed BlackFile/Cordial Spider TTP - PowerShell scripts to bulk exfiltrate sensitive data from SaaS after MFA-bypassed access
+// MITRE T1567 - Exfiltration Over Web Service, T1059.001 - PowerShell
+
+
+dataset = saas_audit_logs
+| filter service_type in ("SharePoint", "OneDrive")
+| filter operation_name_orig in (
+    "FileDownloaded",
+    "FileSyncDownloadedFull",
+    "FileAccessed",
+    "FilePreviewed"
+)
+| filter user_agent ~= "(?i)(powershell|pwsh|pnp|microsoft.graph|graphsdk|msgraph|python|python-requests|axios|node|undici|curl|wget|go-http|httpx|aiohttp|invoke-webrequest|invoke-restmethod)"
+| alter 
+    FileName = json_extract_scalar(raw_log, "$.SourceFileName"),
+    FileExtension = json_extract_scalar(raw_log, "$.SourceFileExtension"),
+    FilePath = json_extract_scalar(raw_log, "$.SourceRelativeUrl"),
+    SiteURL = json_extract_scalar(raw_log, "$.SiteUrl"),
+    ClientIP = json_extract_scalar(raw_log, "$.ClientIP"),
+    tunnels_anonymous = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    tunnels_type = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+// Flag the automation type for triage
+| alter exfil_method = if(
+    user_agent ~= "(?i)(pnp|microsoft.graph|graphsdk|msgraph)", "Graph/PnP SDK",
+    user_agent ~= "(?i)(powershell|pwsh|invoke-webrequest|invoke-restmethod)", "PowerShell",
+    user_agent ~= "(?i)(python-requests|python|aiohttp|httpx)", "Python",
+    user_agent ~= "(?i)(axios|node|undici)", "Node.js",
+    user_agent ~= "(?i)(curl|wget|go-http)", "CLI Tool",
+    "Other Automation"
+)
+//| filter identity_name ~= ""
+//| filter tunnels_anonymous = "true"
+| fields _time, identity_name, operation_name_orig, service_type, exfil_method, FileName, FileExtension, FilePath, SiteURL, caller_ip, caller_ip_geolocation, caller_ip_asn_org, user_agent, tunnels_anonymous, tunnels_type, raw_log
