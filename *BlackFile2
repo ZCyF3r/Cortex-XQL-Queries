@@ -13,26 +13,21 @@ dataset = okta_sso_raw
     "user.mfa.factor.reset_all",
     "user.mfa.factor.deactivate"
   )
-| alter actor_upn = actor -> alternateId
-| alter actor_name = actor -> displayName
-| alter outcome_result = outcome -> result
-// Extract enrolled factor details from target array
-| alter factor_type = coalesce(
-    json_extract_scalar(target, "$[0].type"),
-    json_extract_scalar(target, "$[0].displayName")
-  )
-// Extract client network context
-| alter client_ip = client -> ipAddress
-| alter client_country = client -> geographicalContext.country
-| alter client_city = client -> geographicalContext.city
-| alter user_agent = client -> userAgent.rawUserAgent
-// Extract Okta security context for proxy/ASN evaluation
-| alter asn_org = securitycontext -> asOrg
-| alter asn = securitycontext -> asNumber
-| alter is_proxy = securitycontext -> isProxy
-// Filter: known BlackFile-associated proxy ASN orgs OR Okta proxy flag
-// Residential/commercial proxy networks used by BlackFile/Cordial Spider
+| alter 
+    actor_upn = actor -> alternateId,
+    actor_name = actor -> displayName,
+    outcome_result = outcome -> result,
+    outcome_reason = outcome -> reason,
+    login_risks = debugContext -> debugData.risk,
+    client_ip = client -> ipAddress,
+    client_country = client -> geographicalContext.country,
+    client_city = client -> geographicalContext.city,
+    user_agent = client -> userAgent.rawUserAgent,
+    asn_org = securitycontext -> asOrg,
+    asn = securitycontext -> asNumber,
+    is_proxy = securitycontext -> isProxy
+// Known BlackFile associated proxy ASN orgs OR Okta proxy flags & Residential/commercial proxy networks used by BlackFile/Cordial Spider
 | filter (
     asn_org ~= "mullvad|netnut|9proxy|infatica|nsocks|oxylabs|oxylab|datacamp|m247|packethub|clouvider|ipxo|proxyline|brightdata|luminati|smartproxy|soax|proxyrack|packetstream"
   ) or is_proxy = "true"
-| fields _time, actor_upn, actor_name, outcome_result, factor_type, client_ip, client_country, client_city, asn, asn_org, is_proxy, user_agent
+| fields _time, actor_name, actor_upn, eventType, outcome_result, outcome_reason, login_risks, client_ip, client_country, client_city, asn, asn_org, user_agent, is_proxy
