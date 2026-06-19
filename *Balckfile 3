@@ -1,0 +1,45 @@
+/*
+ * Detection: BlackFile/Cordial Spider MFA Enrollment via Proxy Infrastructure (Okta)
+ * Behavior: Post-AiTM credential capture followed by rapid high-volume SaaS API/file
+ *           operations across Microsoft 365 services within a compressed time window.
+ * Actor: BlackFile / Cordial Spider
+ * Services: SharePoint, OneDrive, MicrosoftTeams, Exchange
+
+
+dataset = saas_audit_logs
+| filter service_type in ("SharePoint", "OneDrive", "MicrosoftTeams", "Exchange")
+| filter operation_name_orig in (
+    "FileDownloaded",
+    "FileSyncDownloadedFull",
+    "FileAccessed",
+    "FilePreviewed",
+    "FileUploaded",
+    "Send",
+    "SearchQueryPerformed",
+    "TeamsSessionStarted",
+    "MessageSent"
+  )
+| filter identity_name != null and caller_ip != null
+| bin _time span = 10m
+| alter time_bucket = _time
+| alter source_file = json_extract_scalar(raw_log, "$.SourceFileName")
+| comp
+    count() as operation_count,
+    count_distinct(service_type) as distinct_services,
+    count_distinct(operation_name_orig) as distinct_operations,
+    count_distinct(source_file) as distinct_files,
+    values(operation_name_orig) as operations_list,
+    values(service_type) as services_list,
+    earliest(_time) as window_start,
+    latest(_time) as window_end,
+    max(caller_ip_geolocation) as caller_ip_geolocation,
+    max(caller_ip_asn_org) as caller_ip_asn_org
+  by identity_name, time_bucket, caller_ip, caller_ip_asn_org
+| filter operation_count >= 50 and distinct_services >= 2
+| alter is_proxy_asn = if(
+    caller_ip_asn_org ~= "(?i)(proxy|vpn|hosting|cloud|digital ocean|linode|vultr|choopa|m247|privatevpn|mullvad|nordvpn|expressvpn|surfshark|hide\.me|torguard|perfect privacy|anonine|ovh|hetzner|serverius|leaseweb)",
+    "TRUE",
+    "FALSE"
+  )
+| fields identity_name, time_bucket, window_start, window_end, caller_ip, caller_ip_asn_org, caller_ip_geolocation, is_proxy_asn, operation_count, distinct_services, distinct_operations, distinct_files, operations_list, services_list,
+| sort desc operation_count
