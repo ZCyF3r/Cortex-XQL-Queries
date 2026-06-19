@@ -1,0 +1,22 @@
+// 
+// 
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter actor_process_image_name = "regsvr32.exe" or action_process_image_name = "regsvr32.exe"
+| filter action_process_command_line != null
+| filter action_process_command_line ~= "(?i)\.dll"
+| filter (
+    action_process_command_line ~= "(?i)\\temp\\"
+    or action_process_command_line ~= "(?i)\\users\\[^\\]+\\appdata\\"
+    or action_process_command_line ~= "(?i)\\programdata\\"
+    or action_process_command_line ~= "(?i)\\users\\[^\\]+\\downloads\\"
+    or action_process_command_line ~= "(?i)\\users\\[^\\]+\\desktop\\"
+    or action_process_command_line ~= "(?i)\\users\\public\\"
+    or action_process_command_line ~= "(?i)\\windows\\temp\\"
+    or action_process_command_line ~= "(?i)\\appdata\\local\\temp\\"
+    or action_process_command_line ~= "(?i)\\appdata\\roaming\\"
+    or action_process_command_line ~= "(?i)\\appdata\\local\\"
+)
+| fields _time, agent_hostname, actor_process_image_name, actor_process_image_path, actor_process_command_line, action_process_image_name, action_process_image_path, action_process_command_line, actor_effective_username, actor_primary_username
