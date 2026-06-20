@@ -1,5 +1,6 @@
-// BlackFile\Cordial Spider High Volume M365 Operations
-// Rapid high-volume SaaS API/file operations across Microsoft 365 services within a compressed time window from known proxy ASNs
+// BlackFile/Cordial Spider/Unc6671 High Volume M365 Cross-Service Operations
+// Detects rapid high-volume file and messaging operations across multiple Microsoft 365 services (SharePoint, OneDrive, Teams, Exchange) within a compressed 10-minute window.
+// MITRE T1567 - Exfiltration Over Web Service, T1530 - Data from Cloud Storage, T1213 - Data from Information Repositories
 
 
 dataset = saas_audit_logs
