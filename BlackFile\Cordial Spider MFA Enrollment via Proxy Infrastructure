@@ -7,7 +7,12 @@ dataset = okta_sso_raw
     "user.mfa.factor.activate",
     "user.mfa.factor.update",
     "user.mfa.factor.reset_all",
-    "user.mfa.factor.deactivate"
+    "user.mfa.factor.deactivate",
+    "device.enrollment.create",
+    "device.lifecycle.activate",
+    "device.user.add",
+    "system.agent.ad.reset_user_password",
+    "user.authentication.sso"
   )
 | alter 
     actor_upn = actor -> alternateId,
@@ -26,4 +31,5 @@ dataset = okta_sso_raw
 | filter (
     asn_org ~= "mullvad|netnut|9proxy|infatica|nsocks|oxylabs|oxylab|datacamp|m247|packethub|clouvider|ipxo|proxyline|brightdata|luminati|smartproxy|soax|proxyrack|packetstream"
   ) or is_proxy = "true"
+//| filter actor_upn = ""
 | fields _time, actor_name, actor_upn, eventType, outcome_result, outcome_reason, login_risks, client_ip, client_country, client_city, asn, asn_org, user_agent, is_proxy
