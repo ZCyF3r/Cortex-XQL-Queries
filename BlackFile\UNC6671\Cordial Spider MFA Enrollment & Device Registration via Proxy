@@ -1,4 +1,4 @@
-// BlackFile/Cordial Spider MFA Enrollment & Device Registration via Proxy
+// BlackFile\UNC6671\Cordial Spider MFA Enrollment & Device Registration via Proxy
 // Detects MFA factor activation, device enrollment, and password resets originating from residential/commercial proxy infrastructure.
 // MITRE T1556.006 - Modify Authentication Process: MFA, T1098.005 - Account Manipulation: Device Registration, T1090.003 - Multi-hop Proxy
 
