@@ -1,4 +1,4 @@
-// BlackFile\UNC6671\Cordial SPider SharePoint & OneDrive Automation Data Exfil
+// BlackFile\UNC6671\Cordial Spider SharePoint & OneDrive Automation Data Exfil
 // Detects programmatic file downloads from SharePoint and OneDrive using PowerShell, PnP, Graph SDK, or python automation rather than browser access
 // MITRE T1567 - Exfiltration Over Web Service, T1059.001 - PowerShell
 
