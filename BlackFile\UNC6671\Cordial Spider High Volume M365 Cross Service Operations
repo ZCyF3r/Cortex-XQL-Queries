@@ -1,4 +1,4 @@
-// BlackFile/Cordial Spider/Unc6671 High Volume M365 Cross-Service Operations
+// BlackFile\UNC6671\Cordial Spider High Volume M365 Cross Service Operations
 // Detects rapid high-volume file and messaging operations across multiple Microsoft 365 services (SharePoint, OneDrive, Teams, Exchange) within a compressed 10-minute window.
 // MITRE T1567 - Exfiltration Over Web Service, T1530 - Data from Cloud Storage, T1213 - Data from Information Repositories
 
