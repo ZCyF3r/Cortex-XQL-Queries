@@ -1,5 +1,6 @@
-// 
-// 
+// Regsvr32 DLL Execution from Suspicious Directory (Squiblydoo \ DLL Sideloading)
+// Detects regsvr32.exe loading DLLs from user-writable directories such as Temp, AppData, ProgramData, Downloads, Desktop, and Public. Legitimate DLL  registration runs from System32 or Program Files - execution from these paths indicates LOLBin abuse for proxy execution, DLL sideloading, or defense evasion commonly used to launch malware payloads.
+// MITRE T1218.010 - System Binary Proxy Execution: Regsvr32, T1574.002 - Hijack Execution Flow: DLL Side-Loading
 
 
 dataset = xdr_data
