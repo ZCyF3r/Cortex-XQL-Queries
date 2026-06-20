@@ -3,7 +3,6 @@
 // MITRE T1087.004 (Cloud Account), T1069.003 (Cloud Groups)
 
 
-// Direct Graph API calls to directory endpoints
 dataset = cloud_audit_logs
 | filter log_name = "microsoft_graph_activity_logs"
 // Only GET requests to directory-related URI paths
@@ -11,64 +10,23 @@ dataset = cloud_audit_logs
 | filter request_uri ~= "(?i)(/users|/groups|/members|/contacts|/directoryObjects|/servicePrincipals|/orgContacts|/transitiveMembers|/scim/v2/users|/scim/v2/groups)"
 // Only requests from known automation/scripting user agents
 | filter user_agent ~= "(?i)(powershell|pwsh|python|python-requests|requests|axios|node|undici|curl|wget|go-http|httpx|aiohttp|invoke-webrequest|invoke-restmethod|microsoft\.graph|graphsdk|msgraph|pnp|graph-explorer)"
-// NOTE: Validate identity/actor field names against cloud_audit_logs schema
-| alter norm_identity   = identity_name
-| alter norm_operation  = operation_name
-| alter norm_resource   = request_uri
-| alter norm_user_agent = user_agent
-| alter norm_caller_ip  = caller_ip
-| alter norm_asn        = caller_ip_asn_org
 
-// Azure AD/Entra directory audit operations
-| union (
-    dataset = msft_azure_ad_audit_raw
-    // Directory read operations consistent with bulk enumeration
-    | filter operation_name in (
-        "Get User",
-        "List Users",
-        "List Group Members",
-        "List Groups",
-        "Get Group",
-        "List DirectoryObjects",
-        "Get DirectoryObject",
-        "List Members",
-        "List OwnedObjects",
-        "List RegisteredDevices",
-        "List MemberOf",
-        "List TransitiveMemberOf",
-        "List Contacts",
-        "List OrgContacts"
-      )
-    // NOTE: Validate identity/actor field names against msft_azure_ad_audit_raw schema
-    | alter norm_identity   = identity_name
-    | alter norm_operation  = operation_name
-    | alter norm_resource   = resource_name
-    | alter norm_user_agent = user_agent
-    | alter norm_caller_ip  = caller_ip
-    | alter norm_asn        = caller_ip_asn_org
-  )
-
-// Geolocation enrichment before aggregation
-| iploc norm_caller_ip loc_country as caller_geo_country
+// NOTE: identity_name and caller_ip are assumed standard unified field names from
+// cloud_audit_logs and should be validated against the actual schema.
 
 // Bucket into 15-minute windows for burst detection
 | bin _time span = 15m
-
-// Aggregate per identity + time window + source IP + ASN
 | comp
-    count()                            as directory_query_count,
-    count_distinct(norm_operation)     as distinct_operations,
-    count_distinct(norm_resource)      as distinct_targets,
-    values(norm_operation)             as operations_list,
-    values(norm_resource)              as resources_list,
-    values(caller_geo_country)         as caller_countries,
-    values(norm_user_agent)            as user_agents
+    count()                        as directory_query_count,
+    count_distinct(request_uri)    as distinct_uris,
+    values(request_uri)            as uri_list,
+    values(user_agent)             as user_agents_list
   by
-    norm_identity,
+    identity_name,
     _time,
-    norm_caller_ip,
-    norm_asn
+    caller_ip,
+    caller_ip_asn_org
 
-// Alert on burst volume or breadth of unique target objects
-| filter directory_query_count >= 30 or distinct_targets >= 20
+// Alert on burst volume or breadth of unique directory URIs
+| filter directory_query_count >= 30 or distinct_uris >= 20
 | sort desc directory_query_count
