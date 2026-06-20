@@ -1,5 +1,4 @@
 // BlackFile\Cordial Spider MFA Enrollment via Proxy Infrastructure
-// Rapid high-volume SaaS API/file operations across Microsoft 365 services within a compressed time window from known proxy ASNs
 
 
 dataset = okta_sso_raw
