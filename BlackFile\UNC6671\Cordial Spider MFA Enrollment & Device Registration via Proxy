@@ -4,7 +4,7 @@
 
 
 dataset = okta_sso_raw
-| filter eventtype in (
+| filter eventType in (
     "user.mfa.factor.activate",
     "user.mfa.factor.update",
     "user.mfa.factor.reset_all",
