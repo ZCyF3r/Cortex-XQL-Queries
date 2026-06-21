@@ -1,0 +1,26 @@
+// BlackFile\UNC6671\Cordial Spider OAuth App Consent & Service Principal Persistence
+// Detects post-AiTM OAuth application registration, service principal creation, and broad permission grants used by BlackFile/Cordial Spider to maintain persistent access independent of user credentials.
+// MITRE T1098.001 Account Manipulation: Additional Cloud Credentials, T1136.003 Create Account: Cloud Account, T1528 Steal Application Access Token
+
+
+dataset = msft_azure_ad_audit_raw
+| filter activitydisplayname in (
+    "Add service principal credentials",
+    "Add OAuth2PermissionGrant",
+    "Consent to application",
+    "Add delegated permission grant",
+    "Add service principal",
+    "Add application"
+  )
+| filter result = "success"
+| alter actor_upn = json_extract_scalar(initiatedby, "$.user.userPrincipalName")
+| alter actor_id  = json_extract_scalar(initiatedby, "$.user.id")
+| alter actor_ip  = json_extract_scalar(initiatedby, "$.user.ipAddress")
+| filter actor_ip_enrichment ~= "(?i)mullvad|netnut|9proxy|infatica|nsocks|oxylabs|datacamp|m247|packethub|clouvider|brightdata|luminati|smartproxy|soax|proxyrack|packetstream"
+  or actor_ip_asn_org ~= "(?i)mullvad|netnut|9proxy|infatica|nsocks|oxylabs|datacamp|m247|packethub|clouvider|brightdata|luminati|smartproxy|soax|proxyrack|packetstream"
+| iploc actor_ip actor_country
+| filter json_extract_scalar(additionaldetails, "$.isProxy") = "true"
+| alter target_app_name      = json_extract_scalar(targetresources, "$[0].displayName")
+| alter target_app_id        = json_extract_scalar(targetresources, "$[0].id")
+| alter modified_properties  = json_extract(targetresources, "$[0].modifiedProperties")
+| fields _time, actor_upn, actor_id, actor_ip, actor_country, activitydisplayname, category, target_app_name, target_app_id, modified_properties, result, resultreason, loggedbyservice, additionaldetails
