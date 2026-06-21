@@ -1,0 +1,20 @@
+// BlackFile\UNC6671\Cordial Spider M365 Employee Directory Enumeration via Graph API and SCIM
+// Detects high-volume Microsoft Graph API and SCIM endpoint enumeration consistent with BlackFile/Cordial Spider employee directory scraping.
+// MITRE T1087.004 (Cloud Account), T1069.003 (Cloud Groups)
+
+
+dataset = cloud_audit_logs
+| filter log_name = "microsoft_graph_activity_logs"
+| filter operation_name = "GET"
+| filter operation_name_orig ~= "(?i)(/users|/groups|/members|/contacts|/directoryObjects|/servicePrincipals|/orgContacts|/transitiveMembers|/scim/v2/users|/scim/v2/groups)"
+| filter user_agent ~= "(?i)(powershell|pwsh|python|python-requests|requests|axios|node|undici|curl|wget|go-http|httpx|aiohttp|invoke-webrequest|invoke-restmethod|microsoft\.graph|graphsdk|msgraph|pnp|graph-explorer)"
+// Filtering out legit cloud providers
+| filter caller_ip_asn_org !~= "(?i)(google|amazon|microsoft|ibm)"
+| bin _time span = 30m
+| comp
+    count() as directory_query_count,
+    count_distinct(operation_name_orig) as distinct_uris,
+    values(operation_name_orig) as uri_list,
+    values(user_agent) as user_agents_list
+  by _time, identity_name, identity_invoked_by_name, operation_status, caller_ip, caller_ip_asn_org
+| filter directory_query_count >= 30 or distinct_uris >= 20
