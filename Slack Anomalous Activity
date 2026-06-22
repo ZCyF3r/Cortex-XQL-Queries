@@ -23,4 +23,4 @@ dataset = slack_slack_raw
 | alter anomaly_reason = json_extract_scalar_array(details, "$.reason")
 //| filter UPN = ""
 //| filter anomaly_reason = ""
-| fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, anomly_JA3, anomly_location, anomly_IPdetails, anomly_previous_IP, anomly_previous_UA, anomly_reason
+| fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, anomaly_JA3, anomaly_location, anomaly_IPdetails, anomaly_previous_IP, anomaly_previous_UA, anomaly_reason
