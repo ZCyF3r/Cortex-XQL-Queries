@@ -20,5 +20,6 @@ dataset = msft_azure_ad_audit_raw
     target_app_name = json_extract_scalar(targetresources, "$[0].displayName"),
     target_app_id = json_extract_scalar(targetresources, "$[0].id")
 | iploc actor_ip loc_country 
-| iploc actor_ip loc_asn_is_proxy 
+| iploc actor_ip loc_asn_is_proxy
+| filter loc_asn_is_proxy = "true"
 | fields _time, actor_upn, actor_id, actor_ip, loc_country, loc_asn_is_proxy, activitydisplayname, category, target_app_name, target_app_id, result, resultreason, loggedbyservice, additionaldetails, *
