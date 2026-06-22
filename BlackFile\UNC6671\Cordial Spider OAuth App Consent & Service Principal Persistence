@@ -1,5 +1,4 @@
-// BlackFile\UNC6671\Cordial Spider OAuth App Consent & Service Principal Persistence
-// Detects post-AiTM OAuth application registration, service principal creation, and broad permission grants used by BlackFile/Cordial Spider to maintain persistent access independent of user credentials.
+// High-Risk OAuth App Consent and Service Principal Operations via Proxy Infrastructure
 // MITRE T1098.001 Account Manipulation: Additional Cloud Credentials, T1136.003 Create Account: Cloud Account, T1528 Steal Application Access Token
 
 
