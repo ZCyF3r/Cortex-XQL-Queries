@@ -23,3 +23,33 @@ dataset = saas_audit_logs
 | alter anonmyousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous")
 | alter IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type")
 | fields _time, identity_name, operation_name_orig, operation_status, RuleName, referenced_resource, MarkedAs, ProcessingRules, IsVPN, anonmyousTunnel, caller_ip, caller_ip_geolocation, caller_ip_asn, user_agent
+
+
+
+dataset = saas_audit_logs
+| filter service_type = "Exchange"
+| filter operation_name_orig in ("New-InboxRule", "Set-InboxRule", "UpdateInboxRules")
+| alter RuleName = arrayindex(regextract(raw_log, "\"Name\":\s*\"Name\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter ToFolder = arrayindex(regextract(raw_log, "\"Name\":\s*\"MoveToFolder\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter MarkedAs = arrayindex(regextract(raw_log, "\"Name\":\s*\"MarkAsRead\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter DeleteMsg = arrayindex(regextract(raw_log, "\"Name\":\s*\"DeleteMessage\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter ProcessingRules = arrayindex(regextract(raw_log, "\"Name\":\s*\"StopProcessingRules\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter SubjectWords = arrayindex(regextract(raw_log, "\"Name\":\s*\"SubjectContainsWords\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter BodyWords = arrayindex(regextract(raw_log, "\"Name\":\s*\"BodyContainsWords\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous")
+| alter IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+// Suppression indicators
+| alter has_trivial_name = if(RuleName = "" or RuleName = null or RuleName ~= "^[\.;,\-_\s]{1,4}$", 1, 0)
+| alter has_hide_action = if(DeleteMsg = "True" or MarkedAs = "True"
+    or ToFolder in ("Conversation History", "Deleted Items", "RSS Feeds", "RSS Subscriptions", "Junk Email", "Archive"), 1, 0)
+| alter targets_security = if(SubjectWords ~= "(?i)(security|mfa|verif|authenticat|sign.in|sign-in|login|password|code|alert|microsoft|account|device|register|2fa|otp|unusual|suspicious)"
+    or BodyWords ~= "(?i)(security|mfa|verif|authenticat|sign.in|login|password|code|alert|microsoft|account|device|register|2fa|otp)", 1, 0)
+| alter suppression_score = has_trivial_name + has_hide_action + targets_security
+// Alert when at least a hide action + one other indicator
+| filter has_hide_action = 1 and (has_trivial_name = 1 or targets_security = 1)
+| fields _time, identity_name, operation_name_orig, operation_status,
+         RuleName, ToFolder, MarkedAs, DeleteMsg, ProcessingRules,
+         SubjectWords, BodyWords, suppression_score,
+         has_trivial_name, has_hide_action, targets_security,
+         IsVPN, anonymousTunnel, caller_ip,
+         caller_ip_geolocation, caller_ip_asn, user_agent
