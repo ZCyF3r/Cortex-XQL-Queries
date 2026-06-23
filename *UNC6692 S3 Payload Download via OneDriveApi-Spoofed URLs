@@ -6,6 +6,7 @@ dataset = xdr_data
 | filter (
     dns_query_name ~= "(?i)service-page-[0-9]+-[0-9]+-outlook\.s3\.[a-z0-9-]+\.amazonaws\.com"
     or dns_query_name ~= "(?i)[a-f0-9]{24}-[0-9]{6,7}-[0-9]\.s3\.us-east-2\.amazonaws\.com"
+    or dns_query_name ~= "cloud2822.s3.us-east-1.amazonaws.com"
     or dns_query_name contains "service-page-25144-30466-outlook.s3.us-west-2.amazonaws.com"
     or dns_query_name contains "cloudfront-021.s3.us-west-2.amazonaws.com"
     or dns_query_name contains "service-page-11369-28315-outlook.s3.us-west-2.amazonaws.com"
