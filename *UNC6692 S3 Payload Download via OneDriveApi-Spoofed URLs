@@ -1,0 +1,13 @@
+// UNC6692 S3 Payload Download via OneDriveApi-Spoofed URLs
+
+
+dataset = xdr_data
+| filter event_type in ("ENUM.STORY", "ENUM.NETWORK")
+| filter (
+    action_network_url ~= "(?i)service-page-[0-9]+-[0-9]+-outlook\.s3\.[a-z0-9-]+\.amazonaws\.com"
+    or action_network_url ~= "(?i)[a-f0-9]{24}-[0-9]{6,7}-[0-9]\.s3\.us-east-2\.amazonaws\.com"
+    or action_network_url contains "service-page-25144-30466-outlook.s3.us-west-2.amazonaws.com"
+    or action_network_url contains "cloudfront-021.s3.us-west-2.amazonaws.com"
+    or action_network_url contains "service-page-11369-28315-outlook.s3.us-west-2.amazonaws.com"
+  )
+| fields _time, agent_hostname, actor_effective_username, causality_actor_process_image_name, action_network_url
