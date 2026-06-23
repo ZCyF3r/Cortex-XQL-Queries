@@ -1,5 +1,5 @@
 // UNC6692 AutoHotKey binary execution via Teams vishing delivery chain
-// Known/renamed AHK binary launched from suspicious path by browser or Teams parent & cmd.exe or powershell.exe spawned as child of an AutoHotKey process
+// AHK binary launched from suspicious path by browser or Teams parent & cmd.exe or powershell.exe spawned as child of an AutoHotKey process
 // MITRE T1059.010, T1566.004, T1204.002
 
 
@@ -7,14 +7,14 @@ dataset = xdr_data
 | filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
 | filter causality_actor_process_image_name in ("msedge.exe", "chrome.exe", "firefox.exe", "iexplore.exe", "teams.exe", "ms-teams.exe")
 | filter (
-    actor_process_image_path contains "\\Downloads\\" or
-    actor_process_image_path contains "\\Temp\\" or
-    actor_process_image_path contains "\\AppData\\" or
-    actor_process_image_path contains "\\Desktop\\" or
-    actor_process_image_path contains "\\Public\\" or
-    actor_process_image_path contains "\\ProgramData\\"
+    actor_process_image_path contains "Downloads" or
+    actor_process_image_path contains "Temp" or
+    actor_process_image_path contains "AppData" or
+    actor_process_image_path contains "Desktop" or
+    actor_process_image_path contains "Public" or
+    actor_process_image_path contains "ProgramData"
 )
-| filter actor_process_image_name ~= (?i)^(patch|update|install|setup|repair|fix|upgrade|component|service|svc|reg)[a-z0-9_\-]*[0-9]+[a-z0-9_\-]*\.exe$
+| filter actor_process_image_name ~= "(?i)^(patch|update|install|setup|repair|fix|upgrade|component|service|svc|reg)[a-z0-9_\-]*[0-9]+[a-z0-9_\-]*\.exe$"
 | filter action_process_image_name in ("cmd.exe", "powershell.exe")
 | filter (
     action_process_image_command_line contains ".ahk" or
