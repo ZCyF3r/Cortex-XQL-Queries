@@ -1,0 +1,27 @@
+// UNC6692 Scheduled Task Persistence for SNOWGLAZE\SNOWBASIN\SNOWBELT
+// 
+
+
+config case_sensitive = false
+| dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name = "schtasks.exe"
+| filter action_process_command_line contains "/create"
+| filter (
+    action_process_command_line contains "autohotkey"
+    or action_process_command_line contains ".ahk"
+    or action_process_command_line contains "AutoHotkey64"
+    or action_process_command_line contains "snowglaze"
+    or action_process_command_line contains "snowbasin"
+    or action_process_command_line contains "snowbelt"
+    or action_process_command_line contains "python.exe"
+    or action_process_command_line contains "msedge"
+    or action_process_command_line ~= "[fieldfefe5-fe8fe9-fe9fe9-fe9\u0400-\u04FF]"
+    or actor_process_command_line ~= "[fieldfefe5-fe8fe9-fe9fe9-fe9\u0400-\u04FF]"
+)
+| alter cyrillic_task_name_match = if(
+    action_process_command_line ~= "[\u0400-\u04FF]" or actor_process_command_line ~= "[\u0400-\u04FF]",
+    "YES - Cyrillic task name",
+    "NO - matched on SNOWGLAZE/SNOWBASIN/SNOWBELT/AutoHotkey command line indicator"
+)
+| fields _time, agent_hostname, actor_effective_username, actor_process_image_name, actor_process_command_line, action_process_image_name, action_process_command_line, action_process_image_path, cyrillic_task_name_match
