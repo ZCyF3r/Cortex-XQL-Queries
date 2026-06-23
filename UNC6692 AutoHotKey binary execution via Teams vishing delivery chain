@@ -5,52 +5,22 @@
 
 dataset = xdr_data
 | filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
-| alter is_known_ahk_child = if(
-    action_process_image_name in ("AutoHotkey.exe", "AutoHotkeyU64.exe", "AutoHotkeyA32.exe"),
-    true, false
+| filter causality_actor_process_image_name in ("msedge.exe", "chrome.exe", "firefox.exe", "iexplore.exe", "teams.exe", "ms-teams.exe")
+| filter (
+    actor_process_image_path contains "\\Downloads\\" or
+    actor_process_image_path contains "\\Temp\\" or
+    actor_process_image_path contains "\\AppData\\" or
+    actor_process_image_path contains "\\Desktop\\" or
+    actor_process_image_path contains "\\Public\\" or
+    actor_process_image_path contains "\\ProgramData\\"
 )
-| alter is_suspicious_child_path = if(
-    action_process_image_path contains "\\Downloads\\" or
-    action_process_image_path contains "\\Temp\\" or
-    action_process_image_path contains "\\AppData\\" or
-    action_process_image_path contains "\\Public\\" or
-    action_process_image_path contains "\\Desktop\\" or
-    action_process_image_path contains "\\ProgramData\\",
-    true, false
+| filter actor_process_image_name ~= "(?i)(patch|update|install|setup|repair|fix|upgrade|component|service|svc|reg)[\\s_\\-]?[0-9].*\\.exe"
+| filter action_process_image_name in ("cmd.exe", "powershell.exe")
+| filter (
+    action_process_command_line contains ".ahk" or
+    action_process_command_line contains "AutoHotkey" or
+    action_process_command_line contains "AutoHotkeyU64" or
+    action_process_command_line contains "AutoHotkeyA32"
 )
-| alter is_ahk_style_cmdline = if(
-    action_process_command_line = null or
-    action_process_command_line ~= "(?i)^\"?[^\"]+\.exe\"?\\s*$" or
-    action_process_command_line ~= "(?i)^\"?[^\"]+\.exe\"?\\s+\"?[^\"]+\.ahk\"?\\s*$",
-    true, false
-)
-| alter is_browser_or_teams_parent = if(
-    actor_process_image_name in ("msedge.exe", "chrome.exe", "firefox.exe", "iexplore.exe", "teams.exe", "ms-teams.exe"),
-    true, false
-)
-| alter is_known_ahk_parent = if(
-    actor_process_image_name in ("AutoHotkey.exe", "AutoHotkeyU64.exe", "AutoHotkeyA32.exe"),
-    true, false
-)
-| alter is_shell_child = if(
-    action_process_image_name in ("cmd.exe", "powershell.exe"),
-    true, false
-)
-| filter
-    (is_known_ahk_child = true and is_suspicious_child_path = true and is_browser_or_teams_parent = true)
-    or
-    (is_known_ahk_child = false and is_suspicious_child_path = true and is_ahk_style_cmdline = true and is_browser_or_teams_parent = true)
-    or
-    (is_known_ahk_parent = true and is_shell_child = true)
-| alter detection_scenario = if(
-    is_known_ahk_child = true and is_browser_or_teams_parent = true,
-        "Known_AHK_Binary_Launched_By_Browser_Or_Teams",
-    is_known_ahk_child = false and is_ahk_style_cmdline = true and is_browser_or_teams_parent = true,
-        "Suspected_Renamed_AHK_Variant_Launched_By_Browser_Or_Teams",
-    is_known_ahk_parent = true and is_shell_child = true,
-        "Shell_Spawned_By_AHK_Parent",
-    "Unknown"
-)
-| fields _time, agent_hostname, actor_effective_username, actor_process_image_name as parent_process, actor_process_image_path as parent_process_path, actor_process_command_line as parent_command_line, action_process_image_name as child_process, action_process_image_path as child_process_path, action_process_command_line as child_command_line, detection_scenario
+| fields _time, agent_hostname, actor_effective_username, causality_actor_process_image_name as cgo_process, actor_process_image_name as parent_process, actor_process_image_path as parent_process_path, action_process_image_name as child_process, action_process_command_line as child_command_line
 | sort desc _time
-| limit 200
