@@ -14,7 +14,7 @@ dataset = xdr_data
     actor_process_image_path contains "\\Public\\" or
     actor_process_image_path contains "\\ProgramData\\"
 )
-| filter actor_process_image_name ~= "(?i)(patch|update|install|setup|repair|fix|upgrade|component|service|svc|reg)[\\s_\\-]?[0-9].*\\.exe"
+| filter actor_process_image_name ~= (?i)^(patch|update|install|setup|repair|fix|upgrade|component|service|svc|reg)[a-z0-9_\-]*[0-9]+[a-z0-9_\-]*\.exe$
 | filter action_process_image_name in ("cmd.exe", "powershell.exe")
 | filter (
     action_process_image_command_line contains ".ahk" or
