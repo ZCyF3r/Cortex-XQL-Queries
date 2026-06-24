@@ -25,3 +25,6 @@ config case_sensitive = false
     "NO - matched on SNOWGLAZE/SNOWBASIN/SNOWBELT/AutoHotkey command line indicator"
 )
 | fields _time, agent_hostname, actor_effective_username, actor_process_image_name, actor_process_command_line, action_process_image_name, action_process_command_line, action_process_image_path, cyrillic_task_name_match
+
+
+| filter actor_process_command_line ~= "(?i)schtasks.*\/tn.*[^\x00-\x7F]"
