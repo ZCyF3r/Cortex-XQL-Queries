@@ -1,6 +1,6 @@
-// UNC6692 AutoHotKey binary execution via Teams vishing delivery chain
-// AHK binary launched from suspicious path by browser or Teams parent & cmd.exe or powershell.exe spawned as child of an AutoHotKey process
-// MITRE T1059.010, T1566.004, T1204.002
+// UNC6692 AutoHotKey Binary Execution via Teams Vishing Delivery Chain
+// Detects renamed AutoHotKey binaries launched from user-writable paths by a browser or Teams parent process, spawning cmd or powershell as children. UNC6692 ("Snow Flurries") impersonates IT helpdesk over Teams, lures victims to a fake "Mailbox Repair Utility" page, and delivers a renamed AHK binary + same-named script from an attacker S3 bucket to install the SNOWBELT extension.
+// MITRE T1059.010 - AutoHotKey & AutoIT, T1566.004 - Spearphishing Voice / T1204.002 - Malicious File, T1036.005 - Match Legitimate Name or Location
 
 
 dataset = xdr_data
