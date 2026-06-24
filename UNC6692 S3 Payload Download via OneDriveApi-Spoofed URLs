@@ -1,4 +1,6 @@
-// UNC6692 S3 Payload Download via OneDriveApi-Spoofed URLs
+// UNC6692 S3 Payload Download via OneDrive/Outlook-Spoofed URLs
+// Detects DNS resolution to attacker-controlled AWS S3 buckets masquerading as Outlook/OneDrive service pages used by UNC6692 for phishing delivery, SNOWBELT C2, and credential exfiltration.
+// MITRE T1567.002 - Exfiltration to Cloud Storage, T1071.001 - Web Protocols / T1102 - Web Service, T1568.002 - Domain Generation Algorithms
 
 
 dataset = xdr_data
