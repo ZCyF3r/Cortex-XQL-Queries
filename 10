@@ -1,0 +1,32 @@
+// UNC6692 SNOWBELT - msedge.exe launched with SNOWBELT-specific extension flags
+// Indicators: --headless=new, User Data path (AppData\Local\Microsoft\Edge\User Data\),
+// --load-extension, --no-first-run and --disable-sync scheduled task flags
+// MITRE ATT&CK: T1176, T1539, T1185
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name = "msedge.exe" or actor_process_image_name = "msedge.exe"
+| alter cmd = coalesce(action_process_command_line, actor_process_command_line)
+| filter cmd contains "--headless=new"
+| filter cmd contains "User Data"
+| filter cmd contains "--load-extension"
+| filter (cmd contains "--no-first-run" and cmd contains "--disable-sync")
+| alter detection_indicators = concat(
+    if(cmd contains "User Data", "User Data ", ""),
+    if(cmd contains "--headless=new", "headless=new ", ""),
+    if(cmd contains "--no-first-run", "no-first-run ", ""),
+    if(cmd contains "--disable-sync", "disable-sync", "")
+)
+| fields
+    _time,
+    agent_hostname,
+    actor_primary_username,
+    actor_process_image_name,
+    actor_process_image_path,
+    actor_process_command_line,
+    action_process_image_name,
+    action_process_image_path,
+    action_process_command_line,
+    detection_indicators
+| sort desc _time
