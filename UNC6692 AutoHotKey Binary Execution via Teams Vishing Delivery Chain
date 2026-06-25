@@ -18,9 +18,6 @@ dataset = xdr_data
 | filter action_process_image_name in ("cmd.exe", "powershell.exe")
 | filter (
     action_process_image_command_line contains ".ahk" or
-    action_process_image_command_line contains "AutoHotkey" or
-    action_process_image_command_line contains "AutoHotkeyU64" or
-    action_process_image_command_line contains "AutoHotkeyA32"
+    action_process_image_command_line contains "AutoHotkey"
 )
 | fields _time, agent_hostname, actor_effective_username, causality_actor_process_image_name as cgo_process, actor_process_image_name as parent_process, actor_process_image_path as parent_process_path, action_process_image_name as child_process, action_process_image_command_line as child_command_line
-| sort desc _time
