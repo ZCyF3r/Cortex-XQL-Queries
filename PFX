@@ -37,7 +37,6 @@ actor_effective_username as deleter_username,
 action_process_instance_id as deleter_process_instance_id
 ) as deletion_events deletion_events.host_del = host
 and deletion_events.pfx_file_path_del = pfx_file_path
-and deletion_events.deletion_time > creation_time
 | filter timestamp_diff(deletion_time, creation_time, "MINUTE") <= 20
 | fields host, pfx_file_path, pfx_file_name, creation_time, creator_username, creator_process_name, creator_process_path, pfx_file_sha256_created, deletion_time, deleter_username, deleter_process_name, deleter_process_path, pfx_file_sha256_deleted
 | sort asc creation_time
