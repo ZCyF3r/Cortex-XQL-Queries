@@ -6,8 +6,7 @@
 
 dataset = saas_audit_logs
 | filter service_type in ("OneDrive", "SharePoint")
-| filter operation_name_orig = "FileSyncDownloadedFull"
-| filter user_agent contains "Microsoft SkyDriveSync"
+| filter operation_name_orig in ("FileSyncDownloadedFull", "FileDownloaded")
 | alter FileName = json_extract_scalar(raw_log, "$.SourceFileName")
 | alter FileExtension = json_extract_scalar(raw_log, "$.SourceFileExtension")
 | alter FilePath = json_extract_scalar(raw_log, "$.SourceRelativeUrl")
