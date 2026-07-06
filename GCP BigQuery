@@ -1,0 +1,12 @@
+dataset = google_cloud_logging_raw 
+| alter 
+    methodName = protoPayload -> methodName,
+    principalEmail = protoPayload -> authenticationInfo.principalEmail,
+    ServiceAccountDelegation = json_extract_scalar(protoPayload, "$.authenticationInfo.serviceAccountDelegationInfo[0].firstPartyPrincipal.principalEmail"),
+    resourceName = protoPayload -> resourceName,
+    query_destination_table = protoPayload -> metadata.jobInsertion.job.jobConfig.queryConfig.destinationTable,
+    query = protoPayload -> metadata.jobInsertion.job.jobConfig.queryConfig.query,
+    statement_type = protoPayload -> etadata.jobInsertion.job.jobConfig.queryConfig.statementType,
+    caller_ip = protoPayload -> requestMetadata.callerIp,
+    caller_user_agent = protoPayload -> requestMetadata.callerSuppliedUserAgent
+| filter methodName contains "InsertJob"
