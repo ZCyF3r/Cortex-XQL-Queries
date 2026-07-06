@@ -1,0 +1,20 @@
+// Pass-the-Hash Lateral Movement
+// Detects Pass-the-Hash (PtH) activity via Windows Event ID 4624 (successful logon) showing NTLM network logon characteristics inconsistent with legitimate usage: LogonType=3 (Network), AuthenticationPackageName=NTLM, LogonProcessName=NtLmSsp,combined with a blank/anomalous WorkstationName field, which is a common artifact of PtH tooling (Mimikatz sekurlsa::pth, Impacket psexec.py/wmiexec.py).
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG and action_evtlog_event_id = 4624
+| alter LogonType = action_evtlog_data_fields->LogonType
+| alter AuthenticationPackageName = action_evtlog_data_fields->AuthenticationPackageName
+| alter LogonProcessName = action_evtlog_data_fields->LogonProcessName
+| alter WorkstationName = action_evtlog_data_fields->WorkstationName
+| alter TargetUserName = action_evtlog_data_fields->TargetUserName
+| alter IpAddress = action_evtlog_data_fields->IpAddress
+| filter LogonType = "3"
+| filter AuthenticationPackageName = "NTLM"
+| filter LogonProcessName = "NtLmSsp"
+| filter TargetUserName != null and TargetUserName not contains "$"
+| alter is_workstation_anomalous = if(WorkstationName = null or WorkstationName = "" or WorkstationName = "-", true, false)
+| bin _time span = 10m
+| comp count_distinct(agent_hostname) as Unique_Hosts_Targeted, values(agent_hostname) as Targeted_Hosts by _time, TargetUserName, IpAddress
+| filter Unique_Hosts_Targeted >= 2
