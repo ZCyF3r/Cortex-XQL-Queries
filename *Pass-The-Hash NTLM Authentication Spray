@@ -1,5 +1,6 @@
-// Pass-the-Hash Lateral Movement
-// Detects Pass-the-Hash (PtH) activity via Windows Event ID 4624 (successful logon) showing NTLM network logon characteristics inconsistent with legitimate usage: LogonType=3 (Network), AuthenticationPackageName=NTLM, LogonProcessName=NtLmSsp,combined with a blank/anomalous WorkstationName field, which is a common artifact of PtH tooling (Mimikatz sekurlsa::pth, Impacket psexec.py/wmiexec.py).
+// NTLM Authentication Spray Across Multiple Hosts
+// Detects a single account or source IP authenticating via NTLM (LogonType 3) to multiple hosts within a short window - a pattern consistent with credential spraying, pass-the-hash lateral movement, or NTLM relay.
+// MITRE T1110.003 - Password Spraying, T1550.002 - Pass the Hash, T1021.002 - SMB/Windows Admin Shares
 
 
 dataset = xdr_data
