@@ -1,0 +1,16 @@
+// Kerberoasting Activity Detected (Multiple RC4 Service Tickets)
+// Detects a single user requesting multiple Kerberos Service Tickets (TGS) with RC4 encryption for non-machine accounts, indicative of Kerberoasting.
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG and action_evtlog_event_id = 4769
+| alter TicketEncryptionType = action_evtlog_data_fields->TicketEncryptionType
+| alter ServiceName = action_evtlog_data_fields->ServiceName
+| alter TargetUserName = action_evtlog_data_fields->TargetUserName
+| alter IpAddress = action_evtlog_data_fields->IpAddress
+| filter TicketEncryptionType in ("0x17", "23")
+| filter ServiceName != "krbtgt"
+| filter ServiceName != null and ServiceName not contains "$"
+| bin _time span = 10m
+| comp count_distinct(ServiceName) as Unique_SPNs_Requested, values(ServiceName) as Targeted_Services by _time, TargetUserName, IpAddress, agent_hostname
+| filter Unique_SPNs_Requested >= 3
