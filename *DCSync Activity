@@ -1,7 +1,6 @@
 // DCSync Activity
 
 
-
 dataset = xdr_data
 | filter event_type = ENUM.EVENT_LOG and action_evtlog_event_id = 4662
 | alter ObjectName = action_evtlog_data_fields->ObjectName
