@@ -1,0 +1,27 @@
+dataset = google_cloud_logging_raw
+| alter
+    methodName = protoPayload -> methodName,
+    principalEmail = protoPayload -> authenticationInfo.principalEmail,
+    ServiceAccountDelegation = json_extract_scalar(protoPayload, "$.authenticationInfo.serviceAccountDelegationInfo[0].firstPartyPrincipal.principalEmail"),
+    resourceName = protoPayload -> resourceName,
+    caller_ip = protoPayload -> requestMetadata.callerIp,
+    caller_user_agent = protoPayload -> requestMetadata.callerSuppliedUserAgent,
+    project_id = resource -> labels.project_id
+| alter binding_array = json_extract_array(protoPayload, "$.serviceData.policyDelta.bindingDeltas")
+| alter granted_role = arrayfilter(arraymap(binding_array, json_extract_scalar("@element", "$.role")), "@element" != null)
+| alter granted_member = arrayfilter(arraymap(binding_array, json_extract_scalar("@element", "$.member")), "@element" != null)
+| alter delta_action = arrayfilter(arraymap(binding_array, json_extract_scalar("@element", "$.action")), "@element" != null)
+| alter role_risk = if(
+    granted_role ~= "(?i)(serviceAccountTokenCreator)", "CRITICAL",
+    granted_role ~= "(?i)(serviceAccountKeyAdmin)", "Critical",
+    granted_role ~= "(?i)(workloadIdentityUser)", "HIGH",
+    granted_role ~= "(?i)(serviceAccountUser)", "HIGH",
+    "MEDIUM - Investigate"
+)
+| alter caller_is_user = if(principalEmail ~= "(?i)(gserviceaccount\.com)$", "false", "true")
+| filter methodName = "SetIamPolicy"
+| filter binding_array ~= "(?i)(serviceAccountTokenCreator|serviceAccountKeyAdmin|workloadIdentityUser|serviceAccountUser|iam\.serviceAccounts)"
+//| filter delta_action = ""
+//| filter role_risk = ""
+//| filter caller_is_user = ""
+| fields _time, methodName, principalEmail, ServiceAccountDelegation, caller_is_user, granted_member, granted_role, delta_action, role_risk, resourceName, project_id, caller_ip, caller_user_agent, binding_array
