@@ -1,0 +1,17 @@
+// AS-REP Roasting Activity (TGT Requests Without Pre-Authentication)
+// AS-REP Roasting targets accounts with Kerberos pre-authentication disabled, allowing an attacker to request a TGT for the account without providing valid credentials, then crack the returned AS-REP offline (especially when RC4 encryption is used).
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG and action_evtlog_event_id = 4768
+| alter PreAuthType = action_evtlog_data_fields->PreAuthType
+| alter TicketEncryptionType = action_evtlog_data_fields->TicketEncryptionType
+| alter TargetUserName = action_evtlog_data_fields->TargetUserName
+| alter IpAddress = action_evtlog_data_fields->IpAddress
+| alter ResultCode = action_evtlog_data_fields->ResultCode
+| filter PreAuthType = "0" or PreAuthType = null
+| filter ResultCode = "0x0" or ResultCode = "0"
+| filter TargetUserName != null and TargetUserName not contains "$"
+| bin _time span = 10m
+| comp count_distinct(TargetUserName) as Unique_NoPreAuth_Accounts_Requested, values(TargetUserName) as Targeted_Accounts by _time, IpAddress, agent_hostname
+| filter Unique_NoPreAuth_Accounts_Requested >= 2
+| sort desc _time
