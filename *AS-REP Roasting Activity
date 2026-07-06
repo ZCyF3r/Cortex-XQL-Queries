@@ -1,5 +1,7 @@
-// AS-REP Roasting Activity (TGT Requests Without Pre-Authentication)
-// AS-REP Roasting targets accounts with Kerberos pre-authentication disabled, allowing an attacker to request a TGT for the account without providing valid credentials, then crack the returned AS-REP offline (especially when RC4 encryption is used).
+// AS-REP Roasting - Accounts Without Kerberos Pre-Authentication
+// Detects Kerberos AS-REQ events (4768) for accounts with pre-authentication disabled (PreAuthType 0), returning successfully. Attackers enumerate accounts lacking pre-auth to request encrypted AS-REP blobs that can be cracked offline to recover passwords. Multiple such accounts from one source indicates AS-REP roasting enumeration. Excludes machine accounts.
+// MITRE T1558.004 - AS-REP Roasting, T1558 - Steal or Forge Kerberos Tickets
+
 
 dataset = xdr_data
 | filter event_type = ENUM.EVENT_LOG and action_evtlog_event_id = 4768
