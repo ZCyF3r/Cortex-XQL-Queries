@@ -1,0 +1,26 @@
+// GCP Dataflow Job Abuse Detection
+// Detects creation of Dataflow pipeline jobs which can be abused to move data at scale from BigQuery/GCS to external or attacker-controlled sinks.
+// Flags jobs created from unusual regions, by scripted user agents, or via service account delegation - patterns consistent with data exfiltration pipelines set up after cloud compromise.
+// MITRE T1530 - Data from Cloud Storage, T1537 - Transfer Data to Cloud Account
+
+
+dataset = google_cloud_logging_raw
+| alter
+    methodName = protoPayload -> methodName,
+    principalEmail = protoPayload -> authenticationInfo.principalEmail,
+    ServiceAccountDelegation = json_extract_scalar(protoPayload, "$.authenticationInfo.serviceAccountDelegationInfo[0].firstPartyPrincipal.principalEmail"),
+    resourceName = protoPayload -> resourceName,
+    jobRegion = json_extract_scalar(protoPayload, "$.resourceLocation.currentLocations[0]"),
+    jobID = protoPayload -> request.job_id,
+    jobName = protoPayload -> request.job_name,
+    caller_ip = protoPayload -> requestMetadata.callerIp,
+    caller_user_agent = protoPayload -> requestMetadata.callerSuppliedUserAgent
+| filter methodName = "dataflow.jobs.create"
+// Flag scripted vs console creation
+| alter is_scripted_ua = if(caller_user_agent ~= "(?i)(python|curl|wget|go-http|node|axios|requests|google-api|dataflow)", "true", "false")
+// Flag delegation - job created via service account chain
+| alter is_delegated = if(ServiceAccountDelegation != null, "true", "false")
+// Flag suspicious job naming - attackers often use generic or random names
+| alter suspicious_name = if(jobName ~= "(?i)(test|temp|export|extract|copy|sync|migrate|backup|job-[0-9]|beam-[0-9]|df-[0-9])", "true", "false")
+//| filter principalEmail ~= ""
+| fields _time, methodName, principalEmail, ServiceAccountDelegation, is_delegated, resourceName, jobID, jobName, suspicious_name, jobRegion, is_scripted_ua, caller_ip, caller_user_agent
