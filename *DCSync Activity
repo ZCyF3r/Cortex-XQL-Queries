@@ -1,0 +1,14 @@
+// DCSync Activity
+
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG and action_evtlog_event_id = 4662
+| alter ObjectName = action_evtlog_data_fields->ObjectName
+| alter SubjectUserName = action_evtlog_data_fields->SubjectUserName
+| alter SubjectUserSid = action_evtlog_data_fields->SubjectUserSid
+| alter Properties = action_evtlog_data_fields->Properties
+| alter IpAddress = action_evtlog_data_fields->IpAddress
+| filter Properties contains "1131f6aa-9c07-11d1-f79f-00c04fc2dcd2" or Properties contains "1131f6ad-9c07-11d1-f79f-00c04fc2dcd2" or Properties contains "89e95b76-444d-4c62-991a-0facbeda640c"
+| filter SubjectUserName != null and SubjectUserName not contains "$"
+| fields _time, agent_hostname, SubjectUserName, SubjectUserSid, ObjectName, Properties, IpAddress
