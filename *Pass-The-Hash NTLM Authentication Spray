@@ -18,4 +18,4 @@ dataset = xdr_data
 | bin _time span = 10m
 | comp count_distinct(agent_hostname) as Unique_Hosts_Targeted, values(agent_hostname) as Targeted_Hosts 
     by _time, TargetUserName, IpAddress, actor_process_image_name, actor_process_image_path, actor_process_signature_vendor, causality_actor_process_command_line, causality_actor_process_image_path, is_workstation_anomalous 
-| filter Unique_Hosts_Targeted >= 2
+| filter Unique_Hosts_Targeted >= 5
