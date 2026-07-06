@@ -14,4 +14,3 @@ dataset = xdr_data
 | bin _time span = 10m
 | comp count_distinct(TargetUserName) as Unique_NoPreAuth_Accounts_Requested, values(TargetUserName) as Targeted_Accounts by _time, IpAddress, agent_hostname
 | filter Unique_NoPreAuth_Accounts_Requested >= 2
-| sort desc _time
