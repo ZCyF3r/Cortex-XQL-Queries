@@ -11,6 +11,7 @@ dataset = xdr_data
 | filter TicketEncryptionType in ("0x17", "23")
 | filter ServiceName != "krbtgt"
 | filter ServiceName != null and ServiceName not contains "$"
+| filter TargetUserName != null and TargetUserName not contains "$"
 | bin _time span = 10m
 | comp count_distinct(ServiceName) as Unique_SPNs_Requested, values(ServiceName) as Targeted_Services by _time, TargetUserName, IpAddress, agent_hostname
 | filter Unique_SPNs_Requested >= 3
