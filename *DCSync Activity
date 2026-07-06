@@ -1,4 +1,6 @@
-// DCSync Activity
+// DCSync - Directory Replication Rights Abuse
+// Detects access to the DS-Replication-Get-Changes control access rights (GUIDs 1131f6aa/1131f6ad/89e95b76) which grant the ability to replicate directory data including password hashes. A non-machine account exercising these rights indicates a DCSync attack to extract credentials from the domain controller. Excludes machine accounts ending in $.
+// MITRE T1003.006 - OS Credential Dumping: DCSync, T1207 - Rogue Domain Controller
 
 
 dataset = xdr_data
