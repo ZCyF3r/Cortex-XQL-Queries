@@ -1,4 +1,4 @@
-// GCP BigQuery Data Exfiltration Detection
+// GCP BigQuery Data Exfiltration
 // Detects BigQuery queries and export jobs indicative of bulk data theft - SELECT * / SELECT without WHERE across large tables, exports to external GCS buckets, and cross-project data access. Attackers use BigQuery jobs to stage and extract sensitive data at scale after cloud compromise.
 // MITRE T1530 - Data from Cloud Storage, T1567.002 - Exfiltration to Cloud Storage
 
@@ -13,12 +13,9 @@ dataset = google_cloud_logging_raw
     query = protoPayload -> metadata.jobInsertion.job.jobConfig.queryConfig.query,
     statement_type = protoPayload -> metadata.jobInsertion.job.jobConfig.queryConfig.statementType,
     caller_ip = protoPayload -> requestMetadata.callerIp,
-    caller_user_agent = protoPayload -> requestMetadata.callerSuppliedUserAgent
-| filter methodName contains "InsertJob"
-// Extract export/extract job fields (data leaving BigQuery to GCS)
-| alter export_uri = protoPayload -> metadata.jobInsertion.job.jobConfig.extractConfig.destinationUris
-| alter export_source = protoPayload -> metadata.jobInsertion.job.jobConfig.extractConfig.sourceTable
-// Flag suspicious patterns
+    caller_user_agent = protoPayload -> requestMetadata.callerSuppliedUserAgent,
+    export_uri = protoPayload -> metadata.jobInsertion.job.jobConfig.extractConfig.destinationUris,
+    export_source = protoPayload -> metadata.jobInsertion.job.jobConfig.extractConfig.sourceTable
 | alter is_bulk_select = if(query ~= "(?i)SELECT\s+\*" or (query ~= "(?i)SELECT" and query !~= "(?i)WHERE"), "true", "false")
 | alter is_export_job = if(export_uri != null, "true", "false")
 | alter is_scripted_ua = if(caller_user_agent ~= "(?i)(python|curl|wget|go-http|node|axios|requests|bq |google-api)", "true", "false")
@@ -28,5 +25,7 @@ dataset = google_cloud_logging_raw
     is_bulk_select = "true", "Bulk SELECT Query",
     "Standard Query"
 )
+| filter methodName contains "google.cloud.bigquery.v2.JobService.InsertJob"
 //| filter principalEmail ~= ""
+//| filter ServiceAccountDelegation = ""
 | fields _time, methodName, principalEmail, ServiceAccountDelegation, resourceName, statement_type, is_bulk_select, is_export_job, is_scripted_ua, risk, query_destination_table, export_source, export_uri, query, caller_ip, caller_user_agent
