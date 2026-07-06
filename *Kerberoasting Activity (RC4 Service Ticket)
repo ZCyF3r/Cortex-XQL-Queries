@@ -15,4 +15,4 @@ dataset = xdr_data
 | filter TargetUserName != null and TargetUserName not contains "$"
 | bin _time span = 10m
 | comp count_distinct(ServiceName) as Unique_SPNs_Requested, values(ServiceName) as Targeted_Services by _time, TargetUserName, IpAddress, agent_hostname
-| filter Unique_SPNs_Requested >= 3
+| filter Unique_SPNs_Requested >= 10
