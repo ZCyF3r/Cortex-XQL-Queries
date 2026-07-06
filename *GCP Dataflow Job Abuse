@@ -15,7 +15,6 @@ dataset = google_cloud_logging_raw
     jobName = protoPayload -> request.job_name,
     caller_ip = protoPayload -> requestMetadata.callerIp,
     caller_user_agent = protoPayload -> requestMetadata.callerSuppliedUserAgent
-| filter methodName = "dataflow.jobs.create"
 | alter is_scripted_ua = if(caller_user_agent ~= "(?i)(python|curl|wget|go-http|node|axios|requests|google-api|dataflow)", "true", "false")
 | alter is_delegated = if(ServiceAccountDelegation != null, "true", "false")
 | alter suspicious_name = if(jobName ~= "(?i)(test|temp|export|extract|copy|sync|migrate|backup|job-[0-9]|beam-[0-9]|df-[0-9])", "true", "false")
