@@ -1,3 +1,8 @@
+// Homoglyph Service Principal Name in Kerberos Ticket Request
+// Detects Kerberos service ticket requests (4769) where the ServiceName contains Unicode homoglyph or lookalike characters. Attackers register SPNs with deceptive characters mimicking legitimate services to evade detection while enabling Kerberoasting or service impersonation. Broad Unicode range covers letterlike symbols, enclosed alphanumerics, and modifier characters.
+// MITRE T1036 - Masquerading, T1558.003 - Kerberoasting, T1558 - Steal or Forge Kerberos Tickets
+
+
 dataset = xdr_data
 | filter event_type = EVENT_LOG and action_evtlog_event_id = 4769
 | fields action_evtlog_data_fields as aedf, agent_hostname, _time
