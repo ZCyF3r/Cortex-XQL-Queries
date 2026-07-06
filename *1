@@ -1,0 +1,16 @@
+dataset = xdr_data
+| filter event_type = EVENT_LOG and action_evtlog_event_id in (5136, 5137)
+| alter aedf = action_evtlog_data_fields
+| filter aedf != null
+| alter ObjectClass = aedf->ObjectClass
+| alter AttributeLDAPDisplayName = aedf->AttributeLDAPDisplayName
+| alter AttributeValue = aedf->AttributeValue
+| alter ObjectDN = aedf->ObjectDN
+| alter SubjectUserName = aedf->SubjectUserName
+| alter OperationType = aedf->OperationType
+| filter ObjectClass = "dnsNode"
+| filter AttributeLDAPDisplayName = "dnsRecord"
+| filter AttributeValue != null
+| filter AttributeValue ~= "[\x{24C7}\x{211D}\x{1D3F}\x{0154}\x{24B8}\x{2024}]"
+| alter EventDescription = if(action_evtlog_event_id = 5137, "dnsNode object created", "dnsNode object modified")
+| fields _time, agent_hostname, action_evtlog_event_id, EventDescription, ObjectClass, AttributeLDAPDisplayName, AttributeValue, ObjectDN, SubjectUserName, OperationType
