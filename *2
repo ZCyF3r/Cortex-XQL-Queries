@@ -1,0 +1,14 @@
+dataset = xdr_data
+| filter event_type = EVENT_LOG and action_evtlog_event_id = 4769
+| fields action_evtlog_data_fields as aedf, agent_hostname, _time
+| filter aedf != null
+| alter ServiceName = replace(json_extract(aedf, "$.ServiceName"), "\"", "")
+| alter TargetUserName = replace(json_extract(aedf, "$.TargetUserName"), "\"", "")
+| alter TargetDomainName = replace(json_extract(aedf, "$.TargetDomainName"), "\"", "")
+| alter ClientAddress = replace(json_extract(aedf, "$.IpAddress"), "\"", "")
+| alter TicketEncryptionType = replace(json_extract(aedf, "$.TicketEncryptionType"), "\"", "")
+| filter ServiceName != null
+| filter ServiceName ~= "[\\x{24C7}\\x{211D}\\x{1D3F}\\x{0154}\\x{24B8}\\x{2024}\\x{2100}-\\x{214F}\\x{2460}-\\x{24FF}\\x{02B0}-\\x{02FF}\\x{2000}-\\x{206F}]"
+| fields _time, agent_hostname, ServiceName, TargetUserName, TargetDomainName, ClientAddress, TicketEncryptionType
+| sort desc _time
+| dedup ServiceName, TargetUserName, ClientAddress by asc _time
