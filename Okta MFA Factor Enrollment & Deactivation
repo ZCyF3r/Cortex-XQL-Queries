@@ -18,4 +18,4 @@ dataset = okta_sso_raw
 | alter target_name = json_extract_scalar(target_str, "$[0].displayName")
 | alter target_upn = json_extract_scalar(target_str, "$[0].alternateId")
 //| filter actor_name = ""
-| fields _time, eventType, displayMessage, actor_name, actor_upn, target_name, target_upn, outcome_result, outcome_reason, ClientIP, client_browser, client_os, client_country, client_city, auth_provider, credential_type, severity, debugContext, request, securityContext
+| fields _time, eventType, displayMessage, actor_name, actor_upn, target_name, target_upn, outcome_result, outcome_reason, client_ip, client_browser, client_os, client_country, client_city, auth_provider, credential_type, severity, debugContext, request, securityContext
