@@ -1,0 +1,16 @@
+// Kerberos Delegation Abuse (Unconstrained/Constrained Delegation)
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG and action_evtlog_event_id in (5136, 4738, 4769)
+| alter AttributeLDAPDisplayName = action_evtlog_data_fields->AttributeLDAPDisplayName
+| alter AttributeValue = action_evtlog_data_fields->AttributeValue
+| alter ObjectDN = action_evtlog_data_fields->ObjectDN
+| alter SubjectUserName = action_evtlog_data_fields->SubjectUserName
+| alter TransmittedServices = action_evtlog_data_fields->TransmittedServices
+| alter ServiceName = action_evtlog_data_fields->ServiceName
+| alter TargetUserName = action_evtlog_data_fields->TargetUserName
+| alter IpAddress = action_evtlog_data_fields->IpAddress
+| filter (action_evtlog_event_id in (5136, 4738) and AttributeLDAPDisplayName in ("msDS-AllowedToDelegateTo", "userAccountControl") and ObjectDN not contains "OU=Domain Controllers") or (action_evtlog_event_id = 4769 and TransmittedServices != null and TransmittedServices != "-" and TransmittedServices != "")
+| alter detection_scenario = if(action_evtlog_event_id in (5136, 4738), "Delegation_Config_Change", "S4U2Proxy_Ticket_Abuse")
+| fields _time, agent_hostname, action_evtlog_event_id, detection_scenario, AttributeLDAPDisplayName, AttributeValue, ObjectDN, SubjectUserName, TransmittedServices, ServiceName, TargetUserName, IpAddress
