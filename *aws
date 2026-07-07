@@ -1,0 +1,25 @@
+dataset = amazon_aws_raw 
+| alter
+    principalARN = userIdentity -> arn,
+    principalType = userIdentity -> type,
+    AccountId = userIdentity -> accountId,
+    targetRole = requestParameters -> roleName,
+    newTrustPolicy = requestParameters -> policyDocument
+| alter trusted_aws_principals = regextract(newTrustPolicy, "\"AWS\":\s*\"([^\"]+)\"")
+| alter trusted_service_principals = regextract(newTrustPolicy, "\"Service\":\s*\"([^\"]+)\"")
+| alter trusted_federation = regextract(newTrustPolicy, "\"Federated\":\s*\"([^\"]+)\"")
+| alter trusted_account_ids = regextract(newTrustPolicy, "arn:aws:iam::([0-9]{12}):")
+| alter trusts_root = if(newTrustPolicy ~= "(?i):root\"", "true", "false")
+| alter trusts_wildcard = if(newTrustPolicy ~= "\"AWS\":\s*\"\\*\"" or newTrustPolicy ~= "\"Principal\":\s*\"\\*\"", "true", "false")
+| alter is_external_account = if(array_length(arrayfilter(trusted_account_ids, "@element" != AccountId)) > 0, "true", "false")
+| alter risk = if(
+    trusts_wildcard = "true" , "Wildcard Principal",
+    is_external_account = "true", "External Account Trust",
+    trusts_root = "true", "Root Principal Trust"
+)
+| filter eventSource = "iam.amazonaws.com"
+| filter eventName = "UpdateAssumeRolePolicy"
+//| filter risk = ""
+//| filter is_external_account = ""
+//| filter principalARN = ""
+| fields _time, eventName, principalARN, principalType, AccountId, targetRole, risk, trusts_root, trusts_wildcard, is_external_account, trusted_aws_principals, trusted_service_principals, trusted_federation, sourceIPAddress, userAgent, awsRegion, newTrustPolicy
