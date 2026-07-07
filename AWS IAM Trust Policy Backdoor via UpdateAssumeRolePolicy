@@ -1,3 +1,9 @@
+// AWS IAM Trust Policy Backdoor via UpdateAssumeRolePolicy
+// Detects modification of an existing IAM role's trust policy to add a new trusted principal - a stealthy persistence and privilege escalation technique that evades iam:CreateRole detections. No new role or policy appears; the existing role simply trusts a new principal the attacker controls. Flags trust policies granting access to external AWS accounts or root principals.
+//  AWS CIRT TTC March 2026 update - increasingly used to blend into IAM noise.
+// MITRE T1098.003 - Account Manipulation: Additional Cloud Roles
+
+
 dataset = amazon_aws_raw 
 | alter
     principalARN = userIdentity -> arn,
