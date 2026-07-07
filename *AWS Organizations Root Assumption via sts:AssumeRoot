@@ -1,0 +1,36 @@
+// Title       : AWS Organizations Root Assumption via sts:AssumeRoot
+// Description : Detects use of sts:AssumeRoot to obtain root-level access into member
+//               accounts from an AWS Organizations management account. Org trust flows one
+//               direction - management account downward - so an attacker who compromises or
+//               gains privilege in the management account can assume root into any member
+//               account, bypassing normal IAM controls. Root access enables actions no IAM
+//               policy can restrict. AWS CIRT TTC June 2026 update.
+// MITRE       : T1548.005 - Abuse Elevation Control Mechanism: Temporary Elevated Cloud Access
+//               T1078.004 - Valid Accounts: Cloud Accounts
+
+dataset = amazon_aws_raw
+| filter eventName = "AssumeRoot"
+    or (eventSource = "sts.amazonaws.com" and eventName ~= "(?i)AssumeRoot")
+| alter
+    principal_arn = json_extract_scalar(userIdentity, "$.arn"),
+    principal_type = json_extract_scalar(userIdentity, "$.type"),
+    principal_id = json_extract_scalar(userIdentity, "$.principalId"),
+    caller_account = json_extract_scalar(userIdentity, "$.accountId"),
+    target_principal = json_extract_scalar(requestParameters, "$.targetPrincipal"),
+    task_policy_arn = json_extract_scalar(requestParameters, "$.taskPolicyArn"),
+    duration = json_extract_scalar(requestParameters, "$.durationSeconds")
+// The target account being rooted into
+| alter target_account = arrayindex(regextract(target_principal, "([0-9]{12})"), 0)
+// Extract the assumed root session from response
+| alter assumed_root_arn = json_extract_scalar(responseElements, "$.credentials.accessKeyId")
+| alter session_expiration = json_extract_scalar(responseElements, "$.credentials.expiration")
+// Flag cross-account root assumption (management -> member)
+| alter is_cross_account = if(target_account != null and target_account != caller_account, "true", "false")
+//| filter is_cross_account = "true"
+//| filter principal_arn ~= ""
+| fields _time, eventName, principal_arn, principal_type,
+         caller_account, target_principal, target_account,
+         is_cross_account, task_policy_arn, duration,
+         session_expiration, sourceIPAddress,
+         userAgent, awsRegion, errorCode, errorMessage
+| sort desc _time
