@@ -1,0 +1,17 @@
+// Pink Extortion (O-UNC-066) Automation Exfiltration User Agents
+// Detects the confirmed Graph SDK and python-requests user agents used by Pink operators for rapid SharePoint/OneDrive exfiltration after passkey-based account takeover. Microsoft.Graph.Client/5.62.0 and specific python-requests versions are operator tooling fingerprints. Unit 42, July 2026.
+// MITRE T1567 - Exfiltration Over Web Service, T1530 - Data from Cloud Storage
+
+
+dataset = saas_audit_logs
+| alter tunnels_anonymous = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous")
+| alter tunnels_type = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| filter service_type in ("SharePoint", "OneDrive", "Exchange", "MicrosoftTeams")
+| filter user_agent in (
+    "Microsoft.Graph.Client/5.62.0",
+    "python-requests/2.28.1",
+    "python-requests/2.33.1"
+  )
+    or user_agent ~= "(?i)Microsoft\.Graph\.Client/5\.62"
+//| filter identity_name ~= ""
+| fields _time, identity_name, operation_name_orig, service_type, user_agent, caller_ip, caller_ip_geolocation, caller_ip_asn_org, tunnels_anonymous, tunnels_type, raw_log
