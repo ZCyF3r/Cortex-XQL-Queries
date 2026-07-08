@@ -1,0 +1,19 @@
+// Pink Extortion (O-UNC-066) Passkey Phishing Infrastructure
+// Detects connections to confirmed Pink/CL-CRI-1147 passkey-enrollment vishing infrastructure. Operators direct victims via phone to phishing domains containing "passkey" that relay credentials and MFA in real time before registering an attacker-controlled passkey. DDoS-Guard hosted. Com-affiliated group overlapping with ShinyHunters/BlackFile. Unit 42, July 2026.
+// MITRE T1566.004 - Spearphishing Voice, T1656 - Impersonation, T1078.004 - Valid Accounts
+// https://www.bleepingcomputer.com/news/security/entra-passkey-enrollment-vishing-targets-microsoft-365-users/
+
+
+dataset = xdr_data
+| filter event_type in (ENUM.NETWORK, ENUM.STORY)
+| filter dns_query_name in (
+    "passkeyadd.com", "passkeydeploy.com", "deploypasskey.com"
+  )
+    or dns_query_name ~= "(?i)(passkey.*(add|deploy|setup|enroll|register|secure|verify))|((add|deploy|setup|enroll|register).*passkey)"
+    or action_remote_ip in ("185.178.208.153", "172.93.100.252", "96.232.20.66")
+| alter is_confirmed_ioc = if(
+    dns_query_name in ("passkeyadd.com", "passkeydeploy.com", "deploypasskey.com")
+    or action_remote_ip in ("185.178.208.153", "172.93.100.252", "96.232.20.66"),
+    "Confirmed IOC", "Pattern Match")
+//| filter agent_hostname ~= ""
+| fields _time, agent_hostname, actor_effective_username, is_confirmed_ioc, actor_process_image_name, actor_process_command_line, dns_query_name, action_remote_ip, action_remote_port
