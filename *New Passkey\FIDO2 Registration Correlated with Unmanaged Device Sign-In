@@ -38,6 +38,4 @@ dataset = cloud_audit_logs
   ) as s s.signin_upn = reg_upn
 | filter timestamp_diff(reg_time, signin_time, "MINUTE") <= 15
     and timestamp_diff(reg_time, signin_time, "MINUTE") >= -5
-| alter reg_via_anon_tunnel = if(reg_tunnel_anon = "true", "true", "false")
-| alter reg_signin_ip_mismatch = if(reg_ip != signin_ip, "true", "false")
-| fields reg_time, signin_time, reg_upn, reg_actor, passkey_type, reg_ip, reg_geo, reg_asn, reg_asn_org, reg_tunnel_anon, reg_tunnel_operator, reg_via_anon_tunnel, signin_ip, signin_asn, reg_signin_ip_mismatch, signin_compliant, signin_managed, signin_device_id, signin_trust, location, appDisplayName, userAgent
+| fields reg_time, signin_time, reg_upn, reg_actor, passkey_type, reg_ip, reg_geo, reg_asn, reg_asn_org, reg_tunnel_anon, reg_tunnel_operator, signin_ip, signin_asn, signin_compliant, signin_managed, signin_device_id, signin_trust, location, appDisplayName, userAgent
