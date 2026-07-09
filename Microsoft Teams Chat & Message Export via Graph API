@@ -11,6 +11,8 @@ dataset = saas_audit_logs
 | alter TeamsSessionDevice = json_extract_scalar(raw_log, "$.ObjectId")
 | alter TeamsSessionDeviceIP = json_extract_scalar(raw_log, "$.ClientId")
 // Message/Chat Activity
+| alter ClientApp = json_extract_scalar(raw_log, "$.AppAccessContext.ClientAppName")
+| alter ClientId = json_extract_scalar(raw_log, "$.AppAccessContext.ClientAppId")
 | alter CommType = json_extract_scalar(raw_log, "$.CommunicationType")
 | alter ChannelGuid = json_extract_scalar(raw_log, "$.ChannelGuid")
 | alter TeamName = json_extract_scalar(raw_log, "$.TeamName")
@@ -26,5 +28,5 @@ dataset = saas_audit_logs
     user_agent ~= "(?i)(python-requests|axios|go-http|curl|wget|powershell|httpx|aiohttp|node)", "HIGH"
     , user_agent ~= "(?i)(graph|postman|thunder|insomnia)", "MEDIUM", "NONE"
 )
-| filter identity_name = "<REPLACE>"
-| fields _time, identity_name, operation_name_orig, TeamsSessionDevice, TeamsSessionDeviceIP, CommType, ChannelGuid, TeamName, ItemName, TargetUserId, ChatThreadID, DeviceID, if_tunnels_anonymous, tunnels_type, ua_risk, user_agent, raw_log 
+| filter identity_name = "REPLACE"
+| fields _time, identity_name, operation_name_orig, TeamsSessionDevice, TeamsSessionDeviceIP,ClientId, ClientApp, CommType, ChannelGuid, TeamName, ItemName, TargetUserId, ChatThreadID, DeviceID, if_tunnels_anonymous, tunnels_type, ua_risk, user_agent, raw_log 
