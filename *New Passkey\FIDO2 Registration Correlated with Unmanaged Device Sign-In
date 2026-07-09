@@ -25,14 +25,8 @@ dataset = cloud_audit_logs
         or signin_managed = "false"
         or signin_device_id = null
         or signin_device_id = ""
-    | fields signin_time, signin_upn, signin_ip, signin_compliant,
-             signin_managed, signin_device_id, signin_trust,
-             location, appDisplayName, userAgent
+    | fields signin_time, signin_upn, signin_ip, signin_compliant, signin_managed, signin_device_id, signin_trust, location, appDisplayName, userAgent
   ) as s s.signin_upn = reg_upn
 | filter timestamp_diff(reg_time, signin_time, "MINUTE") <= 15
     and timestamp_diff(reg_time, signin_time, "MINUTE") >= -5
-| fields reg_time, signin_time, reg_upn, reg_actor,
-         passkey_type, reg_ip, signin_ip,
-         signin_compliant, signin_managed,
-         signin_device_id, signin_trust,
-         location, appDisplayName, userAgent
+| fields reg_time, signin_time, reg_upn, reg_actor, passkey_type, reg_ip, signin_ip, signin_compliant, signin_managed, signin_device_id, signin_trust, location, appDisplayName, userAgent
