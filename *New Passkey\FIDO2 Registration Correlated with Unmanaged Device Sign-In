@@ -5,37 +5,44 @@
 
 dataset = cloud_audit_logs
 | filter cloud_provider = ENUM.Azure
+| filter operation_name_orig in (
+    "User registered security info",
+    "Admin registered security info",
+    "User registered all required security info"
+  )
 | filter operation_status_reason_provided = "User registered Fido2 Authentication Method"
 | alter
     reg_actor = identity_name,
     reg_upn = json_extract_scalar(raw_log, "$.targetResources[0].userPrincipalName"),
     reg_time = _time,
     reg_ip = caller_ip,
-    mod_props = json_extract_array(raw_log, "$.targetResources[0].modifiedProperties"),
     reg_geo = caller_ip_geolocation,
     reg_asn = caller_ip_asn,
     reg_asn_org = caller_ip_asn_org,
     reg_tunnel_anon = caller_ip_enrichment -> tunnels_anonymous,
     reg_tunnel_operator = caller_ip_enrichment -> tunnels_operator
-| alter passkey_type_arr = arraymap(mod_props, if(json_extract_scalar("@element", "$.displayName") ~= "(?i)PasskeyType", json_extract_scalar("@element", "$.newValue"), null))
-| alter passkey_type = arrayindex(arrayfilter(passkey_type_arr, "@element" != null), 0)
 | join type = inner (
-    dataset = msft_azure_ad_raw
+    dataset = cloud_audit_logs
+    | filter cloud_provider = ENUM.Azure
+    | filter operation_name_orig = "Sign-in activity"
     | alter
-        signin_compliant = json_extract_scalar(deviceDetail, "$.isCompliant"),
-        signin_managed = json_extract_scalar(deviceDetail, "$.isManaged"),
-        signin_device_id = json_extract_scalar(deviceDetail, "$.deviceId"),
-        signin_trust = json_extract_scalar(deviceDetail, "$.trustType"),
-        signin_upn = userPrincipalName,
+        signin_compliant = json_extract_scalar(raw_log, "$.deviceDetail.isCompliant"),
+        signin_managed = json_extract_scalar(raw_log, "$.deviceDetail.isManaged"),
+        signin_device_id = json_extract_scalar(raw_log, "$.deviceDetail.deviceId"),
+        signin_trust = json_extract_scalar(raw_log, "$.deviceDetail.trustType"),
+        signin_upn = identity_name,
         signin_time = _time,
-        signin_ip = ipAddress,
-        signin_asn = to_string(autonomousSystemNumber)
+        signin_ip = caller_ip,
+        signin_asn = caller_ip_asn,
+        signin_location = json_extract_scalar(raw_log, "$.location"),
+        signin_app = json_extract_scalar(raw_log, "$.appDisplayName"),
+        signin_user_agent = json_extract_scalar(raw_log, "$.userAgent")
     | filter signin_compliant = "false"
         or signin_managed = "false"
         or signin_device_id = null
         or signin_device_id = ""
-    | fields signin_time, signin_upn, signin_ip, signin_asn, signin_compliant, signin_managed, signin_device_id, signin_trust, location, appDisplayName, userAgent
+    | fields signin_time, signin_upn, signin_ip, signin_asn, signin_compliant, signin_managed, signin_device_id, signin_trust, signin_location, signin_app, signin_user_agent
   ) as s s.signin_upn = reg_upn
 | filter timestamp_diff(reg_time, signin_time, "MINUTE") <= 15
     and timestamp_diff(reg_time, signin_time, "MINUTE") >= -5
-| fields reg_time, signin_time, reg_upn, reg_actor, passkey_type, reg_ip, reg_geo, reg_asn, reg_asn_org, reg_tunnel_anon, reg_tunnel_operator, signin_ip, signin_asn, signin_compliant, signin_managed, signin_device_id, signin_trust, location, appDisplayName, userAgent
+| fields reg_time, signin_time, reg_upn, reg_actor, reg_ip, reg_geo, reg_asn, reg_asn_org, reg_tunnel_anon, reg_tunnel_operator, signin_ip, signin_asn, signin_compliant, signin_managed, signin_device_id, signin_trust, signin_location, signin_app, signin_user_agent
