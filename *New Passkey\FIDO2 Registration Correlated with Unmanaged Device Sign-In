@@ -4,14 +4,8 @@
 
 
 dataset = cloud_audit_logs
-| filter cloud_provider = ENUM.Azure
-| filter operation_name_orig in (
-    "User registered security info",
-    "Admin registered security info",
-    "User registered all required security info"
-  )
-| filter operation_status_reason_provided = "User registered Fido2 Authentication Method"
 | alter
+    app_display_name = identity_orig -> app.displayName,
     reg_actor = identity_name,
     reg_upn = json_extract_scalar(raw_log, "$.targetResources[0].userPrincipalName"),
     reg_time = _time,
@@ -21,11 +15,17 @@ dataset = cloud_audit_logs
     reg_asn_org = caller_ip_asn_org,
     reg_tunnel_anon = caller_ip_enrichment -> tunnels_anonymous,
     reg_tunnel_operator = caller_ip_enrichment -> tunnels_operator
+| filter cloud_provider = ENUM.Azure
+| filter operation_name_orig in (
+    "User registered security info",
+    "Admin registered security info",
+    "User registered all required security info"
+  )
+| filter app_display_name != "Microsoft Authenticator App"
+| filter operation_status_reason_provided = "User registered Fido2 Authentication Method"
 | join type = inner (
     dataset = cloud_audit_logs
-    | filter cloud_provider = ENUM.Azure
-    | filter operation_name_orig = "Sign-in activity"
-    | alter
+      | alter
         signin_compliant = json_extract_scalar(raw_log, "$.deviceDetail.isCompliant"),
         signin_managed = json_extract_scalar(raw_log, "$.deviceDetail.isManaged"),
         signin_device_id = json_extract_scalar(raw_log, "$.deviceDetail.deviceId"),
@@ -37,6 +37,8 @@ dataset = cloud_audit_logs
         signin_location = json_extract_scalar(raw_log, "$.location"),
         signin_app = json_extract_scalar(raw_log, "$.appDisplayName"),
         signin_user_agent = json_extract_scalar(raw_log, "$.userAgent")
+    | filter cloud_provider = ENUM.Azure
+    | filter operation_name_orig = "Sign-in activity"
     | filter signin_compliant = "false"
         or signin_managed = "false"
         or signin_device_id = null
