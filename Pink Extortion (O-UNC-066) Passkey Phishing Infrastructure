@@ -7,12 +7,12 @@
 dataset = xdr_data
 | filter event_type in (ENUM.NETWORK, ENUM.STORY)
 | filter dns_query_name in (
-    "passkeyadd", "passkeydeploy", "deploypasskey", "assignpasskey", "setpasskey" 
+    "passkeyadd.com", "passkeydeploy.com", "deploypasskey.com", "assignpasskey.com", "setpasskey.com" 
   )
     or dns_query_name ~= "(?i)(passkey.*(add|deploy|setup|enroll|register|secure|verify))|((add|deploy|setup|enroll|register).*passkey)"
     or action_remote_ip in ("185.178.208.153", "172.93.100.252", "96.232.20.66", "198.58.118.167", "72.14.178.174", "45.33.23.183", "186.2.163.147")
 | alter is_confirmed_ioc = if(
-    dns_query_name in ("passkeyadd", "passkeydeploy", "deploypasskey", "assignpasskey", "setpasskey")
+    dns_query_name in ("passkeyadd.com", "passkeydeploy.com", "deploypasskey.com", "assignpasskey.com", "setpasskey.com")
     or action_remote_ip in ("185.178.208.153", "172.93.100.252", "96.232.20.66", "198.58.118.167", "72.14.178.174", "45.33.23.183", "186.2.163.147"),
     "Confirmed IOC", "Pattern Match")
 //| filter agent_hostname ~= ""
