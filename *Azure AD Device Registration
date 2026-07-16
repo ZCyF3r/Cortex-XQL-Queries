@@ -1,0 +1,10 @@
+// Azure AD Device Registration
+// 
+
+
+dataset = cloud_audit_logs 
+| alter __additionalDetails = json_extract_array(raw_log, "$.additionalDetails")
+| filter cloud_provider = ENUM.Azure 
+| filter operation_name_orig = "Register device"
+| filter identity_name = ""
+| fields _time, identity_name, operation_name, operation_name_orig, operation_status, operation_status_reason_provided, referenced_resource_name, resource_type_orig, __additionalDetails
