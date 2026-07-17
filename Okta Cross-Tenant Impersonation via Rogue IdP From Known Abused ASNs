@@ -1,0 +1,30 @@
+// Okta Cross-Tenant Impersonation via Rogue IdP From Known Abused ASNs
+// Any create/modify of an inbound Identity Provider. Near-zero baseline: review EVERY row.
+// Attacker with admin adds an IdP they control, then federates in AS your users.
+
+
+dataset = okta_sso_raw
+| filter eventType in ("system.idp.lifecycle.create", "system.idp.lifecycle.update", "system.idp.lifecycle.activate", "system.idp.lifecycle.deactivate", "system.idp.lifecycle.delete")
+| alter
+    actor_upn = actor -> alternateId,
+    actor_name = actor -> displayName,
+    outcome_result = outcome -> result,
+    outcome_reason = outcome -> reason,
+    client_ip = client -> ipAddress,
+    client_os = client -> userAgent.os,
+    client_browser = client -> userAgent.browser,
+    client_country = client -> geographicalContext.country,
+    client_city = client -> geographicalContext.city,
+    user_agent = client -> userAgent.rawUserAgent,
+    asn_org = securityContext -> asOrg,
+    asn = securityContext -> asNumber,
+    isp = securityContext -> isp,
+    is_proxy = securityContext -> isProxy
+| alter target_str = to_string(`target`)
+| alter From_Proxy = if(is_proxy = "true"
+    or asn_org ~= "(?i)(mullvad|netnut|9proxy|infatica|nsocks|oxylabs|m247|packethub|clouvider|ipxo|proxyline|brightdata|luminati|smartproxy|soax|proxyrack|packetstream)", 1, 0)
+| alter idp_name = json_extract_scalar(target_str, "$[0].displayName")
+| alter idp_id = json_extract_scalar(target_str, "$[0].id")
+| alter idp_type = json_extract_scalar(target_str, "$[0].type")
+| fields _time, eventType, displayMessage, actor_name, actor_upn, idp_name, idp_id, idp_type, outcome_result, outcome_reason, client_ip, client_os, client_browser, client_country, client_city, is_proxy, asn_org, isp, asn, From_Proxy
+| sort desc _time
