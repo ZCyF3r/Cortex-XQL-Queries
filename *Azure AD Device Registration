@@ -1,10 +1,12 @@
-// Azure AD Device Registration
-// 
+// Entra ID Device Registration
+// Surfaces device registration events in Entra ID (join/register operations).
+// Attackers register their own device to a compromised account to establish durable access, satisfy device-compliance conditional access policies.
+// MITRE T1098.005 - Account Manipulation: Device Registration
 
 
 dataset = cloud_audit_logs 
 | alter __additionalDetails = json_extract_array(raw_log, "$.additionalDetails")
 | filter cloud_provider = ENUM.Azure 
 | filter operation_name_orig = "Register device"
-| filter identity_name = ""
+| filter identity_name = "REPLACE"
 | fields _time, identity_name, operation_name, operation_name_orig, operation_status, operation_status_reason_provided, referenced_resource_name, resource_type_orig, __additionalDetails
