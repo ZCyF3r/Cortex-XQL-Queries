@@ -1,0 +1,14 @@
+dataset = crowdstrike_falcon_event_raw 
+| alter
+    BiosManufacturer = device -> bios_manufacturer,
+    BiosVersion = device -> bios_version,
+    HostProductName = device -> system_product_name,
+    DeviceID = device -> device_id,
+    DeviceFirstSeen = device -> first_seen,
+    DeviceLastSeen = device -> last_seen,
+    Hostname = device -> hostname,
+    LocalIP = device -> local_ip,
+    MacAddress = device -> mac_address,
+    HostDomain = device -> machine_domain,
+    OSVersion = device -> os_version,
+    HostType = device -> product_type_desc
