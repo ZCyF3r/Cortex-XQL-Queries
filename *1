@@ -1,0 +1,11 @@
+// 
+// 
+
+
+dataset = saas_audit_logs
+| alter MailItemAccessed = json_extract_array(raw_log, "$.Folders")
+| alter VPNInfo = json_extract_array(caller_ip_enrichment, "$.tunnels_data")
+| filter caller_ip = ""
+//| filter identity_name = ""
+| filter operation_name_orig in("MailItemsAccessed", "New-InboxRule")
+| fields _time, identity_name, operation_name_orig, operation_status, MailItemAccessed,  referenced_resource_name, referenced_resources_count, caller_ip, caller_ip_asn, caller_ip_asn_org, caller_ip_geolocation, VPNInfo, user_agent, user_agent_data, caller_ip_enrichment, raw_log 
