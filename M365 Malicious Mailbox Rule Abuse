@@ -1,8 +1,7 @@
 // M365 Malicious Mailbox Rule Abuse
-
 // High fidelity filters that follow attacker TTPs:
 // Blank, null, or trivial rule name (., .., ;) to avoid detection
-// Moves mail to "Conversation History" folder (rarely monitored)
+// Moves mail to "Conversation History" or "RSS Feeds" folder (rarely monitored)
 // Marks emails as read to hide activity from victim
 // StopProcessingRules = True to ensure rule takes priority
 
@@ -15,7 +14,7 @@ dataset = saas_audit_logs
     or RuleName = null
     or RuleName ~= "^[\.;,\-_\s]{1,4}$"
 | alter ToFolder = arrayindex(regextract(raw_log, "\"Name\":\s*\"MoveToFolder\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
-| filter ToFolder = "Conversation History"
+| filter ToFolder ~= "(?i)(Conversation History|RSS Feeds)"
 | alter MarkedAs = arrayindex(regextract(raw_log, "\"Name\":\s*\"MarkAsRead\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | filter MarkedAs = "True"
 | alter ProcessingRules = arrayindex(regextract(raw_log, "\"Name\":\s*\"StopProcessingRules\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
