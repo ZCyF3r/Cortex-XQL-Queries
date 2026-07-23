@@ -15,6 +15,7 @@ dataset = saas_audit_logs
     or RuleName ~= "^[\.;,\-_\s]{1,4}$"
 | alter ToFolder = arrayindex(regextract(raw_log, "\"Name\":\s*\"MoveToFolder\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | filter ToFolder ~= "(?i)(Conversation History|RSS Feeds)"
+| alter SubjectOrBodyWords = arrayindex(regextract(raw_log, "\"Name\":\s*\"SubjectOrBodyContainsWords\",\s*\"Value\":\s*\"(.*?)\"\s*\}"), 0)
 | alter MarkedAs = arrayindex(regextract(raw_log, "\"Name\":\s*\"MarkAsRead\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | alter ProcessingRules = arrayindex(regextract(raw_log, "\"Name\":\s*\"StopProcessingRules\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | alter anonyousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous")
