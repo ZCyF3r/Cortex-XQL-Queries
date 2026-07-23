@@ -18,9 +18,11 @@ dataset = cloud_audit_logs
 | alter is_callback = if(
     NewURI ~= "(burpcollaborator|oastify\.com|interact\.sh|oast\.fun|oast\.me|oast\.online|pipedream|requestbin|webhook\.site|canarytokens|hookbin\.com|beeceptor\.com|requestcatcher\.com|mockbin\.org|postb\.in)",
     "true", "false")
-// localhost
+// Potential Token Theft
 | alter potential_token_theft = if(
-    NewURI ~= "(?i)(gettoken)", "true", "false")
+    NewURI ~= "(?i)^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?(/|$)"
+    or NewURI ~= "(?i)gettoken",
+    "true", "false")
 | alter pattern_match = if(
     is_tunnel = "true", "Tunnel/RevProxy",
     if(is_callback = "true", "Callback/Interaction",
