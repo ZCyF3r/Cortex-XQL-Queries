@@ -1,5 +1,6 @@
 // Azure Suspicious Redirect URI Detection
-// Looks for reverse proxies, tunnels & callback infra
+// Looks for reverse proxies, tunnels, callback infra, & potential token theft
+// Author: Lacey Cochrane
 
 
 dataset = cloud_audit_logs 
@@ -18,11 +19,11 @@ dataset = cloud_audit_logs
     NewURI ~= "(burpcollaborator|oastify\.com|interact\.sh|oast\.fun|oast\.me|oast\.online|pipedream|requestbin|webhook\.site|canarytokens|hookbin\.com|beeceptor\.com|requestcatcher\.com|mockbin\.org|postb\.in)",
     "true", "false")
 // localhost
-| alter is_localhost = if(
-    NewURI ~= "(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])", "true", "false")
+| alter potential_token_theft = if(
+    NewURI ~= "(?i)(gettoken)", "true", "false")
 | alter pattern_match = if(
-    is_tunnel = "true", "tunnel/RevProxy",
+    is_tunnel = "true", "Tunnel/RevProxy",
     if(is_callback = "true", "Callback/Interaction",
-    if(is_localhost = "true", "localhost/loopback", null)))
+    if(potential_token_theft = "true", "Token Theft", null)))
 | filter pattern_match != null
 | fields _time, identity_name, identity_invoked_by_name, operation_name, operation_name_orig, pattern_match, display_name, NewURI, OldURI, caller_ip, caller_ip_asn, caller_ip_geolocation, user_agent
