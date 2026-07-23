@@ -1,0 +1,27 @@
+// Slack Anomalous Activity
+// Surfaces Slack's own anomaly detection events including impossible travel, new device access, suspicious IP changes and behavioral anomalies
+// MITRE T1078 - Valid Accounts, T1539 - Steal Web Session Cookie
+
+
+dataset = slack_slack_raw 
+| alter 
+    UPN = json_extract_scalar(actor, "$.user.email"),
+    DisplayName = json_extract_scalar(actor, "$.user.name"),
+    UserId = json_extract_scalar(actor, "$.user.id"),
+    TeamId = json_extract_scalar(actor, "$.user.team"),
+    SlackType = json_extract_scalar(context, "$.location.type"),
+    SlackId = json_extract_scalar(context, "$.location.id"),
+    SlackDomain = json_extract_scalar(context, "$.location.domain"),
+    ReqUserAgent = json_extract_scalar(context, "$.ua"),
+    SrcIP = json_extract_scalar(context, "$.ip_address"),
+    SessId = json_extract_scalar(context, "$.session_id"),
+    anomaly_JA3 = json_extract_scalar(details, "$.client_ja3_fingerprint"),
+    anomaly_IPdetails = json_extract_scalar_array(details, "$.ip_address_details"),
+    anomaly_location = json_extract_scalar(details, "$.location"),
+    anomaly_previous_IP = json_extract_scalar(details, "$.previous_ip_address"),
+    anomaly_previous_UA = json_extract_scalar(details, "$.previous_ua"),
+    anomaly_reason = json_extract_scalar_array(details, "$.reason")
+| filter action in ("anomaly", "audit_logs_records_searched_anomaly")
+| filter UPN = ""
+//| filter anomaly_reason = ""
+| fields _time, action, DisplayName, UPN, UserId, TeamId, SlackType, SlackId, SlackDomain, ReqUserAgent, SrcIP, SessId, anomaly_JA3, anomaly_location, anomaly_IPdetails, anomaly_previous_IP, anomaly_previous_UA, anomaly_reason, *
