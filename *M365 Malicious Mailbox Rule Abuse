@@ -21,7 +21,7 @@ dataset = saas_audit_logs
 | filter RuleName = ""
     or RuleName = null
     or RuleName ~= "^[\.;,\-_\s]{1,4}$"
-    or SubjectOrBodyWords ~= "(?i)(compromis|hack|phish|spam|scam|malicious|suspicious|virus|password|mailer.?demon|postmaster|mail delivery|automatic reply|do not open|is this legit|legitimate|jeopardi[sz]ed|weird|fake)"
-    or SubjectOrBodyWords ~= "(?i)(ach request|atm id|\bbank\b|bill payment verification|charge.?back|closed card|direct deposit|payment election|payroll|\bvendor\b|\bvoid\b|\bdeposit\b)"
+    or WordsContaining ~= "(?i)(compromis|hack|phish|spam|scam|malicious|suspicious|virus|password|mailer.?demon|postmaster|mail delivery|automatic reply|do not open|is this legit|legitimate|jeopardi[sz]ed|weird|fake)"
+    or WordsContaining ~= "(?i)(ach request|atm id|\bbank\b|bill payment verification|charge.?back|closed card|direct deposit|payment election|payroll|\bvendor\b|\bvoid\b|\bdeposit\b)"
 | filter ToFolder ~= "(?i)(Conversation History|RSS Feeds)"
 | fields _time, identity_name, operation_name_orig, operation_status, RuleName, WordsContaining, referenced_resource, MarkedAs, ProcessingRules, VPNOperator, IsVPN, anonyousTunnel, caller_ip, caller_ip_geolocation, caller_ip_asn, user_agent, raw_log, caller_ip_enrichment
