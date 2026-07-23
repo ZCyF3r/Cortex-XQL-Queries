@@ -5,18 +5,19 @@
 
 
 dataset = saas_audit_logs 
+| alter 
+    RuleName = arrayindex(regextract(raw_log, "\"Name\":\s*\"Name\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    ToFolder = arrayindex(regextract(raw_log, "\"Name\":\s*\"MoveToFolder\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    WordsContaining = arrayindex(regextract(raw_log, "\"Name\":\s*\"SubjectOrBodyContainsWords\",\s*\"Value\":\s*\"(.*?)\"\s*\}"), 0),
+    MarkedAs = arrayindex(regextract(raw_log, "\"Name\":\s*\"MarkAsRead\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    ProcessingRules = arrayindex(regextract(raw_log, "\"Name\":\s*\"StopProcessingRules\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    anonyousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
 | filter service_type = "Exchange"
 | filter operation_name_orig in ("New-InboxRule", "Set-InboxRule")
-| alter RuleName = arrayindex(regextract(raw_log, "\"Name\":\s*\"Name\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | filter RuleName = ""
     or RuleName = null
     or RuleName ~= "^[\.;,\-_\s]{1,4}$"
-| alter ToFolder = arrayindex(regextract(raw_log, "\"Name\":\s*\"MoveToFolder\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
 | filter ToFolder ~= "(?i)(Conversation History|RSS Feeds)"
-| alter WordsContaining = arrayindex(regextract(raw_log, "\"Name\":\s*\"SubjectOrBodyContainsWords\",\s*\"Value\":\s*\"(.*?)\"\s*\}"), 0)
-| alter MarkedAs = arrayindex(regextract(raw_log, "\"Name\":\s*\"MarkAsRead\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
-| alter ProcessingRules = arrayindex(regextract(raw_log, "\"Name\":\s*\"StopProcessingRules\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
-| alter anonyousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous")
-| alter IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type")
-| alter VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
 | fields _time, identity_name, operation_name_orig, operation_status, RuleName, WordsContaining, referenced_resource, MarkedAs, ProcessingRules, VPNOperator, IsVPN, anonyousTunnel, caller_ip, caller_ip_geolocation, caller_ip_asn, user_agent, raw_log, caller_ip_enrichment
