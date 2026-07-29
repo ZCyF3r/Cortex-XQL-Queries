@@ -1,0 +1,25 @@
+// PKINIT Certificate Identity Mismatch to Non-DC Computer Account
+// Detects certificate-based (PKINIT) Kerberos authentication where the UPN/SID embedded in the certificate does not match the target account's actual SID, and the target computer account is not a verified Domain Controller in AD inventory. Indicates forged or stolen certificate abuse (Shadow Credentials, AD CS ESC9/ESC10, Certipy, Rubeus).
+// MITRE T1649 - Steal or Forge Authentication Certificates, T1558 - Steal or Forge Kerberos Tickets, T1078.002 - Valid Accounts: Domain Accounts
+
+dataset = xdr_data
+| alter
+    CertIssuerName = action_evtlog_data_fields -> CertIssuerName,
+    CertSerialNumber = action_evtlog_data_fields -> CertSerialNumber,
+    CertificateUPN = action_evtlog_data_fields -> AltSecurityIdentityUPN,
+    CertificateSID = action_evtlog_data_fields -> AltSecurityIdentitySid,
+    TargetUserName = action_evtlog_data_fields -> TargetUserName,
+    TargetSid = action_evtlog_data_fields -> TargetSid,
+    SourceIP = action_evtlog_data_fields -> IpAddress,
+    AuthStatus = action_evtlog_data_fields -> Status
+| filter event_type = EVENT_LOG
+| filter action_evtlog_event_id in ("4768")
+| filter action_evtlog_data_fields != null
+| filter CertificateUPN != null and CertificateSID != null
+| filter CertificateSID != TargetSid
+| filter lowercase(TargetUserName) ~= "\\$$"
+| alter TargetUserName_clean = rtrim(TargetUserName, "$")
+| join type=left (preset=ad_computers) as dc dc.name = TargetUserName_clean
+| alter isKnownDC = if(dc.name != null and dc.OU contains "Domain Controllers", true, false)
+| filter isKnownDC = false
+| fields _time, agent_hostname, TargetUserName, TargetSid, CertificateUPN, CertificateSID, CertIssuerName, CertSerialNumber, SourceIP, AuthStatus
