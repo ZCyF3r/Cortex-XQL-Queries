@@ -19,7 +19,6 @@ dataset = sentinelone_deep_visibility_raw
     src_process_pid = json_extract_scalar(_raw_log, "$['src.process.pid']"),
     src_process_uid = json_extract_scalar(_raw_log, "$['src.process.uid']"),
     src_process_usersid = json_extract_scalar(_raw_log, "$['src.process.userSid']"),
-    src_process_pid = json_extract_scalar(_raw_log, "$['src.process.pid']"),
     src_process_cmdline = json_extract_scalar(_raw_log, "$['src.process.cmdline']"),
     src_process_image_path = json_extract_scalar(_raw_log, "$['src.process.image.path']"),
     src_process_image_sha256 = json_extract_scalar(_raw_log, "$['src.process.image.sha256']"),
@@ -89,12 +88,11 @@ dataset = sentinelone_deep_visibility_raw
     task_name = json_extract_scalar(_raw_log, "$['task.name']"),
     task_path = json_extract_scalar(_raw_log, "$['task.path']"),
     task_trigger_type = json_extract_scalar(_raw_log, "$['task.triggerType']"),
-    cmd_content = json_extract_scalar(_raw_log, "$['cmdScript.content']"),
     cmd_application = json_extract_scalar(_raw_log, "$['cmdScript.applicationName']"),
     cmd_script_content = json_extract_scalar(_raw_log, "$['cmdScript.content']"),
     cmd_script_original_size = json_extract_scalar(_raw_log, "$['cmdScript.originalSize']"),
     cmd_script_sha256 = json_extract_scalar(_raw_log, "$['cmdScript.sha256']"),
-    src_process_crossprocess_threadcount = json_extract_scalar(_raw_log, "$['src.processcrossProcessDupThreadHandleCount']"),
-    src_process_crossprocess_remotethreadcount = json_extract_scalar(_raw_log, "$['src.processcrossProcessDupRemoteProcessHandleCount']"),
-    src_process_crossprocess_openprocess_count = json_extract_scalar(_raw_log, "$['src.processcrossProcessOpenProcessCount']"),
-| fields _time, event_category, event_type, meta_event_name, endpoint_name, endpoint_os, endpoint_type, site_name, agent_uuid, src_process_name, src_process_pid, src_process_cmdline, src_process_image_path, src_process_image_sha256, src_process_user, src_process_parent_name, src_process_parent_cmdline, tgt_process_name, tgt_process_pid, tgt_process_cmdline, tgt_process_image_path, tgt_process_image_sha256, tgt_file_path, tgt_file_sha256, tgt_file_sha1, tgt_file_md5, tgt_file_type, tgt_file_size, tgt_file_old_path,src_ip, src_port, dst_ip, dst_port, net_direction, net_protocol, dns_request, dns_response, reg_key_path, reg_value_name, reg_value_data, login_type, login_account, login_domain, login_success, indicator_name, indicator_category, indicator_description, url_address, task_name, task_path, cmd_content, cmd_app, cross_process_type
+    src_process_crossprocess_threadcount = json_extract_scalar(_raw_log, "$['src.process.crossProcessDupThreadHandleCount']"),
+    src_process_crossprocess_remotethreadcount = json_extract_scalar(_raw_log, "$['src.process.crossProcessDupRemoteProcessHandleCount']"),
+    src_process_crossprocess_openprocess_count = json_extract_scalar(_raw_log, "$['src.process.crossProcessOpenProcessCount']")
+| fields _time, event_category, event_type, event_time, event_id, meta_event_name, endpoint_name, endpoint_os, endpoint_type, site_name, site_id, agent_uuid, agent_version, src_process_name, src_process_pid, src_process_uid, src_process_usersid, src_process_cmdline, src_process_image_path, src_process_image_sha256, src_process_image_sha1, src_process_image_md5, src_process_is_executable, src_process_displayName, src_process_publisher, src_process_user, src_process_parent_name, src_process_parent_displayName, src_process_parent_cmdline, src_process_parent_image_path, src_process_parent_image_md5, src_process_parent_image_sha256, src_process_parent_image_size, src_process_parent_uid, src_process_parent_signature_valid, tgt_process_name, tgt_process_displayname, tgt_process_pid, tgt_process_cmdline, tgt_process_image_path, tgt_process_image_sha256, tgt_process_image_sha1, tgt_process_is_executable, tgt_process_publisher, tgt_process_user, tgt_process_usersid, tgt_file_path, tgt_file_name, tgt_file_id, tgt_file_sha256, tgt_file_sha1, tgt_file_md5, tgt_file_type, tgt_file_size, tgt_file_old_path, tgt_file_is_executable, tgt_file_owner_name, tgt_file_owner_sid, src_ip, src_port, dst_ip, dst_port, net_direction, net_protocol, network_transport_protocol, dns_request, dns_response_code, dns_protocol, dns_provider, reg_key_path, reg_value_name, reg_value_data, reg_value_type, reg_old_value, login_type, login_account, login_domain, login_success, indicator_name, indicator_category, indicator_description, indicator_metadata, url_address, task_name, task_path, task_trigger_type, cmd_content, cmd_application, cmd_script_original_size, cmd_script_sha256, src_process_crossprocess_threadcount, src_process_crossprocess_remotethreadcount, src_process_crossprocess_openprocess_count
