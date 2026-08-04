@@ -1,0 +1,5 @@
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter actor_process_image_name in ("chrome.exe", "msedge.exe", "firefox.exe")
+| filter action_process_image_name in ("cmd.exe", "powershell.exe", "bash")
+| fields timestamp_desc, agent_hostname, actor_process_image_name, actor_process_image_path, action_process_image_name, action_process_image_path, action_process_command_line, actor_process_command_line
