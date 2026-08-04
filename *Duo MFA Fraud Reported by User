@@ -4,12 +4,12 @@
 
 
 dataset = duo_mfa_raw
-| filter eventType = "authentication"
-| filter reason = "user_marked_fraud"
 | alter
     country = access_device_location_country,
     city = access_device_location_city,
     OS = access_device_os,
     browser = access_device_browser
+| filter eventType = "authentication"
+| filter reason = "user_marked_fraud"
 | fields _time, user_name, factor, application_name, access_device_ip, country, city, os, browser, access_device_hostname, adaptive_trust_assessments_more_secure_auth_reason, adaptive_trust_assessments_more_secure_auth_trust_level, adaptive_trust_assessments_remember_me_reason, reason, result_format_1, _raw_log 
 | sort desc _time
