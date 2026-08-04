@@ -1,5 +1,6 @@
 // Browser Extension Force-Installed via Registry Policy
 // Detects registry writes to Chromium ExtensionInstallForcelist or ExtensionInstallSources policy keys. Attackers modify these to silently force-install malicious extensions without user consent or Web Store review. Legitimate use is enterprise GPO-managed — any write from a non-GPO process (cmd, powershell, reg.exe, malware) is suspicious.
+// Add in benign src_process to increase the fidelity
 // MITRE T1176 - Browser Extensions, T1112 - Modify Registry
 
 
