@@ -1,0 +1,15 @@
+// Unenrolled User Bypassed MFA via Trusted Network
+// A user who has not enrolled in Duo MFA was allowed to authenticate because they were on a trusted network. This represents an MFA coverage gap — an attacker on the trusted network (VPN, compromised workstation, lateral movement) can authenticate as any unenrolled user without MFA. Monitor for unexpected users and push enrollment completion.
+// MITRE T1556 - Modify Authentication Process
+
+
+dataset = duo_mfa_raw
+| filter eventType = "authentication"
+| filter reason = "allow_unenrolled_user_on_trusted_network"
+| alter
+    country = access_device_location_country,
+    city = access_device_location_city,
+    OS = access_device_os,
+    browser = access_device_browser
+| fields _time, user_name, factor, application_name, access_device_ip, country, city, os, browser, access_device_hostname
+| sort desc _time
