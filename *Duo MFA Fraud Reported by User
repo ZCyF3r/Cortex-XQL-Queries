@@ -1,0 +1,15 @@
+// Duo MFA Fraud Reported by User
+// User explicitly flagged an MFA push as fraudulent.
+// MITRE T1621 - Multi-Factor Authentication Request Generation
+
+
+dataset = duo_mfa_raw
+| filter eventType = "authentication"
+| filter reason = "user_marked_fraud"
+| alter
+    country = access_device_location_country,
+    city = access_device_location_city,
+    OS = access_device_os,
+    browser = access_device_browser
+| fields _time, user_name, factor, application_name, access_device_ip, country, city, os, browser, access_device_hostname
+| sort desc _time
