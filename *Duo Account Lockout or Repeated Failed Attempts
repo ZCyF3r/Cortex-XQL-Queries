@@ -1,0 +1,15 @@
+// Duo Account Lockout or Repeated Failed Attempts
+// User account locked out or flagged for frequent failed authentication attempts. Indicates brute force, credential stuffing, or an attacker repeatedly trying to pass MFA. Correlate with IdP sign-in failures for the same user to determine if primary credentials are also under attack.
+// MITRE T1110 - Brute Force, T1621 - Multi-Factor Authentication Request Generation
+
+
+dataset = duo_mfa_raw
+| filter eventType = "authentication"
+| filter reason in ("locked_out", "frequent_attempts")
+| alter
+    country = access_device_location_country,
+    city = access_device_location_city,
+    OS = access_device_os,
+    browser = access_device_browser
+| fields _time, user_name, factor, reason, application_name, access_device_ip, country, city, os, browser, access_device_hostname
+| sort desc _time
