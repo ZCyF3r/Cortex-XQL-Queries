@@ -7,10 +7,10 @@ dataset = xdr_data
 | filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
 | filter actor_process_image_name in ("chrome.exe", "msedge.exe", "brave.exe", "chromium.exe")
     or action_process_image_name in ("chrome.exe", "msedge.exe", "brave.exe", "chromium.exe")
-| filter action_process_command_line contains "--load-extension"
-    or action_process_command_line contains "--disable-extensions-except"
+| filter action_process_image_command_line contains "--load-extension"
+    or action_process_image_command_line contains "--disable-extensions-except"
 | alter LoadedExtensionPath = coalesce(
-        arrayindex(regextract(action_process_command_line, "--load-extension=([^ ]+)"), 0),
-        arrayindex(regextract(action_process_command_line, "--disable-extensions-except=([^ ]+)"), 0)),
+        arrayindex(regextract(action_process_image_command_line, "--load-extension=([^ ]+)"), 0),
+        arrayindex(regextract(action_process_image_command_line, "--disable-extensions-except=([^ ]+)"), 0)),
     username = os_actor_primary_username
-| fields _time, agent_hostname, username, actor_process_image_name, action_process_image_name, action_process_command_line, LoadedExtensionPath
+| fields _time, agent_hostname, username, actor_process_image_name, action_process_image_name, action_process_image_command_line, LoadedExtensionPath
