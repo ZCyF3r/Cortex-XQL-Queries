@@ -1,0 +1,16 @@
+// Sideloaded Unpacked Browser Extension via Developer Mode
+// Detects Chromium-based browsers launched with --load-extension or --disable-extensions-except flags, indicating a locally sideloaded unpacked extension. Malicious actors use this to bypass Web Store review, load credential stealers, session hijackers, or C2 implants without triggering extension store telemetry.
+// MITRE T1176 - Browser Extensions
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter actor_process_image_name in ("chrome.exe", "msedge.exe", "brave.exe", "chromium.exe")
+    or action_process_image_name in ("chrome.exe", "msedge.exe", "brave.exe", "chromium.exe")
+| filter action_process_command_line contains "--load-extension"
+    or action_process_command_line contains "--disable-extensions-except"
+| alter LoadedExtensionPath = coalesce(
+        arrayindex(regextract(action_process_command_line, "--load-extension=([^ ]+)"), 0),
+        arrayindex(regextract(action_process_command_line, "--disable-extensions-except=([^ ]+)"), 0)),
+    username = os_actor_primary_username
+| fields _time, agent_hostname, username, actor_process_image_name, action_process_image_name, action_process_command_line, LoadedExtensionPath
