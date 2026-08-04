@@ -4,10 +4,6 @@
 
 
 dataset = xdr_data
-| filter event_type = ENUM.REGISTRY
-| filter action_registry_key_name ~= "(?i)(ExtensionInstallForcelist|ExtensionInstallSources|ExtensionInstallAllowlist|ExtensionSettings)"
-| filter action_registry_key_name ~= "(?i)(Google\\Chrome|Microsoft\\Edge|BraveSoftware\\Brave)"
-| filter action_registry_value_name != null
 | alter
     username = os_actor_primary_username,
     src_process = actor_process_image_name,
@@ -15,4 +11,9 @@ dataset = xdr_data
     reg_key = action_registry_key_name,
     reg_value_name = action_registry_value_name,
     reg_data = action_registry_data
+| filter event_type = ENUM.REGISTRY
+| filter action_registry_key_name ~= "(?i)(ExtensionInstallForcelist|ExtensionInstallSources|ExtensionInstallAllowlist|ExtensionSettings)"
+| filter action_registry_key_name ~= "(?i)(Google\\Chrome|Microsoft\\Edge|BraveSoftware\\Brave)"
+| filter action_registry_value_name != null
+| filter src_process not in ("svchost.exe", "DeviceEnroller.exe", "winlogon.exe", "Citrix.Wem.Agent.Service.exe")
 | fields _time, agent_hostname, username, src_process, src_cmdline, reg_key, reg_value_name, reg_data
