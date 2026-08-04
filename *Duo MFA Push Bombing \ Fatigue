@@ -1,0 +1,27 @@
+// Duo MFA Push Bombing \ Fatigue
+// Detects a burst of push denials (user_cancelled, no_response, user_mistake) from a single user within an aggregation window, indicating an attackerbspamming MFA push requests to fatigue the user into approving.
+// MITRE T1621 - Multi-Factor Authentication Request Generation
+
+
+dataset = duo_mfa_raw
+| filter eventType = "authentication"
+| filter factor = "duo_push"
+| filter reason in ("user_approved", "user_cancelled", "no_response", "user_mistake", "user_marked_fraud")
+| alter
+    is_denial  = if(reason in ("user_cancelled", "no_response", "user_mistake", "user_marked_fraud"), 1, 0),
+    is_approve = if(reason = "user_approved", 1, 0)
+| comp
+    sum(is_denial) as push_denials,
+    sum(is_approve) as push_approvals,
+    count() as total_pushes,
+    count_distinct(access_device_ip) as distinct_ips,
+    values(access_device_ip) as source_ips,
+    values(application_name) as applications,
+    values(access_device_location_country) as countries,
+    values(reason) as reasons,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by user_name
+| filter push_denials >= 3
+| alter approved_after_fatigue = if(push_approvals >= 1 and push_denials >= 3, "YES - INVESTIGATE", "Denials Only")
+| sort desc push_denials
