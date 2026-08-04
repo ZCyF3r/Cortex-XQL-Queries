@@ -22,6 +22,6 @@ dataset = duo_mfa_raw
     min(_time) as first_seen,
     max(_time) as last_seen
   by user_name
-| filter push_denials >= 3
+| filter push_denials >= 5
 | alter approved_after_fatigue = if(push_approvals >= 1 and push_denials >= 3, "YES - INVESTIGATE", "Denials Only")
 | sort desc push_denials
