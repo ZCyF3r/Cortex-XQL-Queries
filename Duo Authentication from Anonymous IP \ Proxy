@@ -1,0 +1,15 @@
+// Duo Authentication from Anonymous IP \ Proxy
+// Duo flagged the source IP as a known anonymous proxy, VPN, or Tor exit. Attackers use anonymizing infrastructure to obscure origin during credential stuffing, session hijacking, and post-compromise access. Correlate with Okta/Entra sign-in logs for the same user and timeframe.
+// MITRE T1090 - Proxy, T1078 - Valid Accounts
+
+
+dataset = duo_mfa_raw
+| filter eventType = "authentication"
+| filter reason = "anonymous_ip"
+| alter
+    country = access_device_location_country,
+    city = access_device_location_city,
+    OS = access_device_os,
+    browser = access_device_browser
+| fields _time, user_name, factor, application_name, access_device_ip, country, city, os, browser, access_device_hostname
+| sort desc _time
