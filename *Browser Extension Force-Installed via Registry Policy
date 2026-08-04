@@ -7,6 +7,7 @@ dataset = xdr_data
 | filter event_type = ENUM.REGISTRY
 | filter action_registry_key_name ~= "(?i)(ExtensionInstallForcelist|ExtensionInstallSources|ExtensionInstallAllowlist|ExtensionSettings)"
 | filter action_registry_key_name ~= "(?i)(Google\\Chrome|Microsoft\\Edge|BraveSoftware\\Brave)"
+| filter action_registry_value_name != null
 | alter
     username = os_actor_primary_username,
     src_process = actor_process_image_name,
