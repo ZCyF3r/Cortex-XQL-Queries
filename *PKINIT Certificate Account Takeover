@@ -12,7 +12,7 @@ dataset = xdr_data
     PreAuthType = aedf -> PreAuthType,
     TicketEncryptionType = aedf -> TicketEncryptionType
 | filter AuthStatus = "0x0"
-//| filter agent_hostname = "REPLACE"
+| filter agent_hostname = "REPLACE"
 | filter CertIssuerName not contains "login.windows.net"
 | filter PreAuthType = "16"
 | filter TicketEncryptionType = "0x12"
