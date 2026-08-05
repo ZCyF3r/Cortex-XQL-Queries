@@ -1,0 +1,18 @@
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG and action_evtlog_event_id = 4768
+| fields action_evtlog_data_fields as aedf, agent_hostname
+| filter aedf != null
+| alter
+    CertIssuerName = aedf -> CertIssuerName,
+    CertSerialNumber = aedf -> CertSerialNumber,
+    TargetUserName = aedf -> TargetUserName,
+    TargetSid = aedf -> TargetSid,
+    SourceIP = aedf -> IpAddress,
+    AuthStatus = aedf -> Status,
+    PreAuthType = aedf -> PreAuthType,
+    TicketEncryptionType = aedf -> TicketEncryptionType
+| filter AuthStatus = "0x0"
+//| filter agent_hostname = "REPLACE"
+| filter CertIssuerName not contains "login.windows.net"
+| filter PreAuthType = "16"
+| filter TicketEncryptionType = "0x12"
