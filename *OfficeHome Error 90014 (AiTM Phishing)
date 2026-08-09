@@ -4,3 +4,12 @@
 // MITRE T1557 - Adversary-in-the-Middle, T1078 - Valid Accounts
 
 
+dataset = msft_azure_ad_raw 
+| alter 
+    error_code = status -> errorCode,
+    failure_reason = status -> failureReason
+| alter UserAgent_MixMatch = if(userAgent contains "Mobile Safari" and deviceDetail contains "Windows", "YES - Implausible combo", 
+    if(userAgent contains "Chrome Mobile" and deviceDetail contains "Windows", "YES - Implausible combo", "No"))
+| filter appDisplayName = "OfficeHome"
+| filter error_code = "90014"
+| fields _time, userPrincipalName, userDisplayName, error_code, appDisplayName, appId, clientAppUsed, failure_reason, ipAddress, location, userAgent, deviceDetail
