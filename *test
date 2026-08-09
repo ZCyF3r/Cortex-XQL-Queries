@@ -1,0 +1,8 @@
+dataset = cloud_audit_logs 
+| alter finance_recon = if(operation_name_orig ~= "(?i)/users"
+    and operation_name_orig ~= "(?i)(payroll|finance|hr|humman.resources|accounting|benefits|controller|treasury|compensation|accounts.payable)", "YES", "NO")
+| alter bulk_enum = if(operation_name_orig ~= "(?i)/users.*\\$top=999", "YES", "NO")
+| alter is_axios = if(user_agent ~= "(?i)(axios)", "YES", "NO")
+| filter log_name = "microsoft_graph_activity_logs"
+| filter operation_name = ENUM.Get
+| filter finance_recon = "YES" or bulk_enum = "YES" or is_axios = "YES"
