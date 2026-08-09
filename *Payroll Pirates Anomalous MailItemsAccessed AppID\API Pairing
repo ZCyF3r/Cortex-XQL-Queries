@@ -1,0 +1,4 @@
+// Payroll Pirates Anomalous MailItemsAccessed AppID\API Pairing
+// Detects mailbox access using the specific ClientAppId and API pairing unique to the Storm-2755 / Payroll Pirates AiTM campaign. Access type "Bind" confirms message content was retrieved. Campaign targets payroll, HR, and finance personnel mailboxes.
+// Reference: https://arcticwolf.com/resources/blog/payroll-pirates-strange-new-tides-in-business-email-compromise/
+// MITRE T1114.002 - Email Collection: Remote Email Collection, T1550.001 - Use Alternate Authentication Material: Application Access Token
