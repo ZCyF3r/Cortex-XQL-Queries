@@ -1,0 +1,6 @@
+// OfficeHome Error 90014 (AiTM Phishing)
+// Detects error code 90014 on the OfficeHome first-party application. This error occurs when the OAuth flow is initiated without the nonce parameter, which happens when AiTM proxy toolkits relay the auth flow incorrectly. Exceedingly rare on legitimate first-party Microsoft applications. Strongest when paired with user-agent/OS mismatches (e.g. Mobile Safari on Windows 10) or residential proxy IPs.
+// Reference: https://arcticwolf.com/resources/blog/payroll-pirates-strange-new-tides-in-business-email-compromise/
+// MITRE T1557 - Adversary-in-the-Middle, T1078 - Valid Accounts
+
+
