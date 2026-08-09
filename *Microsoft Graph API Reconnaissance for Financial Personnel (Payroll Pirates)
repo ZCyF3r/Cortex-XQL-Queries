@@ -1,3 +1,9 @@
+// Microsoft Graph API Reconnaissance for Financial Personnel (Payroll Pirates)
+// Detects Graph API enumeration of tenant users filtered by payroll, HR, finance, and administrative attributes. Storm-2755 uses axios and queries graph.microsoft.com/v1.0/users targeting financial personnel before collecting their mailbox data. Also flags bulk user enumeration via $top=999. Results aggregated by source IP/ASN to surface coordinated reconnaissance across multiple identities.
+// Reference: https://arcticwolf.com/resources/blog/payroll-pirates-strange-new-tides-in-business-email-compromise/
+// MITRE T1087.003 - Account Discovery: Email Account, T1114 - Email Collection
+
+
 dataset = cloud_audit_logs 
 | alter finance_recon = if(operation_name_orig ~= "(?i)/users"
     and operation_name_orig ~= "(?i)(payroll|finance|hr|human.resources|accounting|benefits|controller|treasury|compensation|accounts.payable)", "YES", "NO")
