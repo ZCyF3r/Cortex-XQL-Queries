@@ -13,4 +13,4 @@ dataset = saas_audit_logs
 | filter identity_invoked_by_uuid = "5d661950-3475-41cd-a2c3-d671a3162bc1"
 | filter operation_name_orig = "MailItemsAccessed"
 | filter user_agent ~= "(?i)(firefox)"
-| fields _time, event_timestamp, identity_name, identity_invoked_by_uuid, operation_name_orig,operation_status, API_ID, user_agent, user_agent_data, caller_ip, caller_ip_asn, caller_ip_asn_org, caller_ip_geolocation, caller_ip_enrichment, raw_log
+| fields _time, event_timestamp, identity_name, identity_invoked_by_uuid, operation_name_orig,operation_status, Mail_Operation_Type, API_ID, user_agent, user_agent_data, caller_ip, caller_ip_asn, caller_ip_asn_org, caller_ip_geolocation, caller_ip_enrichment, raw_log
