@@ -1,4 +1,4 @@
-// OAuth App Authorization Spike\Bulk Token Grants
+// Google Workspace OAuth App Authorization Spike\Bulk Token Grants
 // Detects a user authorizing an unusual number of OAuth apps in a short window. Automated consent phishing toolkits or compromised accounts mass-granting app access produce a burst of authorize events. Legitimate users rarely authorize more than a few apps per day.
 // MITRE T1528 - Steal Application Access Token
 
