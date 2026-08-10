@@ -1,4 +1,4 @@
-// OAuth App Authorized with Sensitive Scopes (Consent Phishing)
+// Google Workspace OAuth App Authorized with Sensitive Scopes (Consent Phishing)
 // Detects OAuth application authorization events where the granted scopes include access to Gmail, Drive, or Admin APIs. Consent phishing attacks trick users into granting a malicious third-party app broad access to their account. Legitimate apps rarely request full Gmail or Admin scopes. Unrecognized app names with sensitive scopes are near-certain phishing.
 // MITRE T1528 - Steal Application Access Token, T1550.001 - Use Alternate Authentication Material: Application Access Token
 
