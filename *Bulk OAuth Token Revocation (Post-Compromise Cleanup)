@@ -1,3 +1,8 @@
+// Bulk OAuth Token Revocation (Post-Compromise Cleanup)
+// Detects mass revocation of OAuth tokens for a user. Attackers may revoke tokens after extracting data to remove evidence of the apps they used. Admins may also bulk-revoke during IR.
+// MITRE T1070 - Indicator Removal
+
+
 dataset = google_workspace_token_raw 
 | alter events_str = to_string(events)
 | alter event_name = json_extract_scalar(events_str, "$[0].name")
