@@ -1,3 +1,8 @@
+// Google Workspace Risky Sensitive Action Allowed
+// Google flagged an action as risky but it was allowed to proceed. This is Google's own risk signal & covers scenarios like sign-ins from suspicious locations, unusual devices, or known-bad IPs that still passed authentication.
+// MITRE T1078.004 - Valid Accounts: Cloud Accounts
+
+
 dataset = google_workspace_login_raw 
 | alter events_str = to_string(events)
 | alter event_name = json_extract_scalar(events_str, "$[0].name")
