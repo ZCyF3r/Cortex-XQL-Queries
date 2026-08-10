@@ -15,5 +15,5 @@ dataset = google_workspace_token_raw
 | alter admin_scope = if(events_str contains "googleapis.com/auth/admin", "YES", "NO")
 | filter event_name = "authorize"
 | filter gmail_scope = "YES" or drive_scope = "YES" or admin_scope = "YES"
-| filter app_name not in("Google CLoud SDK", "Google Drive", "Gmail", "Google Docs")
+| filter app_name not in("Google Cloud SDK", "Google Drive", "Gmail", "Google Docs")
 | fields _time, actor_email, app_name, event_name, client_id, gmail_scope, drive_scope, admin_scope, ipAddress 
