@@ -1,3 +1,8 @@
+// Google Workspace Login Brute Force \ Credential Stuffing
+// Detects a burst of login failures from a single IP targeting multiple accounts, or repeated failures against a single account. Prioritize cases where a success follows the failure burst.
+// MITRE T1110 - Brute Force, T1078.004 - Valid Accounts: Cloud Accounts
+
+
 dataset = google_workspace_login_raw 
 | alter events_str = to_string(events)
 | alter event_name = json_extract_scalar(events_str, "$[0].name")
