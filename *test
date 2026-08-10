@@ -1,0 +1,14 @@
+dataset = google_workspace_token_raw 
+| alter events_str = to_string(events)
+| alter event_name = json_extract_scalar(events_str, "$[0].name")
+| alter
+    client_id = arrayindex(regextract(events_str, "\"name\":\s*\"client_id\",\s*\"value\":\s*\"([^\"]+)\""), 0),
+    app_name = arrayindex(regextract(events_str, "\"name\":\s*\"app_name\",\s*\"value\":\s*\"([^\"]+)\""), 0),
+    actor_email = json_extract_scalar(actor, "$.email")
+| alter gmail_scope = if(events_str contains "mail.google.com" or events_str ~= "(?i)(googleapis\.com/auth/gmail)", "YES", "NO")
+| alter drive_scope = if(events_str contains "googleapis.com/auth/drive", "YES", "NO")
+| alter admin_scope = if(events_str contains "googleapis.com/auth/admin", "YES", "NO")
+| filter event_name = "authorize"
+| filter gmail_scope = "YES" or drive_scope = "YES" or admin_scope = "YES"
+| filter app_name not in("Google CLoud SDK", "Google Drive", "Gmail", "Google Docs")
+| fields _time, actor_email, app_name, event_name, client_id, gmail_scope, drive_scope, admin_scope, ipAddress 
