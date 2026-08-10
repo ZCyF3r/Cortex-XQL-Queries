@@ -1,0 +1,9 @@
+dataset = google_workspace_login_raw 
+| alter events_str = to_string(events)
+| alter event_name = json_extract_scalar(events_str, "$[0].name")
+| alter
+    actor_email = json_extract_scalar(actor, "$.email"),
+    challenge_type = arrayindex(regextract(events_str, "login_challenge_method[^]]*\"multiValue\":\s*\\[\\s*\"([^\"]+)\""), 0),
+    ASN = json_extract_array(networkInfo, "$.ipAsn"),
+    country_code = json_extract_scalar(networkInfo, "$.regionCode")
+| filter event_name = "login_challenge"
