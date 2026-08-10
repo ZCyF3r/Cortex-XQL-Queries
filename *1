@@ -1,0 +1,20 @@
+dataset = google_workspace_login_raw 
+| alter events_str = to_string(events)
+| alter event_name = json_extract_scalar(events_str, "$[0].name")
+| alter
+    is_failure = if(event_name = "login_failure", 1, 0),
+    is_success = if(event_name = "login_success", 1, 0),
+    actor_email = json_extract_scalar(actor, "$.email")
+| filter event_name in("login_failure", "login_success")
+| comp
+    sum(is_failure) as total_failures,
+    sum(is_success) as total_successes,
+    count_distinct(actor_email) as distinct_users, 
+    values(actor_email) as targeted_users, 
+    values(event_name) as outcomes,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+    by ipAddress
+| filter total_failures >= 5
+| alter success_after_failures = if(total_successes >= 1 and total_failures >= 5, "INVESTIGATE", "FAILURES ONLY")
+| sort desc total_failures 
