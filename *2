@@ -1,0 +1,12 @@
+dataset = google_workspace_login_raw 
+| alter events_str = to_string(events)
+| alter event_name = json_extract_scalar(events_str, "$[0].name")
+| alter
+    actor_email = json_extract_scalar(actor, "$.email"),
+    login_type = arrayindex(regextract(events_str, "\"name\":\s*\"login_type\",\s*\"value\":\s*\"([^\"]+)\""), 0),
+//    is_suspect = arrayindex(regextract(events_str, "\"name\":\s*\"is_suspicious\",\s*\"boolValue\":\s*\"([^\"]+)\""), 0),
+    sensitive_action = arrayindex(regextract(events_str, "\"name\":\s*\"sensitive_action_name\",\s*\"value\":\s*\"([^\"]+)\""), 0),
+    ASN = json_extract_array(networkInfo, "$.ipAsn"),
+    country_code = json_extract_scalar(networkInfo, "$.regionCode")
+| filter event_name = "risky_sensitive_action_allowed"
+| fields _time, actor_email, event_name, login_type, sensitive_action, ipAddress, ASN, country_code
