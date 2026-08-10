@@ -1,0 +1,18 @@
+dataset = google_workspace_token_raw 
+| alter events_str = to_string(events)
+| alter event_name = json_extract_scalar(events_str, "$[0].name")
+| alter
+    client_id = arrayindex(regextract(events_str, "\"name\":\s*\"client_id\",\s*\"value\":\s*\"([^\"]+)\""), 0),
+    app_name = arrayindex(regextract(events_str, "\"name\":\s*\"app_name\",\s*\"value\":\s*\"([^\"]+)\""), 0),
+    actor_email = json_extract_scalar(actor, "$.email")
+| filter event_name = "revoke"
+| comp
+    count() as total_revocations,
+    count_distinct(app_name) as distinct_apps,
+    values(app_name) as apps_revoked,
+    values(ipAddress) as source_ips,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+    by actor_email
+| filter total_revocations >= 3
+| sort desc total_revocations
