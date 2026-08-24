@@ -1,0 +1,41 @@
+// Calendar C2 Dead-Drop via Graph API
+// Detects Graph API calendar operations (event creation, attachment upload, event modification, calendarView queries) performed by an application identity with a non-browser user agent, combined with content markers specific to the HOLLOWGRAPH C2 protocol: far-future dates (2050),  Boss{..}ID{..} subject tags, Event ID: subject format, or File{n}.txt attachment naming. HOLLOWGRAPH uses a compromised M365 mailbox calendar as a two-way dead-drop for C2 tasking and encrypted data exfiltration.
+// Reference https://www.group-ib.com/blog/hollowgraph-microsoft-365/
+// MITRE T1071.001 - Application Layer Protocol: Web Protocols, T1567 - Exfiltration Over Web Service, T1102 - Web Service
+
+
+dataset = cloud_audit_logs
+| filter log_name = "microsoft_graph_activity_logs"
+| filter operation_name_orig ~= "(?i)(calendar|events|attachments)"
+| alter
+    is_event_create = if(operation_name = "Post"
+        and operation_name_orig ~= "(?i)/calendar/events", "YES", "NO"),
+    is_attachment_upload = if(operation_name = "Post"
+        and operation_name_orig ~= "(?i)/attachments", "YES", "NO"),
+    is_event_modify = if(operation_name = "Post"
+        and operation_name_orig ~= "(?i)/events/", "YES", "NO"),
+    is_calendar_view = if(operation_name = ENUM.Get
+        and operation_name_orig ~= "(?i)calendarView", "YES", "NO")
+| filter is_event_create = "YES"
+    or is_attachment_upload = "YES"
+    or is_event_modify = "YES"
+    or is_calendar_view = "YES"
+| alter raw_str = to_string(raw_log)
+| alter
+    is_app_identity = if(identity_name not contains "@", "YES", "NO"),
+    has_future_date = if(raw_str ~= "(2050|2049|2048)", "YES", "NO"),
+    has_boss_subject = if(raw_str ~= "(?i)Boss\{", "YES", "NO"),
+    has_eventid_subject = if(raw_str contains "Event ID:", "YES", "NO"),
+    has_file_attachment = if(raw_str ~= "File\\d+\\.txt", "YES", "NO"),
+    has_suspicious_ua = if(
+        user_agent not contains "Outlook" and
+        user_agent not contains "Edge" and
+        user_agent not contains "Chrome" and
+        user_agent not contains "Safari", "YES", "NO")
+| filter is_app_identity = "YES"
+    and has_suspicious_ua = "YES"
+    and (has_future_date = "YES"
+        or has_boss_subject = "YES"
+        or has_eventid_subject = "YES"
+        or has_file_attachment = "YES")
+| fields _time, identity_name, operation_name, operation_name_orig, caller_ip, caller_ip_asn_org, user_agent, is_event_create, is_attachment_upload, is_event_modify, is_calendar_view, has_future_date, has_boss_subject, has_eventid_subject, has_file_attachment
