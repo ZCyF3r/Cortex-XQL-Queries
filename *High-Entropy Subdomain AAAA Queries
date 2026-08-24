@@ -11,6 +11,7 @@ dataset = xdr_data
 | filter dns_query_name != null
 | filter query_length >= 60
 | filter label_count >= 5
+| filter dns_query_name ~= "^[a-zA-Z0-9]{8,}\."
 | filter dns_query_name not contains "amazonaws.com"
     and dns_query_name not contains "cloudfront.net"
     and dns_query_name not contains "azurewebsites.net"
