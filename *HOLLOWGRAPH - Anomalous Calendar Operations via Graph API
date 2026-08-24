@@ -19,25 +19,6 @@ dataset = cloud_audit_logs
     or is_attachment_upload = "YES"
     or is_event_modify = "YES"
     or is_calendar_view = "YES"
-| fields _time, identity_name, operation_name, operation_name_orig, caller_ip, caller_ip_asn_org, caller_ip_geolocation, user_agent, is_event_create, is_attachment_upload, is_event_modify, is_calendar_view, raw_log
-
-
-
-dataset = cloud_audit_logs
-| filter log_name = "microsoft_graph_activity_logs"
-| filter operation_name_orig ~= "(?i)(calendar|events|attachments)"
-| alter is_event_create = if(operation_name = "operation_name_POST"
-    and operation_name_orig ~= "(?i)/calendar/events", "YES", "NO")
-| alter is_attachment_upload = if(operation_name = "operation_name_POST"
-    and operation_name_orig ~= "(?i)/attachments", "YES", "NO")
-| alter is_event_modify = if(operation_name = "operation_name_POST"
-    and operation_name_orig ~= "(?i)/events/", "YES", "NO")
-| alter is_calendar_view = if(operation_name = ENUM.Get 
-    and operation_name_orig ~= "(?i)calendarView", "YES", "NO")
-| filter is_event_create = "YES"
-    or is_attachment_upload = "YES"
-    or is_event_modify = "YES"
-    or is_calendar_view = "YES"
 | alter raw_str = to_string(raw_log)
 | alter is_app_identity = if(identity_name not contains "@", "YES", "NO")
 | alter has_future_date = if(operation_name_orig ~= "(?i)(2050|2049|2048)", "YES", "NO")
@@ -49,10 +30,9 @@ dataset = cloud_audit_logs
     user_agent not contains "Edge" and
     user_agent not contains "Chrome" and
     user_agent not contains "Safari", "YES", "NO")
-| alter signal_count = add(
-    if(is_app_identity = "YES", 1, 0),
-    if(has_future_date = "YES", 1, 0),
-    if(has_boss_subject = "YES", 1, 0),
-    if(has_eventid_subject = "YES", 1, 0),
-    if(has_file_attachment = "YES", 1, 0),
-    if(has_suspcious_ua = "YES", 1, 0))
+| filter is_app_identity = "YES"
+    and has_suspcious_ua = "YES"
+    and (has_future_date = "YES"
+        or has_boss_subject = "YES"
+        or has_eventid_subject = "YES"
+        or has_file_attachment = "YES")s
