@@ -7,11 +7,11 @@
 dataset = cloud_audit_logs
 | filter log_name = "microsoft_graph_activity_logs"
 | filter operation_name_orig ~= "(?i)(calendar|events|attachments)"
-| alter is_event_create = if(operation_name = ENUM.Post
+| alter is_event_create = if(operation_name = "Post"
     and operation_name_orig ~= "(?i)/calendar/events", "YES", "NO")
-| alter is_attachment_upload = if(operation_name = ENUM.Post
+| alter is_attachment_upload = if(operation_name = "Post"
     and operation_name_orig ~= "(?i)/attachments", "YES", "NO")
-| alter is_event_modify = if(operation_name = ENUM.Patch
+| alter is_event_modify = if(operation_name = "Post"
     and operation_name_orig ~= "(?i)/events/", "YES", "NO")
 | alter is_calendar_view = if(operation_name = ENUM.Get
     and operation_name_orig ~= "(?i)calendarView", "YES", "NO")
@@ -19,4 +19,4 @@ dataset = cloud_audit_logs
     or is_attachment_upload = "YES"
     or is_event_modify = "YES"
     or is_calendar_view = "YES"
-| fields _time, identity_name, operation_name, operation_name_orig, caller_ip, caller_ip_asn_org, caller_ip_geolocation, user_agent, is_event_create, is_attachment_upload, is_event_modify, is_calendar_view
+| fields _time, identity_name, operation_name, operation_name_orig, caller_ip, caller_ip_asn_org, caller_ip_geolocation, user_agent, is_event_create, is_attachment_upload, is_event_modify, is_calendar_view, raw_log 
