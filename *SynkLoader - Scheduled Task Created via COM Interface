@@ -17,5 +17,5 @@ dataset = xdr_data
 | alter has_python = if(TaskContent ~= "(?i)python", "YES", "NO")
 | alter has_powershell = if(TaskContent ~= "(?i)(powershell|pwsh|\.ps1)", "YES", "NO")
 | alter has_logon_trigger = if(TaskContent ~= "(?i)(LogonTrigger|SessionChange)", "YES", "NO")
-| filter has_logon_trigger = "Yes" and (has_powershell = "YES" or has_python = "YES")
+| filter has_logon_trigger = "YES" and (has_powershell = "YES" or has_python = "YES")
 | fields _time, agent_hostname, SubjectUser, TaskName, has_python, has_powershell, has_logon_trigger, TaskContent
