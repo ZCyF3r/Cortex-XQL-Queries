@@ -1,3 +1,9 @@
+// SynkLoader - Windowless Python from Non-Standard Path with Suspicious Parent
+// Detects pythonw.exe (windowless Python) executing from user-writable directories, launched by a suspicious parent process. SynkLoader ships a Python environment into a random AppData subfolder and uses pythonw.exe to run its C2 loader without a visible console.
+// Reference https://expel.com/blog/synkloader-when-you-throw-in-everything-but-the-kitchen-sink/
+// MITRE T1059.006 - Command and Scripting Interpreter: Python, T1036 - Masquerading
+
+
 dataset = xdr_data
 | alter runs_ss_py = if(action_process_image_command_line ~= "(?i)ss\.py", "YES", "NO")
 | alter has_c2_script = if(action_process_image_command_line ~= "(?i)(ss\.py|cleaner\.ps1|sync\.py|loader\.py)", "YES", "NO")
