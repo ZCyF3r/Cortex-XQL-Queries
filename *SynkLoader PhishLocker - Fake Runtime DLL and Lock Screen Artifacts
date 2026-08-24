@@ -1,0 +1,24 @@
+// SynkLoader PhishLocker - Fake Runtime DLL and Lock Screen Artifacts
+// Detects behavioral indicators of the PhishLocker credential harvester. The module uses fake Microsoft Visual C++ runtime DLLs (msvcp150.dll, msvcp160.dll) that are actually custom C/C++ modules loaded by the Python framework. 
+// Detection surfaces: fake MSVC DLLs loaded from user-writable paths (legitimate ones live in System32/SysWOW64), Python processes reading Windows lock screen imagery from C:\Windows\Web\Screen, and Python processes calling GetUserName.
+// Reference https://expel.com/blog/synkloader-when-you-throw-in-everything-but-the-kitchen-sink/
+// MITRE T1056.002 - Input Capture: GUI Input Capture, T1574.001 - Hijack Execution Flow: DLL Search Order Hijacking, T1036.005 - Masquerading: Match Legitimate Name or Location
+
+
+dataset = xdr_data
+| filter
+    (event_type = ENUM.LOAD_IMAGE
+        and action_module_path ~= "(?i)(AppData|Temp|ProgramData|Downloads)"
+        and action_module_path ~= "(?i)(msvcp150\.dll|msvcp160\.dll|msvcp140\.dll)")
+    or
+    (event_type = ENUM.FILE and event_sub_type = ENUM.FILE_OPEN
+        and actor_process_image_name ~= "(?i)(python|pythonw)"
+        and action_file_path ~= "(?i)Windows\\Web\\Screen")
+    or
+    (event_type = ENUM.LOAD_IMAGE
+        and actor_process_image_name ~= "(?i)(python|pythonw)"
+        and action_module_path ~= "(?i)(msvcp150\.dll|msvcp160\.dll)")
+| alter detection_type = if(
+    action_file_path ~= "(?i)Windows\\Web\\Screen", "Lock Screen Image Access",
+    if(action_module_path ~= "(?i)(msvcp15|msvcp16)", "Fake MSVC DLL Load", "Unknown"))
+| fields _time, agent_hostname, os_actor_primary_username, event_type, detection_type, actor_process_image_name, actor_process_image_path, action_module_path, action_file_path
