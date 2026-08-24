@@ -4,17 +4,19 @@
 // MITRE T1071.001 - Application Layer Protocol: Web Protocols, T1564 - Hide Artifacts
 
 
-dataset = saas_audit_logs
-| filter service_type = ENUM.Exchange
-| filter operation_name_orig in ("Create", "Update", "MoveToDeletedItems")
-| alter raw_str = to_string(raw_log)
-| alter has_future_date = if(raw_str ~= "(?i)(2050|2049|2048|2047|2046|2045)", "YES", "NO")
-| alter has_boss_subject   = if(raw_str ~= "(?i)Boss\{", "YES", "NO")
-| alter has_eventid_subject = if(raw_str ~= "(?i)Event ID:", "YES", "NO")
-| alter has_file_attachment = if(raw_str ~= "(?i)File\d+\.txt", "YES", "NO")
-| filter has_future_date = "YES"
-    or has_boss_subject = "YES"
-    or has_eventid_subject = "YES"
-    or has_file_attachment = "YES"
-| fields _time, identity_name, operation_name_orig, caller_ip, caller_ip_asn_org, caller_ip_geolocation, user_agent, has_future_date, has_boss_subject, has_eventid_subject, has_file_attachment
-| sort desc _time
+dataset = cloud_audit_logs
+| filter log_name = "microsoft_graph_activity_logs"
+| filter operation_name_orig ~= "(?i)(calendar|events|attachments)"
+| alter is_event_create = if(operation_name = ENUM.Post
+    and operation_name_orig ~= "(?i)/calendar/events", "YES", "NO")
+| alter is_attachment_upload = if(operation_name = ENUM.Post
+    and operation_name_orig ~= "(?i)/attachments", "YES", "NO")
+| alter is_event_modify = if(operation_name = ENUM.Patch
+    and operation_name_orig ~= "(?i)/events/", "YES", "NO")
+| alter is_calendar_view = if(operation_name = ENUM.Get
+    and operation_name_orig ~= "(?i)calendarView", "YES", "NO")
+| filter is_event_create = "YES"
+    or is_attachment_upload = "YES"
+    or is_event_modify = "YES"
+    or is_calendar_view = "YES"
+| fields _time, identity_name, operation_name, operation_name_orig, caller_ip, caller_ip_asn_org, caller_ip_geolocation, user_agent, is_event_create, is_attachment_upload, is_event_modify, is_calendar_view
