@@ -1,7 +1,7 @@
-// HOLLOWGRAPH - Calendar Event Created with Far-Future Date
-// Detects creation of calendar events dated far into the future (2050+). HOLLOWGRAPH schedules all C2 dead-drop events for 2050-05-13 to keep them out of the mailbox owner's normal calendar view. No legitimate business use case exists for scheduling events 24+ years in the future.
+// HOLLOWGRAPH - Anomalous Calendar Operations via Graph API
+// Detects Graph API requests creating calendar events, uploading attachments to events, or modifying event subjects. HOLLOWGRAPH uses a compromised M365 mailbox calendar as a two-way C2 dead-drop, creating events dated 2050-05-13, attaching encrypted exfil as File{n}.txt, and renaming subjects to Boss{..}ID{..} tags.
 // Reference https://www.group-ib.com/blog/hollowgraph-microsoft-365/
-// MITRE T1071.001 - Application Layer Protocol: Web Protocols, T1564 - Hide Artifacts
+// MITRE T1071.001 - Application Layer Protocol: Web Protocols, T1567 - Exfiltration Over Web Service
 
 
 dataset = cloud_audit_logs
