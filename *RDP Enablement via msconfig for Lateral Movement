@@ -1,4 +1,4 @@
-// RDP Enablement via msconfig for Lateral Movement
+// Choas Ransomware - RDP Enablement via msconfig for Lateral Movement
 // Detects msconfig.exe execution or registry modifications enabling Remote Desktop services.
 // Reference https://www.sophos.com/en-us/blog/chaos-in-teams-vishing
 // MITRE T1021.001 - Remote Services: Remote Desktop Protocol, T1112 - Modify Registry
