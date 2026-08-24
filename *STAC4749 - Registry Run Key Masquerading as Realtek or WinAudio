@@ -1,0 +1,13 @@
+// STAC4749 - Registry Run Key Masquerading as Realtek or WinAudio
+// Detects creation of registry Run keys with display names mimicking Realtek audio or WinAudio services, pointing to executables in user-writable paths. STAC4749 cycles through Run key names (Realtek HD Audio, Realtek Audio UHD, WinAudio life2) across campaigns but consistently drops payloads to AppData/Roaming/Temp.
+// Actor: STAC4749 → Chaos ransomware
+// Reference: https://www.sophos.com/en-us/blog/chaos-in-teams-vishing
+// MITRE: T1547.001 - Boot or Logon Autostart Execution: Registry Run Keys, T1036.005 - Masquerading: Match Legitimate Name or Location
+
+
+dataset = xdr_data
+| filter event_type = ENUM.REGISTRY
+| filter action_registry_key_name ~= "(?i)CurrentVersion\\Run"
+| filter action_registry_value_name ~= "(?i)(realtek|winaudio|audio.*uhd|audio.*universal)"
+| filter action_registry_data ~= "(?i)(AppData|Roaming|Temp|ProgramData)"
+| fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, actor_process_image_path, action_registry_key_name, action_registry_value_name, action_registry_data
