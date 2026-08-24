@@ -1,16 +1,27 @@
-// SynkLoader - Python Executing from Non-Standard User Path
-// Detects Python interpreters running from user-writable directories outside standard installation paths. SynkLoader ships an entire Python environment into a random AppData subfolder. Legitimate Python installs go to Program Files, py launcher paths, or conda environments.
+// SynkLoader - Windowless Python from Non-Standard Path with Suspicious Parent
+// Detects pythonw.exe (windowless Python) executing from user-writable directories, launched by a suspicious parent process. SynkLoader ships a Python environment into a random AppData subfolder and uses pythonw.exe to run its C2 loader without a visible console.
 // Reference https://expel.com/blog/synkloader-when-you-throw-in-everything-but-the-kitchen-sink/
 // MITRE T1059.006 - Command and Scripting Interpreter: Python, T1036 - Masquerading
 
 
 dataset = xdr_data
+| alter runs_ss_py = if(action_process_image_command_line ~= "(?i)ss\.py", "YES", "NO")
+| alter has_c2_script = if(action_process_image_command_line ~= "(?i)(ss\.py|cleaner\.ps1|sync\.py|loader\.py)", "YES", "NO")
 | filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
-| filter action_process_image_name ~= "(?i)(python\.exe|pythonw\.exe|python3\.exe)"
-| filter action_process_image_path ~= "(?i)(AppData|Temp|ProgramData|Downloads)"
+| filter action_process_image_name ~= "(?i)pythonw"
+| filter action_process_image_path ~= "(?i)(\\AppData\\|\\Temp\\|\\ProgramData\\|\\Downloads\\)"
 | filter action_process_image_path not contains "Programs\\Python"
     and action_process_image_path not contains "Program Files"
     and action_process_image_path not contains "Anaconda"
     and action_process_image_path not contains "Miniconda"
     and action_process_image_path not contains "WindowsApps"
-| fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, actor_process_image_path, action_process_image_name, action_process_image_path, action_process_image_command_line
+// Exclude known legitimate apps that bundle Python in AppData
+    and action_process_image_path not contains "Dropbox"
+    and action_process_image_path not contains "Blender"
+    and action_process_image_path not contains "GIMP"
+    and action_process_image_path not contains "Calibre"
+    and action_process_image_path not contains "ArcGIS"
+| filter actor_process_image_name in (
+    "msiexec.exe", "explorer.exe", "taskhostw.exe", "taskeng.exe",
+    "cmd.exe", "powershell.exe", "pwsh.exe", "svchost.exe", "wmiprvse.exe")
+| fields _time, agent_hostname, os_actor_primary_username, runs_ss_py, has_c2_script, actor_process_image_name, actor_process_image_path, action_process_image_name, action_process_image_path, action_process_image_command_line
