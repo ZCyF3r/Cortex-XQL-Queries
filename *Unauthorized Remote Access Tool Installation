@@ -1,6 +1,5 @@
 // Unauthorized Remote Access Tool Installation
 // Detects deployment of remote monitoring and management (RMM) tools commonly abused by TAs for lateral movement and persistence.
-// Reference https://www.sophos.com/en-us/blog/chaos-in-teams-vishing
 // MITRE T1219 - Remote Access Software
 
 
