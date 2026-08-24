@@ -1,0 +1,35 @@
+// CornFlake RAT - Service Registration and Persistence Artifacts
+// Detects CornFlake RAT persistence mechanisms: Windows service registration as "svchost32" / "Cloud Sync Service", file creation in %APPDATA%\svchost32\, Registry Run key persistence, and the sync.dat configuration file.
+// Reference https://www.microsoft.com/en-us/security/blog/2026/07/31/captivecrunch-midnight-blizzard-targets-travelers-worldwide-for-malware-delivery-and-credential-theft/
+// MITRE T1543.003 - Create or Modify System Process: Windows Service, T1547.001 - Boot or Logon Autostart Execution: Registry Run Keys, T1036.005 - Masquerading: Match Legitimate Name or Location
+
+
+dataset = xdr_data
+| filter
+    (event_type = ENUM.EVENT_LOG
+        and action_evtlog_event_id in (7045, 4697)
+        and (action_evtlog_data_fields -> ServiceName = "svchost32"
+            or action_evtlog_data_fields -> ImagePath contains "svchost32"
+            or action_evtlog_data_fields -> ServiceName = "Cloud Sync Service"))
+    or
+    (event_type = ENUM.FILE
+        and action_file_path ~= "(?i)AppData.*svchost32.*svchost32\.exe")
+    or
+    (event_type = ENUM.FILE
+        and action_file_name = "sync.dat"
+        and action_file_path ~= "(?i)(AppData|svchost32)")
+    or
+    (event_type = ENUM.REGISTRY
+        and action_registry_key_name ~= "(?i)CurrentVersion\\Run"
+        and action_registry_data ~= "(?i)svchost32")
+    or
+    (event_type = ENUM.PROCESS
+        and event_sub_type = ENUM.PROCESS_START
+        and action_process_image_path ~= "(?i)AppData.*svchost32.*svchost32\.exe")
+| alter detection_type = if(
+    event_type = ENUM.EVENT_LOG, "Service Registration",
+    if(event_type = ENUM.FILE and action_file_name = "sync.dat", "Config File",
+    if(event_type = ENUM.FILE, "File Drop",
+    if(event_type = ENUM.REGISTRY, "Run Key Persistence",
+    if(event_type = ENUM.PROCESS, "Process Execution", "Unknown")))))
+| fields _time, agent_hostname, os_actor_primary_username, event_type, detection_type, actor_process_image_name, actor_process_image_path, action_process_image_name, action_process_image_path, action_process_image_command_line, action_file_path, action_file_name, action_registry_key_name, action_registry_data
