@@ -5,19 +5,19 @@
 
 
 dataset = xdr_data
-| filter event_type = ENUM.DNS
-| filter dns_query_name != null
-// Long subdomain labels indicate tunneling — legitimate domains rarely exceed 50 chars
-| alter query_length = length(dns_query_name)
+| alter query_length = array_length(split(dns_query_name, "."))
 | alter label_count  = array_length(split(dns_query_name, "."))
+| filter event_type in (ENUM.NETWORK, ENUM.STORY)
+| filter dns_query_name != null
 | filter query_length >= 60
 | filter label_count >= 5
-// Exclude known CDN/cloud domains that legitimately use long subdomains
 | filter dns_query_name not contains "amazonaws.com"
     and dns_query_name not contains "cloudfront.net"
     and dns_query_name not contains "azurewebsites.net"
     and dns_query_name not contains "googleapis.com"
     and dns_query_name not contains "akamaiedge.net"
     and dns_query_name not contains "microsoftonline.com"
+    and dns_query_name not contains "azure-dns.com"
+    and dns_query_name not contains "windows.net"
 | fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, dns_query_name, query_length, label_count
 | sort desc query_length
