@@ -1,4 +1,4 @@
-// Choas Ransomware - PowerShell Payload Download with Token Authentication
+// STAC4749 - PowerShell Payload Download with Token Authentication
 // Detects PowerShell downloading executables to AppData using Invoke-WebRequest followed by execution with a --token-raw argument.
 // Reference https://www.sophos.com/en-us/blog/chaos-in-teams-vishing
 // MITRE T1059.001 - Command and Scripting Interpreter: PowerShell, T1105 - Ingress Tool Transfer
