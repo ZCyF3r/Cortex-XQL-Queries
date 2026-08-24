@@ -1,0 +1,40 @@
+// Okta Admin Privilege Grant
+// Detects admin privilege grants to users or groups. Threat Actors compromises Super Admin accounts then grants admin rights to attacker-controlled accounts as the step before configuring rogue IdP federation, group.privilege.grant covers adding groups to admin roles (sneakier), iam.resourceset.bindings.add covers the newer custom admin role API.
+// Reference CISA AA23-320A
+// MITRE T1098.003 - Account Manipulation: Additional Cloud Roles
+
+
+dataset = okta_sso_raw
+| filter eventType in (
+    "user.account.privilege.grant",
+    "user.account.privilege.revoke",
+    "group.privilege.grant",
+    "group.privilege.revoke",
+    "iam.resourceset.bindings.add",
+    "iam.resourceset.bindings.delete")
+| alter
+    actor_upn      = actor -> alternateId,
+    actor_name     = actor -> displayName,
+    outcome_result = outcome -> result,
+    outcome_reason = outcome -> reason,
+    client_ip      = client -> ipAddress,
+    client_country = client -> geographicalContext.country,
+    client_city    = client -> geographicalContext.city,
+    user_agent     = client -> userAgent.rawUserAgent,
+    asn_org        = securityContext -> asOrg,
+    is_proxy       = securityContext -> isProxy
+| alter target_str = to_string(`target`)
+| alter debug_str  = to_string(debugContext)
+| alter
+    target_user      = json_extract_scalar(target_str, "$[0].alternateId"),
+    target_name      = json_extract_scalar(target_str, "$[0].displayName"),
+    target_type      = json_extract_scalar(target_str, "$[0].type"),
+    privilege_granted = json_extract_scalar(debug_str, "$.debugData.privilegeGranted")
+| alter From_Proxy = if(is_proxy = "true"
+    or asn_org ~= "(?i)(mullvad|netnut|9proxy|infatica|nsocks|oxylabs|m247|packethub|clouvider|ipxo|proxyline|brightdata|luminati|smartproxy|soax|proxyrack|packetstream)", 1, 0)
+| alter action_type = if(
+    eventType contains "grant", "PRIVILEGE GRANTED",
+    if(eventType contains "revoke", "PRIVILEGE REVOKED",
+    if(eventType contains "bindings.add", "ROLE BINDING ADDED",
+    if(eventType contains "bindings.delete", "ROLE BINDING REMOVED", "OTHER"))))
+| fields _time, eventType, action_type, displayMessage, actor_name, actor_upn, target_user, target_name, target_type, privilege_granted, outcome_result, outcome_reason, client_ip, client_country, client_city, is_proxy, asn_org, From_Proxy, user_agent
