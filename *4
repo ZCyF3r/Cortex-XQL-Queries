@@ -1,0 +1,17 @@
+// HOLLOWGRAPH - Application-Driven Calendar Operations via Graph API
+// Detects Microsoft Graph API requests targeting calendar endpoints (event creation, attachment upload, event modification) performed by an application identity rather than an interactive user. HOLLOWGRAPH uses a compromised M365 mailbox calendar as a two-way C2 dead-drop, creating events dated 2050, attaching encrypted exfil data as File{n}.txt, and renaming subjects to operator-recognizable tags (Boss{..}ID{..}).
+// Reference https://www.group-ib.com/blog/hollowgraph-microsoft-365/
+// MITRE T1071.001 - Application Layer Protocol: Web Protocols, T1567 - Exfiltration Over Web Service, T1102 - Web Service
+
+
+dataset = cloud_audit_logs
+| filter log_name = "microsoft_graph_activity_logs"
+| filter operation_name_orig ~= "(?i)(calendar|events|attachments)"
+| filter operation_name_orig ~= "(?i)graph\.microsoft\.com"
+// Flag the specific Graph endpoints HOLLOWGRAPH uses
+| alter is_calendar_view = if(operation_name_orig ~= "(?i)calendarView", "YES", "NO")
+| alter is_event_create = if(operation_name in (ENUM.Post) and operation_name_orig ~= "(?i)/calendar/events", "YES", "NO")
+| alter is_attachment = if(operation_name_orig ~= "(?i)/attachments", "YES", "NO")
+| alter is_event_patch = if(operation_name in (ENUM.Patch) and operation_name_orig ~= "(?i)/events/", "YES", "NO")
+| fields _time, identity_name, operation_name, operation_name_orig, caller_ip, caller_ip_asn_org, caller_ip_geolocation, user_agent, is_calendar_view, is_event_create, is_attachment, is_event_patch
+| sort desc _time
