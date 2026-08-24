@@ -1,0 +1,20 @@
+// HOLLOWGRAPH - Calendar Event Created with Far-Future Date
+// Detects creation of calendar events dated far into the future (2050+). HOLLOWGRAPH schedules all C2 dead-drop events for 2050-05-13 to keep them out of the mailbox owner's normal calendar view. No legitimate business use case exists for scheduling events 24+ years in the future.
+// Reference https://www.group-ib.com/blog/hollowgraph-microsoft-365/
+// MITRE T1071.001 - Application Layer Protocol: Web Protocols, T1564 - Hide Artifacts
+
+
+dataset = saas_audit_logs
+| filter service_type = ENUM.Exchange
+| filter operation_name_orig in ("Create", "Update", "MoveToDeletedItems")
+| alter raw_str = to_string(raw_log)
+| alter has_future_date = if(raw_str ~= "(?i)(2050|2049|2048|2047|2046|2045)", "YES", "NO")
+| alter has_boss_subject   = if(raw_str ~= "(?i)Boss\{", "YES", "NO")
+| alter has_eventid_subject = if(raw_str ~= "(?i)Event ID:", "YES", "NO")
+| alter has_file_attachment = if(raw_str ~= "(?i)File\d+\.txt", "YES", "NO")
+| filter has_future_date = "YES"
+    or has_boss_subject = "YES"
+    or has_eventid_subject = "YES"
+    or has_file_attachment = "YES"
+| fields _time, identity_name, operation_name_orig, caller_ip, caller_ip_asn_org, caller_ip_geolocation, user_agent, has_future_date, has_boss_subject, has_eventid_subject, has_file_attachment
+| sort desc _time
