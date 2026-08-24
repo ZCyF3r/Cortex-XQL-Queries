@@ -1,0 +1,14 @@
+// STAC4749 - VBS Script Creating Startup Folder Shortcut
+// Detects VBS scripts creating shortcuts in the Startup folder, a secondary persistence mechanism used alongside registry Run keys. STAC4749 uses mklink-%.vbs scripts to create shortcuts disguised as SecurityHealth or OneDriveUpdate in the Startup folder, with hidden file attributes applied to avoid user detection.
+// Actor: STAC4749 → Chaos ransomware
+// Reference: https://www.sophos.com/en-us/blog/chaos-in-teams-vishing
+// MITRE: T1547.001 - Boot or Logon Autostart Execution: Registry Run Keys, T1547.009 - Boot or Logon Autostart Execution: Shortcut Modification
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name in ("wscript.exe", "cscript.exe")
+| filter action_process_image_command_line ~= "(?i)(mklink|\.vbs)"
+| filter action_process_image_command_line ~= "(?i)(Startup|Start Menu)"
+    or action_process_image_command_line ~= "(?i)(SecurityHealth|OneDriveUpdate)"
+| fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, action_process_image_name, action_process_image_command_line
