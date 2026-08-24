@@ -1,0 +1,14 @@
+// Unauthorized Remote Access Tool Installation
+// Detects deployment of remote monitoring and management (RMM) tools commonly abused by TAs for lateral movement and persistence.
+// Reference https://www.sophos.com/en-us/blog/chaos-in-teams-vishing
+// MITRE T1219 - Remote Access Software
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name ~= "(?i)(remsupp|dwagent|dwservice|anydesk|screenconnect|connectwise|teamviewer|rustdesk|meshagent|quickassist|hoptodesk)"
+    or action_process_image_path ~= "(?i)(remsupp|dwagent|dwservice|anydesk)"
+    or action_process_image_command_line ~= "(?i)(remsupp|dwagent|dwservice)"
+| alter from_user_path = if(
+    action_process_image_path ~= "(?i)(AppData|Temp|Downloads|ProgramData|Users.*Desktop)", "YES", "NO")
+| fields _time, agent_hostname, os_actor_primary_username, from_user_path, actor_process_image_name, actor_process_image_path, action_process_image_name, action_process_image_path, action_process_image_command_line
