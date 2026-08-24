@@ -1,0 +1,20 @@
+// SynkLoader - Scheduled Task Created via COM Interface
+// Detects scheduled task creation via Event ID 4698. SynkLoader creates persistence through the COM interface rather than schtasks.exe to avoid EDR detection. The task triggers at user logon and daily, launching from user-writable paths. Since COM task creation bypasses command-line logging, event log monitoring is the only reliable detection surface.
+// Reference https://www.darkreading.com/threat-intelligence/tricky-synkloader-multitool-ransomware
+// MITRE T1053.005 - Scheduled Task/Job: Scheduled Task
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id in (4698, 4702)
+| fields action_evtlog_data_fields as aedf, agent_hostname, _time
+| filter aedf != null
+| alter
+    TaskName = aedf -> TaskName,
+    TaskContent = aedf -> TaskContent,
+    SubjectUser = aedf -> SubjectUserName
+| filter TaskContent ~= "(?i)(AppData|Temp|ProgramData|Downloads|Users)"
+| alter has_python     = if(TaskContent ~= "(?i)python", "YES", "NO")
+| alter has_powershell = if(TaskContent ~= "(?i)(powershell|pwsh|\.ps1)", "YES", "NO")
+| alter has_logon_trigger = if(TaskContent ~= "(?i)(LogonTrigger|SessionChange)", "YES", "NO")
+| fields _time, agent_hostname, SubjectUser, TaskName, has_python, has_powershell, has_logon_trigger, TaskContent
