@@ -1,23 +1,20 @@
-// STAC4749 - RDP Enablement via msconfig for Lateral Movement
-// Detects msconfig.exe execution or registry modifications enabling Remote Desktop services.
-// Reference https://www.sophos.com/en-us/blog/chaos-in-teams-vishing
-// MITRE T1021.001 - Remote Services: Remote Desktop Protocol, T1112 - Modify Registry
+// STAC4749 - RDP Enablement from Remote Access Tool or Suspicious Parent
+// Detects RDP being enabled when the parent process is a remote access tool or scripting interpreter running from a user-writable path. STAC4749 enables RDP through the initial remote session (Quick Assist / RemSupp) to prepare for lateral movement. Legitimate IT enablement via SCCM, Intune, or direct admin console is excluded.
+// Actor: STAC4749 → Chaos ransomware
+// Reference: https://www.sophos.com/en-us/blog/chaos-in-teams-vishing
+// MITRE: T1021.001 - Remote Services: Remote Desktop Protocol, T1112 - Modify Registry 
 
 
 dataset = xdr_data
 | filter
-    (event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
-        and action_process_image_name = "msconfig.exe")
-    or
     (event_type = ENUM.REGISTRY
         and action_registry_key_name ~= "(?i)Terminal Server"
         and action_registry_value_name = "fDenyTSConnections"
         and action_registry_data = "0")
     or
     (event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
-        and action_process_image_command_line ~= "(?i)(fDenyTSConnections.*0|TermService.*start|netsh.*firewall.*remote desktop)")
-| alter detection_type = if(
-    action_process_image_name = "msconfig.exe", "msconfig Execution",
-    if(event_type = ENUM.REGISTRY, "RDP Registry Enable",
-    "RDP Command Line Enable"))
-| fields _time, agent_hostname, os_actor_primary_username, detection_type, actor_process_image_name, action_process_image_name, action_process_image_command_line, action_registry_key_name, action_registry_value_name, action_registry_data
+        and action_process_image_command_line ~= "(?i)(net\s+start\s+TermService|sc\s+(start|config)\s+TermService|netsh.*firewall.*remote.desktop|fDenyTSConnections.*0)")
+| filter actor_process_image_name ~= "(?i)(remsupp|quickassist|dwagent|anydesk|screenconnect|teamviewer|rustdesk|meshagent)"
+    or (actor_process_image_name in ("cmd.exe", "powershell.exe", "pwsh.exe", "wscript.exe", "cscript.exe")
+        and actor_process_image_path ~= "(?i)(AppData|Temp|ProgramData|Downloads)")
+| fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, actor_process_image_path, action_process_image_name, action_process_image_command_line, action_registry_key_name, action_registry_value_name, action_registry_data, event_type
