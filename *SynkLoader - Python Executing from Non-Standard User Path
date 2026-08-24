@@ -1,0 +1,16 @@
+// SynkLoader - Python Executing from Non-Standard User Path
+// Detects Python interpreters running from user-writable directories outside standard installation paths. SynkLoader ships an entire Python environment into a random AppData subfolder. Legitimate Python installs go to Program Files, py launcher paths, or conda environments.
+// Reference https://expel.com/blog/synkloader-when-you-throw-in-everything-but-the-kitchen-sink/
+// MITRE T1059.006 - Command and Scripting Interpreter: Python, T1036 - Masquerading
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name ~= "(?i)(python\.exe|pythonw\.exe|python3\.exe)"
+| filter action_process_image_path ~= "(?i)(AppData|Temp|ProgramData|Downloads)"
+| filter action_process_image_path not contains "Programs\\Python"
+    and action_process_image_path not contains "Program Files"
+    and action_process_image_path not contains "Anaconda"
+    and action_process_image_path not contains "Miniconda"
+    and action_process_image_path not contains "WindowsApps"
+| fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, actor_process_image_path, action_process_image_name, action_process_image_path, action_process_image_command_line
