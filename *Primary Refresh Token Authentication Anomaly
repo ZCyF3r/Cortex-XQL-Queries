@@ -1,0 +1,23 @@
+// Primary Refresh Token Authentication Anomaly
+// Detects PRT-backed sign-ins with anomalous characteristics that may indicate PRT theft. Stolen PRTs (via ROADtoken, AADInternals, TokenTactics, or LSASS extraction) are replayed from attacker infrastructure to authenticate as the victim without credentials or MFA. Key signals: PRT auth from a non-Entra-joined device, PRT from an IP/location that doesn't match the user's normal pattern, or PRT combined with a suspicious user agent.
+// MITRE T1528 - Steal Application Access Token, T1550.001 - Use Alternate Authentication Material: Application Access Token
+
+
+dataset = msft_azure_ad_raw
+| alter
+    error_code = json_extract_scalar(to_string(status), "$.errorCode"),
+    failure_reason = json_extract_scalar(to_string(status), "$.failureReason"),
+    Compliance = json_extract_scalar(deviceDetail, "$.isCompliant"),
+    Managed = json_extract_scalar(deviceDetail, "$.isManaged"),
+    Browser = json_extract_scalar(deviceDetail, "$.browser"),
+    OS = json_extract_scalar(deviceDetail, "$.operatingSystem"),
+    TrustType = json_extract_scalar(deviceDetail, "$.trustType")
+| filter authenticationProtocol = "primaryRefreshToken"
+    or originalTransferMethod = "primaryRefreshToken"
+    or tokenIssuerType = "AzureAD"
+| alter is_unmanaged = if(Managed = "false" and Compliance = "false", "YES", "NO")
+| alter is_not_joined = if(TrustType != "AzureAd" and TrustType != "ServerAd", "YES", "NO")
+| alter is_suspicious_ua = if(
+    userAgent ~= "(?i)(python|curl|axios|httpie|go-http|aiohttp)"
+    or userAgent ~= "(?i)(ROADtoken|AADInternals|TokenTactics)", "YES", "NO")
+| fields _time, userPrincipalName, appDisplayName, appId, authenticationProtocol, originalTransferMethod, tokenIssuerType, signInTokenProtectionStatus, ipAddress, location, userAgent, Browser, OS, Managed, Compliance, TrustType, is_unmanaged, is_not_joined, is_suspicious_ua, error_code, failure_reason
