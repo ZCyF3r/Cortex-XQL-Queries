@@ -1,0 +1,13 @@
+// PowerShell Payload Download with Token Authentication
+// Detects PowerShell downloading executables to AppData using Invoke-WebRequest followed by execution with a --token-raw argument.
+// Reference https://www.sophos.com/en-us/blog/chaos-in-teams-vishing
+// MITRE T1059.001 - Command and Scripting Interpreter: PowerShell, T1105 - Ingress Tool Transfer
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name in ("powershell.exe", "pwsh.exe")
+    or actor_process_image_name in ("powershell.exe", "pwsh.exe")
+| filter action_process_image_command_line ~= "(?i)(Invoke-WebRequest|Invoke-RestMethod|wget|curl)"
+    and action_process_image_command_line ~= "(?i)(token-raw|AppData.*\.exe)"
+| fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, action_process_image_name, action_process_image_command_line
