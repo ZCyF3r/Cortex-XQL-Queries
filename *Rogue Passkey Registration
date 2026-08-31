@@ -1,0 +1,18 @@
+// Rogue Passkey Registration
+// Detects new passkey registration events. With roadtx now supporting passkey registration, an attacker with a stolen PRT or compromised session can register an attacker-controlled passkey.
+// MITRE: T1556.006 - Modify Authentication Process: Multi-Factor Authentication, T1098.005 - Account Manipulation: Device Registration
+
+
+dataset = msft_azure_ad_raw
+| alter auth_details_str = to_string(authenticationDetails)
+| alter
+    auth_method = arrayindex(regextract(auth_details_str, "\"authenticationMethod\":\s*\"([^\"]+)\""), 0),
+    auth_method_detail = arrayindex(regextract(auth_details_str, "\"authenticationMethodDetail\":\s*\"([^\"]+)\""), 0),
+    error_code = json_extract_scalar(to_string(status), "$.errorCode"),
+    Managed = json_extract_scalar(deviceDetail, "$.isManaged"),
+    Compliance = json_extract_scalar(deviceDetail, "$.isCompliant"),
+    OS = json_extract_scalar(deviceDetail, "$.operatingSystem")
+| filter auth_details_str ~= "(?i)passkey"
+| filter operationName ~= "(?i)(register|enroll|add.*credential|fido)"
+    or category ~= "(?i)(UserManagement|Authentication)"
+| fields _time, userPrincipalName, appDisplayName, auth_method, auth_method_detail, error_code, ipAddress, location, Managed, Compliance, OS
