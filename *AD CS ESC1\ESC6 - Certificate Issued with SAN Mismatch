@@ -1,0 +1,31 @@
+// AD CS ESC1\ESC6 - Certificate Issued with SAN Mismatch
+// Detects certificates issued where the Subject Alternative Name (SAN) contains a UPN that does not match the requester. ESC1 exploits templates with CT_FLAG_ENROLLEE_SUPPLIES_SUBJECT enabled, allowing any enrollee to specify an arbitrary SAN (e.g. Domain Admin UPN). 
+// ESC6 achieves the same result via the EDITF_ATTRIBUTESUBJECTALTNAME2 CA flag, which allows SAN specification on ANY template regardless of template config. Requester ≠ SAN is the highest-fidelity AD CS abuse signal.
+// MITRE: T1649 - Steal or Forge Authentication Certificates
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4887
+| fields action_evtlog_data_fields as aedf, agent_hostname, _time
+| filter aedf != null
+| alter
+    Requester = aedf -> Requester,
+    SAN = aedf -> subjectalternativename,
+    CertSubject = aedf -> subject,
+    Template = aedf -> certificatetemplate,
+    SerialNumber = aedf -> serialnumber,
+    Disposition = aedf -> disposition,
+    RequestID = aedf -> requestid,
+    AuthService = aedf -> authenticationservice,
+    AuthLevel = aedf -> authenticationlevel
+| filter SAN != null and SAN != ""
+| alter san_upn = arrayindex(regextract(SAN, "(?i)(?:upn=|Principal Name=)([^\r\n,]+)"), 0)
+| alter requester_user = arrayindex(regextract(Requester, "(?i)\\\\([^\\\\]+)$"), 0)
+| alter san_upn_lower = lowercase(san_upn)
+| alter requester_lower = lowercase(requester_user)
+| filter san_upn != null
+| filter san_upn_lower not contains requester_lower
+    and requester_lower not contains san_upn_lower
+| filter Requester not contains "$" or SAN not contains Requester
+| fields _time, agent_hostname, Requester, san_upn, CertSubject, Template, SerialNumber, RequestID, Disposition, AuthService, AuthLevel
