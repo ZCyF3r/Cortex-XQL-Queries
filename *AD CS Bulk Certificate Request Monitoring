@@ -1,0 +1,25 @@
+// AD CS Bulk Certificate Request Monitoring
+// Baselines all certificate issuance events. Aggregates by requester to surface users requesting an unusual number of certificates. Certipy, Certify, and other AD CS exploitation tools generate multiple certificate requests in rapid succession during enumeration and exploitation.
+// MITRE: T1649 - Steal or Forge Authentication Certificates
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4887
+| fields action_evtlog_data_fields as aedf, agent_hostname, _time
+| filter aedf != null
+| alter
+    Requester = aedf -> Requester,
+    Template = aedf -> certificatetemplate,
+    SAN = aedf -> subjectalternativename
+| alter has_san = if(SAN != null and SAN != "", "YES", "NO")
+| comp
+    count() as total_certs_issued,
+    count_distinct(Template) as distinct_templates,
+    values(Template) as templates_used,
+    values(has_san) as san_present,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by Requester
+| filter total_certs_issued >= 3
+| sort desc total_certs_issued
