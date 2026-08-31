@@ -1,0 +1,24 @@
+// AD CS ESC8 - Certificate Request via NTLM (Potential Relay)
+// Detects certificate requests authenticated via NTLM rather than Kerberos. ESC8 abuses the AD CS HTTP web enrollment endpoint by relaying NTLM authentication from a coerced machine account (PetitPotam, PrinterBug, DFSCoerce) to obtain a certificate as that machine. Certificate requests using NTLM authentication are unusual in environments where Kerberos is the standard.
+// MITRE: T1649 - Steal or Forge Authentication Certificates, T1187 - Forced Authentication
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id in (4886, 4887)
+| fields action_evtlog_data_fields as aedf, agent_hostname, _time
+| filter aedf != null
+| alter
+    Requester = aedf -> Requester,
+    SAN = aedf -> subjectalternativename,
+    CertSubject = aedf -> subject,
+    Template = aedf -> certificatetemplate,
+    RequestID = aedf -> requestid,
+    AuthService = aedf -> authenticationservice,
+    AuthLevel = aedf -> authenticationlevel,
+    DCOMorRPC = aedf -> DCOMorRPC,
+    ClientInfo = aedf -> requestclientinfo
+| filter AuthService ~= "(?i)NTLM"
+    or AuthLevel ~= "(?i)(call|connect|packet)"
+| alter is_machine_account = if(Requester ~= "\\$$", "YES", "NO")
+| fields _time, agent_hostname, Requester, CertSubject, SAN, Template, RequestID, AuthService, AuthLevel, DCOMorRPC, ClientInfo, is_machine_account
