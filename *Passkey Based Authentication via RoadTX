@@ -1,0 +1,22 @@
+// Passkey Based Authentication via RoadTX
+// Detects all authentications using passkeys (FIDO2 device-bound) via roadtx.
+// MITRE: T1078.004 - Valid Accounts: Cloud Accounts, T1550.001 - Use Alternate Authentication Material: Application Access Token
+
+
+dataset = msft_azure_ad_raw
+| alter auth_details_str = to_string(authenticationDetails)
+| alter
+    auth_method = arrayindex(regextract(auth_details_str, "\"authenticationMethod\":\s*\"([^\"]+)\""), 0),
+    auth_method_detail = arrayindex(regextract(auth_details_str, "\"authenticationMethodDetail\":\s*\"([^\"]+)\""), 0),
+    auth_step_time = arrayindex(regextract(auth_details_str, "\"authenticationStepDateTime\":\s*\"([^\"]+)\""), 0),
+    error_code = json_extract_scalar(to_string(status), "$.errorCode"),
+    failure_reason = json_extract_scalar(to_string(status), "$.failureReason"),
+    Managed = json_extract_scalar(deviceDetail, "$.isManaged"),
+    Compliance = json_extract_scalar(deviceDetail, "$.isCompliant"),
+    OS = json_extract_scalar(deviceDetail, "$.operatingSystem"),
+    TrustType = json_extract_scalar(deviceDetail, "$.trustType")
+| alter is_unmanaged = if(Managed = "false" and Compliance = "false", "YES", "NO")
+| alter has_roadtx_artifact = if(auth_method_detail ~= "(?i)(roadtx|roadtools|roatb)", "YES", "NO")
+| alter is_not_joined = if(TrustType != "AzureAd" and TrustType != "ServerAd" and TrustType != null, "YES", "NO")
+| filter auth_details_str ~= "(?i)passkey"
+| fields _time, userPrincipalName, appDisplayName, auth_method, auth_method_detail, auth_step_time, error_code, ipAddress, location, OS, Managed, Compliance, TrustType, is_unmanaged, has_roadtx_artifact, is_not_joined
