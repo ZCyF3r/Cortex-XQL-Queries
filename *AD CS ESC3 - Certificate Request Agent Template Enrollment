@@ -1,0 +1,19 @@
+// AD CS ESC3 - Certificate Request Agent Template Enrollment
+// Detects certificates issued using enrollment agent templates. ESC3 is a two-stage attack: first obtain a Certificate Request Agent cert, then use it to enroll on behalf of a privileged user.
+// MITRE: T1649 - Steal or Forge Authentication Certificates
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4887
+| fields action_evtlog_data_fields as aedf, agent_hostname, _time
+| filter aedf != null
+| alter
+    Requester = aedf -> Requester,
+    SAN = aedf -> subjectalternativename,
+    CertSubject = aedf -> subject,
+    Template = aedf -> certificatetemplate,
+    SerialNumber = aedf -> serialnumber,
+    RequestID = aedf -> requestid
+| filter Template ~= "(?i)(EnrollmentAgent|CertificateRequestAgent|Request Agent|enrollment.*agent)"
+| fields _time, agent_hostname, Requester, CertSubject, SAN, Template, SerialNumber, RequestID
