@@ -8,8 +8,7 @@
 dataset = xdr_data
 | filter event_type = ENUM.FILE
 | filter event_sub_type in (ENUM.FILE_WRITE, ENUM.FILE_CREATE_NEW, ENUM.FILE_OPEN)
-| filter action_file_path ~= "(?i)CertLog"
-    or action_file_path ~= "(?i)System32\\CertLog"
+| filter action_file_path ~= "(?i)System32\\CertLog"
 | filter actor_process_image_name not in ("certsvc.exe", "CertSvc.exe")
 | filter causality_actor_type in(ENUM.REMOTE_FILE_SMB, ENUM.REMOTE_NAMED_PIPE, ENUM.REMOTE_TCP)
 | alter target_file_type = if(
