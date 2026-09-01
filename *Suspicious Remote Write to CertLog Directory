@@ -1,6 +1,6 @@
 // Suspicious Remote Write to CertLog Directory
 // Detects file writes to the CA's CertLog directory (C:\Windows\System32\CertLog\) by processes other than certsvc.exe.
-// The CertLog directory contains the CA database (.edb), transaction logs (.log), and checkpoint files. Remote writes via SMB appear as System (PID 4) as the actor process. 
+// The CertLog directory contains the CA database (.edb), transaction logs (.log), and checkpoint files.
 // Any non-certsvc write to this directory indicates CA database tampering, log manipulation, or anti-forensics — especially if the source is a non-CA host.
 // MITRE: T1070 - Indicator Removal, T1565 - Data Manipulation
 
@@ -11,12 +11,10 @@ dataset = xdr_data
 | filter action_file_path ~= "(?i)CertLog"
     or action_file_path ~= "(?i)System32\\CertLog"
 | filter actor_process_image_name not in ("certsvc.exe", "CertSvc.exe")
-| alter is_remote_smb = if(actor_process_image_name = "System"
-    or actor_process_image_name = "system"
-    or actor_process_image_name = "ntoskrnl.exe", "YES", "NO")
+| filter causality_actor_type in(ENUM.REMOTE_FILE_SMB, ENUM.REMOTE_NAMED_PIPE, ENUM.REMOTE_TCP)
 | alter target_file_type = if(
     action_file_path ~= "(?i)\.edb$", "CA Database",
     if(action_file_path ~= "(?i)\.log$", "Transaction Log",
     if(action_file_path ~= "(?i)\.pat$", "Patch File",
     if(action_file_path ~= "(?i)\.chk$", "Checkpoint File", "Other"))))
-| fields _time, agent_hostname, os_actor_primary_username, is_remote_smb, target_file_type, actor_process_image_name, actor_process_image_path, action_file_path, action_file_name, event_sub_type
+| fields _time, agent_hostname, os_actor_primary_username, actor_remote_ip, actor_remote_pipe_name, target_file_type, actor_rpc_interface_uuid, actor_rpc_username, actor_rpc_protocol, action_file_path, action_file_name, event_sub_type
