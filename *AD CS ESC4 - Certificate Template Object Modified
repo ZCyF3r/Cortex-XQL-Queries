@@ -1,0 +1,25 @@
+// AD CS ESC4 - Certificate Template Object Modified
+// Detects modifications to certificate template objects in Active Directory (Event ID 5136). ESC4 attackers with write permissions on a template object modify it to enable enrollee-supplied SAN, add Client Authentication EKU, or broaden enrollment rights.
+// MITRE: T1649 - Steal or Forge Authentication Certificates, T1484.001 - Domain Policy Modification: Group Policy Modification
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id in (5136, 4899)
+| fields action_evtlog_data_fields as aedf, agent_hostname, _time
+| filter aedf != null
+| alter aedf_str = to_string(aedf)
+| alter
+    SubjectUser = arrayindex(regextract(aedf_str, "\"(?i)SubjectUserName\":\s*\"([^\"]+)\""), 0),
+    SubjectDomain = arrayindex(regextract(aedf_str, "\"(?i)SubjectDomainName\":\s*\"([^\"]+)\""), 0),
+    ObjectDN = arrayindex(regextract(aedf_str, "\"(?i)ObjectDN\":\s*\"([^\"]+)\""), 0),
+    ObjectClass = arrayindex(regextract(aedf_str, "\"(?i)ObjectClass\":\s*\"([^\"]+)\""), 0),
+    AttributeName = arrayindex(regextract(aedf_str, "\"(?i)AttributeLDAPDisplayName\":\s*\"([^\"]+)\""), 0),
+    AttributeValue = arrayindex(regextract(aedf_str, "\"(?i)AttributeValue\":\s*\"([^\"]+)\""), 0),
+    DSType = arrayindex(regextract(aedf_str, "\"(?i)DSType\":\s*\"([^\"]+)\""), 0)
+| filter ObjectClass ~= "(?i)pKICertificateTemplate"
+    or ObjectDN ~= "(?i)Certificate Templates"
+| alter is_san_flag = if(AttributeName ~= "(?i)msPKI-Certificate-Name-Flag", "YES", "NO")
+| alter is_eku = if(AttributeName ~= "(?i)pKIExtendedKeyUsage", "YES", "NO")
+| alter is_enrollment_acl = if(AttributeName ~= "(?i)(nTSecurityDescriptor|msPKI-Enrollment)", "YES", "NO")
+| fields _time, agent_hostname, SubjectUser, SubjectDomain, ObjectDN, AttributeName, AttributeValue, DSType, is_san_flag, is_eku, is_enrollment_acl
