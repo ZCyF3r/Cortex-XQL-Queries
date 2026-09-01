@@ -1,4 +1,4 @@
-// Certificate Authentication via Schannel
+// Certificate Authentication via Schannel or PKU2U (certificate-based peer authentication) logon processes
 // Detects successful logon events using Schannel (TLS client certificate) authentication or PKU2U (certificate-based peer authentication) logon processes. After obtaining a forged certificate via ESC1-ESC8, attackers can authenticate using Schannel instead of PKINIT to bypass Kerberos-based detections (Event 4768). 
 // MITRE: T1649 - Steal or Forge Authentication Certificates, T1078.002 - Valid Accounts: Domain Accounts
 
