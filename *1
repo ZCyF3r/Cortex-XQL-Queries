@@ -1,0 +1,12 @@
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4768
+| alter aedf_str = to_string(action_evtlog_data_fields)
+| filter aedf_str ~= ""
+| alter
+    TargetUser = arrayindex(regextract(aedf_str, "\"(?i)TargetUserName\":\s*\"([^\"]+)\""), 0),
+    SourceIP = arrayindex(regextract(aedf_str, "\"(?i)IpAddress\":\s*\"([^\"]+)\""), 0),
+    PreAuthType = arrayindex(regextract(aedf_str, "\"(?i)PreAuthType\":\s*\"([^\"]+)\""), 0),
+    Status = arrayindex(regextract(aedf_str, "\"(?i)Status\":\s*\"([^\"]+)\""), 0),
+    CertIssuer = arrayindex(regextract(aedf_str, "\"(?i)CertIssuerName\":\s*\"([^\"]+)\""), 0)
+| fields _time, agent_hostname, TargetUser, SourceIP, PreAuthType, Status, CertIssuer
