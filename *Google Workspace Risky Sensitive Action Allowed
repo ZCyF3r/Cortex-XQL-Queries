@@ -9,7 +9,6 @@ dataset = google_workspace_login_raw
 | alter
     actor_email = json_extract_scalar(actor, "$.email"),
     login_type = arrayindex(regextract(events_str, "\"name\":\s*\"login_type\",\s*\"value\":\s*\"([^\"]+)\""), 0),
-    is_suspect = arrayindex(regextract(events_str, "\"name\":\s*\"is_suspicious\",\s*\"boolValue\":\s*\"([^\"]+)\""), 0),
     sensitive_action = arrayindex(regextract(events_str, "\"name\":\s*\"sensitive_action_name\",\s*\"value\":\s*\"([^\"]+)\""), 0),
     ASN = json_extract_array(networkInfo, "$.ipAsn"),
     country_code = json_extract_scalar(networkInfo, "$.regionCode")
