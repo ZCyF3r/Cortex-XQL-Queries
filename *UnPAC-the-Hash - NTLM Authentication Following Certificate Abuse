@@ -1,0 +1,33 @@
+// UnPAC-the-Hash - NTLM Authentication Following Certificate Abuse
+// Detects NTLM network logons (NtLmSsp) for accounts that recently had certificates issued with their identity in the SAN. After ESC1 certificate abuse, attackers commonly use UnPAC-the-hash to extract the victim's NTLM hash from the PKINIT TGT's PAC, then switch to pass-the-hash for lateral movement.
+// MITRE: T1550.002 - Use Alternate Authentication Material: Pass the Hash, T1649 - Steal or Forge Authentication Certificates
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4624
+| alter aedf_str = to_string(action_evtlog_data_fields)
+| alter
+    TargetUser = arrayindex(regextract(aedf_str, "\"(?i)TargetUserName\":\s*\"([^\"]+)\""), 0),
+    TargetDomain = arrayindex(regextract(aedf_str, "\"(?i)TargetDomainName\":\s*\"([^\"]+)\""), 0),
+    LogonType = arrayindex(regextract(aedf_str, "\"(?i)LogonType\":\s*\"([^\"]+)\""), 0),
+    AuthPackage = arrayindex(regextract(aedf_str, "\"(?i)AuthenticationPackageName\":\s*\"([^\"]+)\""), 0),
+    LogonProcess = arrayindex(regextract(aedf_str, "\"(?i)LogonProcessName\":\s*\"([^\"]+)\""), 0),
+    SourceIP = arrayindex(regextract(aedf_str, "\"(?i)IpAddress\":\s*\"([^\"]+)\""), 0),
+    Workstation = arrayindex(regextract(aedf_str, "\"(?i)WorkstationName\":\s*\"([^\"]+)\""), 0),
+    ElevatedToken = arrayindex(regextract(aedf_str, "\"(?i)ElevatedToken\":\s*\"([^\"]+)\""), 0),
+    LogonGUID = arrayindex(regextract(aedf_str, "\"(?i)LogonGuid\":\s*\"([^\"]+)\""), 0)
+| filter LogonProcess = "NtLmSsp"
+| filter AuthPackage = "NTLM"
+| filter LogonType = "3"
+| filter TargetUser not contains "$"
+| filter TargetUser not in ("ANONYMOUS LOGON", "DWM-1", "DWM-2", "UMFD-0", "UMFD-1")
+| filter TargetDomain not in ("NT AUTHORITY", "Window Manager", "Font Driver Host")
+//| filter SourceIP = ""
+//| filter TargetUser = ""
+| alter is_admin = if(
+    TargetUser ~= "(?i)(admin|adm-|da-|svc-|service)",
+    "YES", "NO")
+| alter is_elevated = if(ElevatedToken = "%%1842", "YES", "NO")
+| fields _time, agent_hostname, TargetUser, TargetDomain, SourceIP, Workstation, LogonProcess, AuthPackage, LogonType, is_admin, is_elevated, LogonGUID
+| sort desc _time
