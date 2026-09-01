@@ -8,11 +8,12 @@ dataset = xdr_data
 | filter action_evtlog_event_id = 4887
 | fields action_evtlog_data_fields as aedf, agent_hostname, _time
 | filter aedf != null
+| alter aedf_str = to_string(aedf)
 | alter
-    Requester = aedf -> Requester,
-    Template = aedf -> certificatetemplate,
-    SAN = aedf -> subjectalternativename
-| alter has_san = if(SAN != null and SAN != "", "YES", "NO")
+    Requester = arrayindex(regextract(aedf_str, "\"(?i)requester\":\s*\"([^\"]+)\""), 0),
+    Template = arrayindex(regextract(aedf_str, "\"(?i)certificatetemplate\":\s*\"([^\"]+)\""), 0),
+    SAN_field = arrayindex(regextract(aedf_str, "\"(?i)subjectalternativename\":\s*\"([^\"]+)\""), 0)
+| alter has_san = if(SAN_field != null and SAN_field != "", "YES", "NO")
 | comp
     count() as total_certs_issued,
     count_distinct(Template) as distinct_templates,
