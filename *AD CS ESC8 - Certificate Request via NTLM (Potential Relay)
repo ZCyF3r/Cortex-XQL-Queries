@@ -1,0 +1,28 @@
+// AD CS ESC8 - Certificate Request via NTLM (Potential Relay)
+// Detects certificate requests authenticated via NTLM rather than Kerberos. ESC8 abuses the AD CS HTTP web enrollment endpoint by relaying NTLM authentication from a coerced machine account (PetitPotam, PrinterBug, DFSCoerce) to obtain a certificate as that machine. Certificate requests using NTLM authentication are unusual in environments where Kerberos is the standard.
+// MITRE: T1649 - Steal or Forge Authentication Certificates, T1187 - Forced Authentication
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id in (4886, 4887)
+| fields action_evtlog_data_fields as aedf, agent_hostname, _time
+| filter aedf != null
+| alter aedf_str = to_string(aedf)
+| alter
+    Requester = arrayindex(regextract(aedf_str, "\"(?i)requester\":\s*\"([^\"]+)\""), 0),
+    SAN_field = arrayindex(regextract(aedf_str, "\"(?i)subjectalternativename\":\s*\"([^\"]+)\""), 0),
+    Attributes = arrayindex(regextract(aedf_str, "\"(?i)attributes\":\s*\"([^\"]+)\""), 0),
+    CertSubject = arrayindex(regextract(aedf_str, "\"(?i)subject\":\s*\"([^\"]+)\""), 0),
+    Template = arrayindex(regextract(aedf_str, "\"(?i)certificatetemplate\":\s*\"([^\"]+)\""), 0),
+    RequestID = arrayindex(regextract(aedf_str, "\"(?i)requestid\":\s*\"([^\"]+)\""), 0),
+    AuthService = arrayindex(regextract(aedf_str, "\"(?i)authenticationservice\":\s*\"([^\"]+)\""), 0),
+    AuthLevel = arrayindex(regextract(aedf_str, "\"(?i)authenticationlevel\":\s*\"([^\"]+)\""), 0),
+    DCOMorRPC = arrayindex(regextract(aedf_str, "\"(?i)DCOMorRPC\":\s*\"([^\"]+)\""), 0),
+    ClientInfo = arrayindex(regextract(aedf_str, "\"(?i)requestclientinfo\":\s*\"([^\"]+)\""), 0)
+| filter AuthService ~= "(?i)NTLM"
+| alter san_upn = coalesce(
+    arrayindex(regextract(SAN_field, "(?i)Principal Name=([^\r\n\\\\]+)"), 0),
+    arrayindex(regextract(Attributes, "(?i)SAN:upn=([^\r\n\\\\]+)"), 0))
+| alter is_machine_account = if(Requester ~= "\\$$", "YES", "NO")
+| fields _time, agent_hostname, Requester, CertSubject, san_upn, Template, RequestID, AuthService, AuthLevel, DCOMorRPC, ClientInfo, is_machine_account
