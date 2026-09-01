@@ -1,0 +1,31 @@
+// Certificate Authentication via Schannel
+// Detects successful logon events using Schannel (TLS client certificate) authentication. After obtaining a forged certificate via ESC1-ESC8, attackers can authenticate using Schannel instead of PKINIT to bypass Kerberos-based detections (Event 4768). 
+// MITRE: T1649 - Steal or Forge Authentication Certificates, T1078.002 - Valid Accounts: Domain Accounts
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4624
+| fields action_evtlog_data_fields as aedf, agent_hostname, _time
+| filter aedf != null
+| alter
+    AuthPackage = aedf -> AuthenticationPackageName,
+    LogonType = aedf -> LogonType,
+    TargetUserName = aedf -> TargetUserName,
+    TargetDomainName = aedf -> TargetDomainName,
+    SubjectUserName = aedf -> SubjectUserName,
+    SubjectDomainName = aedf -> SubjectDomainName,
+    SourceIP = aedf -> IpAddress,
+    SourcePort = aedf -> IpPort,
+    WorkstationName = aedf -> WorkstationName,
+    ElevatedToken = aedf -> ElevatedToken,
+    ImpersonationLevel = aedf -> ImpersonationLevel,
+    LogonProcessName = aedf -> LogonProcessName
+| filter AuthPackage ~= "(?i)schannel"
+| filter LogonType = "3"
+| filter TargetUserName not contains "$"
+| alter is_admin_target = if(
+    TargetUserName ~= "(?i)(admin|adm-|da-|domain.*admin|enterprise.*admin)",
+    "YES", "NO")
+| alter is_elevated = if(ElevatedToken = "%%1842", "YES", "NO")
+| fields _time, agent_hostname, TargetUserName, TargetDomainName, SubjectUserName, SourceIP, WorkstationName, AuthPackage, LogonType, LogonProcessName, ElevatedToken, is_elevated, is_admin_target, ImpersonationLevel
