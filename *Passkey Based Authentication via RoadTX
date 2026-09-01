@@ -17,6 +17,17 @@ dataset = msft_azure_ad_raw
     TrustType = json_extract_scalar(deviceDetail, "$.trustType")
 | alter is_unmanaged = if(Managed = "false" and Compliance = "false", "YES", "NO")
 | alter has_roadtx_artifact = if(auth_method_detail ~= "(?i)(roadtx|roadtools|roatb)", "YES", "NO")
-| alter is_not_joined = if(TrustType != "AzureAd" and TrustType != "ServerAd" and TrustType != null, "YES", "NO")
+| alter is_not_joined = if(TrustType = null, "YES",
+    if(TrustType != "AzureAd" and TrustType != "ServerAd", "YES", "NO"))
 | filter auth_details_str ~= "(?i)passkey"
 | fields _time, userPrincipalName, appDisplayName, auth_method, auth_method_detail, auth_step_time, error_code, ipAddress, location, OS, Managed, Compliance, TrustType, is_unmanaged, has_roadtx_artifact, is_not_joined
+
+
+
+
+dataset = msft_azure_ad_raw
+| alter auth_details_str = to_string(authenticationDetails)
+| filter auth_details_str ~= "(?i)passkey"
+| alter aaguid = arrayindex(regextract(auth_details_str, "(?i)(?:aaguid|AAGUID|authenticatorAttestationGUID)\":\s*\"([^\"]+)\""), 0)
+| fields _time, userPrincipalName, aaguid, auth_details_str
+| limit 10
