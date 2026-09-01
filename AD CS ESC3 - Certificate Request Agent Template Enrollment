@@ -8,12 +8,17 @@ dataset = xdr_data
 | filter action_evtlog_event_id = 4887
 | fields action_evtlog_data_fields as aedf, agent_hostname, _time
 | filter aedf != null
+| alter aedf_str = to_string(aedf)
 | alter
-    Requester = aedf -> Requester,
-    SAN = aedf -> subjectalternativename,
-    CertSubject = aedf -> subject,
-    Template = aedf -> certificatetemplate,
-    SerialNumber = aedf -> serialnumber,
-    RequestID = aedf -> requestid
+    Requester = arrayindex(regextract(aedf_str, "\"(?i)requester\":\s*\"([^\"]+)\""), 0),
+    SAN_field = arrayindex(regextract(aedf_str, "\"(?i)subjectalternativename\":\s*\"([^\"]+)\""), 0),
+    Attributes = arrayindex(regextract(aedf_str, "\"(?i)attributes\":\s*\"([^\"]+)\""), 0),
+    CertSubject = arrayindex(regextract(aedf_str, "\"(?i)subject\":\s*\"([^\"]+)\""), 0),
+    Template = arrayindex(regextract(aedf_str, "\"(?i)certificatetemplate\":\s*\"([^\"]+)\""), 0),
+    SerialNumber = arrayindex(regextract(aedf_str, "\"(?i)serialnumber\":\s*\"([^\"]+)\""), 0),
+    RequestID = arrayindex(regextract(aedf_str, "\"(?i)requestid\":\s*\"([^\"]+)\""), 0),
+    AuthService = arrayindex(regextract(aedf_str, "\"(?i)authenticationservice\":\s*\"([^\"]+)\""), 0)
 | filter Template ~= "(?i)(EnrollmentAgent|CertificateRequestAgent|Request Agent|enrollment.*agent)"
-| fields _time, agent_hostname, Requester, CertSubject, SAN, Template, SerialNumber, RequestID
+| alter san_upn = coalesce(arrayindex(regextract(SAN_field, "(?i)Principal Name=([^\r\n\\\\]+)"), 0),
+    arrayindex(regextract(Attributes, "(?i)SAN:upn=([^\r\n\\\\]+)"), 0))
+| fields _time, agent_hostname, Requester, CertSubject, san_upn, Template, SerialNumber, RequestID, AuthService
