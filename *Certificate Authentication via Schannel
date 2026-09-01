@@ -1,5 +1,5 @@
 // Certificate Authentication via Schannel
-// Detects successful logon events using Schannel (TLS client certificate) authentication. After obtaining a forged certificate via ESC1-ESC8, attackers can authenticate using Schannel instead of PKINIT to bypass Kerberos-based detections (Event 4768). 
+// Detects successful logon events using Schannel (TLS client certificate) authentication or PKU2U (certificate-based peer authentication) logon processes. After obtaining a forged certificate via ESC1-ESC8, attackers can authenticate using Schannel instead of PKINIT to bypass Kerberos-based detections (Event 4768). 
 // MITRE: T1649 - Steal or Forge Authentication Certificates, T1078.002 - Valid Accounts: Domain Accounts
 
 
@@ -21,9 +21,13 @@ dataset = xdr_data
     ElevatedToken = aedf -> ElevatedToken,
     ImpersonationLevel = aedf -> ImpersonationLevel,
     LogonProcessName = aedf -> LogonProcessName
-| filter AuthPackage ~= "(?i)schannel"
+| filter LogonProcess in ("Schannel", "Pku2uS4U", "Pku2uSsp")
 | filter LogonType = "3"
 | filter TargetUserName not contains "$"
+| alter cert_auth_type = if(
+    LogonProcess = "Schannel", "TLS Client Certificate",
+    if(LogonProcess = "Pku2uS4U", "PKU2U Service-for-User",
+    "PKU2U Peer Auth"))
 | alter is_admin_target = if(
     TargetUserName ~= "(?i)(admin|adm-|da-|domain.*admin|enterprise.*admin)",
     "YES", "NO")
