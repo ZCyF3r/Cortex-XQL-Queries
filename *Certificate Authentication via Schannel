@@ -21,12 +21,12 @@ dataset = xdr_data
     ElevatedToken = aedf -> ElevatedToken,
     ImpersonationLevel = aedf -> ImpersonationLevel,
     LogonProcessName = aedf -> LogonProcessName
-| filter LogonProcess in ("Schannel", "Pku2uS4U", "Pku2uSsp")
+| filter LogonProcessName in ("Schannel", "Pku2uS4U", "Pku2uSsp")
 | filter LogonType = "3"
 | filter TargetUserName not contains "$"
 | alter cert_auth_type = if(
-    LogonProcess = "Schannel", "TLS Client Certificate",
-    if(LogonProcess = "Pku2uS4U", "PKU2U Service-for-User",
+    LogonProcessName = "Schannel", "TLS Client Certificate",
+    if(LogonProcessName = "Pku2uS4U", "PKU2U Service-for-User",
     "PKU2U Peer Auth"))
 | alter is_admin_target = if(
     TargetUserName ~= "(?i)(admin|adm-|da-|domain.*admin|enterprise.*admin)",
