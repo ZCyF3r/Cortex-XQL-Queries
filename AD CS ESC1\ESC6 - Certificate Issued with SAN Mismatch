@@ -9,65 +9,26 @@ dataset = xdr_data
 | filter action_evtlog_event_id = 4887
 | fields action_evtlog_data_fields as aedf, agent_hostname, _time
 | filter aedf != null
-| alter
-    Requester = aedf -> Requester,
-    SAN = aedf -> subjectalternativename,
-    CertSubject = aedf -> subject,
-    Template = aedf -> certificatetemplate,
-    SerialNumber = aedf -> serialnumber,
-    Disposition = aedf -> disposition,
-    RequestID = aedf -> requestid,
-    AuthService = aedf -> authenticationservice,
-    AuthLevel = aedf -> authenticationlevel
-| filter SAN != null and SAN != ""
-| alter san_upn = arrayindex(regextract(SAN, "(?i)(?:upn=|Principal Name=)([^\r\n,]+)"), 0)
-| alter requester_user = arrayindex(regextract(Requester, "(?i)\\\\([^\\\\]+)$"), 0)
-| alter san_upn_lower = lowercase(san_upn)
-| alter requester_lower = lowercase(requester_user)
-| filter san_upn != null
-| filter san_upn_lower not contains requester_lower
-    and requester_lower not contains san_upn_lower
-| filter Requester not contains "$" or SAN not contains Requester
-| fields _time, agent_hostname, Requester, san_upn, CertSubject, Template, SerialNumber, RequestID, Disposition, AuthService, AuthLevel
-
-
-
-
-dataset = xdr_data
-| filter event_type = ENUM.EVENT_LOG
-| filter action_evtlog_event_id = 4887
-| fields action_evtlog_data_fields as aedf, agent_hostname, _time
-| filter aedf != null
 | alter aedf_str = to_string(aedf)
-// Extract from the raw string to avoid case-sensitivity issues with arrow operator
 | alter
-    Requester    = arrayindex(regextract(aedf_str, "\"(?i)requester\":\s*\"([^\"]+)\""), 0),
-    SAN_field    = arrayindex(regextract(aedf_str, "\"(?i)subjectalternativename\":\s*\"([^\"]+)\""), 0),
-    Attributes   = arrayindex(regextract(aedf_str, "\"(?i)attributes\":\s*\"([^\"]+)\""), 0),
-    CertSubject  = arrayindex(regextract(aedf_str, "\"(?i)subject\":\s*\"([^\"]+)\""), 0),
-    Template     = arrayindex(regextract(aedf_str, "\"(?i)certificatetemplate\":\s*\"([^\"]+)\""), 0),
+    Requester = arrayindex(regextract(aedf_str, "\"(?i)requester\":\s*\"([^\"]+)\""), 0),
+    SAN_field = arrayindex(regextract(aedf_str, "\"(?i)subjectalternativename\":\s*\"([^\"]+)\""), 0),
+    Attributes = arrayindex(regextract(aedf_str, "\"(?i)attributes\":\s*\"([^\"]+)\""), 0),
+    CertSubject = arrayindex(regextract(aedf_str, "\"(?i)subject\":\s*\"([^\"]+)\""), 0),
+    Template = arrayindex(regextract(aedf_str, "\"(?i)certificatetemplate\":\s*\"([^\"]+)\""), 0),
     SerialNumber = arrayindex(regextract(aedf_str, "\"(?i)serialnumber\":\s*\"([^\"]+)\""), 0),
-    RequestID    = arrayindex(regextract(aedf_str, "\"(?i)requestid\":\s*\"([^\"]+)\""), 0),
-    AuthService  = arrayindex(regextract(aedf_str, "\"(?i)authenticationservice\":\s*\"([^\"]+)\""), 0),
-    AuthLevel    = arrayindex(regextract(aedf_str, "\"(?i)authenticationlevel\":\s*\"([^\"]+)\""), 0),
-    Disposition  = arrayindex(regextract(aedf_str, "\"(?i)disposition\":\s*\"([^\"]+)\""), 0)
-// Extract UPN from subjectalternativename field (Principal Name=user@domain)
+    RequestID = arrayindex(regextract(aedf_str, "\"(?i)requestid\":\s*\"([^\"]+)\""), 0),
+    AuthService = arrayindex(regextract(aedf_str, "\"(?i)authenticationservice\":\s*\"([^\"]+)\""), 0),
+    AuthLevel = arrayindex(regextract(aedf_str, "\"(?i)authenticationlevel\":\s*\"([^\"]+)\""), 0),
+    Disposition = arrayindex(regextract(aedf_str, "\"(?i)disposition\":\s*\"([^\"]+)\""), 0)
 | alter san_upn_1 = arrayindex(regextract(SAN_field, "(?i)Principal Name=([^\r\n\\\\]+)"), 0)
-// Extract UPN from attributes field (SAN:upn=user@domain)
 | alter san_upn_2 = arrayindex(regextract(Attributes, "(?i)SAN:upn=([^\r\n\\\\]+)"), 0)
-// Use whichever populated
 | alter san_upn = coalesce(san_upn_1, san_upn_2)
-// Extract username from Requester (DOMAIN\user format)
 | alter requester_user = arrayindex(regextract(Requester, "\\\\([^\\\\]+)$"), 0)
-// Normalize for comparison
 | alter san_upn_lower = lowercase(san_upn)
 | alter requester_lower = lowercase(requester_user)
-// SAN must exist and must not match requester
 | filter san_upn != null
 | filter san_upn_lower not contains requester_lower
     and requester_lower not contains san_upn_lower
-// Flag NTLM auth — could indicate ESC8 relay on top of ESC1
 | alter is_ntlm = if(AuthService ~= "(?i)NTLM", "YES", "NO")
-| fields _time, agent_hostname, Requester, requester_user, san_upn,
-         CertSubject, Template, SerialNumber, RequestID,
-         Disposition, AuthService, AuthLevel, is_ntlm
+| fields _time, agent_hostname, Requester, requester_user, san_upn, CertSubject, Template, SerialNumber, RequestID, Disposition, AuthService, AuthLevel, is_ntlm
