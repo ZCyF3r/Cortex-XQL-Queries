@@ -1,0 +1,18 @@
+// Suspicious Remote Read of CertLog Directory
+// Detects remote file reads from the CertLog directory. The CA database (.edb) contains all issued certificates and archived private keys if key archival is enabled. Remote reads from a non-CA host indicate an attacker copying the CA database for offline certificate and key extraction.
+// MITRE: T1005 - Data from Local System, T1552.004 - Unsecured Credentials: Private Keys, T1649 - Steal or Forge Authentication Certificates
+
+
+dataset = xdr_data
+| filter event_type = ENUM.FILE
+| filter event_sub_type in (ENUM.FILE_OPEN, ENUM.FILE_DIR_READ)
+| filter action_file_path ~= "(?i)CertLog"
+| filter actor_process_image_name not in ("certsvc.exe", "CertSvc.exe")
+| filter causality_actor_type in (ENUM.REMOTE_FILE_SMB, ENUM.REMOTE_NAMED_PIPE, ENUM.REMOTE_TCP)
+| alter target_file_type = if(
+    action_file_path ~= "(?i)\.edb$", "CA Database - CRITICAL",
+    if(action_file_path ~= "(?i)\.log$", "Transaction Log",
+    if(action_file_path ~= "(?i)\.pat$", "Patch File",
+    if(action_file_path ~= "(?i)\.chk$", "Checkpoint File", "Other"))))
+| alter severity = if(action_file_path ~= "(?i)\.edb$", "CRITICAL", "Review")
+| fields _time, agent_hostname, os_actor_primary_username, severity, actor_remote_ip, causality_actor_type, actor_remote_pipe_name, target_file_type, actor_rpc_interface_uuid, actor_rpc_username, actor_rpc_protocol, action_file_path, action_file_name, event_sub_type
