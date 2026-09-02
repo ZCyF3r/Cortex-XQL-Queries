@@ -1,0 +1,20 @@
+// Overpass-the-Hash - RC4 Pre-Authentication in AES Environment
+// Detects Kerberos TGT requests (Event 4768) using RC4 pre-authentication (PreAuthType 23) in environments where AES is the default. Overpass-the-hash uses a stolen NTLM hash to request a Kerberos TGT — the RC4 pre-auth type betrays the use of an NTLM hash rather than a password or AES key.
+// MITRE: T1550.002 - Use Alternate Authentication Material: Pass the Hash
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4768
+| alter aedf_str = to_string(action_evtlog_data_fields)
+| alter
+    TargetUser = arrayindex(regextract(aedf_str, "\"(?i)TargetUser Name\":\s*\"([^\"]+)\""), 0),
+    SourceIP = arrayindex(regextract(aedf_str, "\"(?i)IpAddress\":\s*\"([^\"]+)\""), 0),
+    PreAuthType = arrayindex(regextract(aedf_str, "\"(?i)PreAuthType\":\s*\"([^\"]+)\""), 0),
+    EncryptionType = arrayindex(regextract(aedf_str, "\"(?i)TicketEncryptionType\":\s*\"([^\"]+)\""), 0),
+    Status = arrayindex(regextract(aedf_str, "\"(?i)Status\":\s*\"([^\"]+)\""), 0)
+| filter PreAuthType = "23"
+| filter Status = "0x0"
+| filter TargetUser not contains "$"
+| fields _time, agent_hostname, TargetUser, SourceIP, PreAuthType, EncryptionType, Status
+| sort desc _time
