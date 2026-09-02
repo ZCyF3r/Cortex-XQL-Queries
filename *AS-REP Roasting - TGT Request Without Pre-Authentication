@@ -1,0 +1,20 @@
+// AS-REP Roasting - TGT Request Without Pre-Authentication
+// Detects Kerberos TGT requests (Event 4768) for accounts with Kerberos pre-authentication disabled. AS-REP Roasting targets these accounts to obtain an encrypted TGT that can be cracked offline without any authentication.
+// MITRE: T1558.004 - Steal or Forge Kerberos Tickets: AS-REP Roasting
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4768
+| alter aedf_str = to_string(action_evtlog_data_fields)
+| alter
+    TargetUser = arrayindex(regextract(aedf_str, "\"(?i)TargetUserName\":\s*\"([^\"]+)\""), 0),
+    SourceIP = arrayindex(regextract(aedf_str, "\"(?i)IpAddress\":\s*\"([^\"]+)\""), 0),
+    PreAuthType = arrayindex(regextract(aedf_str, "\"(?i)PreAuthType\":\s*\"([^\"]+)\""), 0),
+    EncryptionType = arrayindex(regextract(aedf_str, "\"(?i)TicketEncryptionType\":\s*\"([^\"]+)\""), 0),
+    Status = arrayindex(regextract(aedf_str, "\"(?i)Status\":\s*\"([^\"]+)\""), 0)
+| filter PreAuthType in ("0", "-")
+| filter Status = "0x0"
+| filter TargetUser not contains "$"
+| fields _time, agent_hostname, TargetUser, SourceIP, PreAuthType, EncryptionType, Status
+| sort desc _time
