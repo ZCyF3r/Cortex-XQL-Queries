@@ -18,11 +18,11 @@ dataset = xdr_data
 | filter ServiceName not contains "$"
 | filter ServiceName != "krbtgt"
 | comp
-    count()                       as total_tgs_requests,
-    count_distinct(ServiceName)   as distinct_services,
-    values(ServiceName)           as services_targeted,
-    min(_time)                    as first_seen,
-    max(_time)                    as last_seen
+    count() as total_tgs_requests,
+    count_distinct(ServiceName) as distinct_services,
+    values(ServiceName) as services_targeted,
+    min(_time) as first_seen,
+    max(_time) as last_seen
   by TargetUser, SourceIP
 | filter distinct_services >= 5
 | sort desc distinct_services
