@@ -1,0 +1,29 @@
+// Golden Ticket - TGT Request Anomaly Detection
+// Detects indicators of forged Kerberos TGTs (Golden Tickets). Key signals: TGT requested for a non-existent account (Status 0x6), domain mismatch in the request, or krbtgt service ticket requests from unexpected sources.
+// MITRE: T1558.001 - Steal or Forge Kerberos Tickets: Golden Ticket
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id in (4768, 4769)
+| alter aedf_str = to_string(action_evtlog_data_fields)
+| alter
+    EventID = action_evtlog_event_id,
+    TargetUser = arrayindex(regextract(aedf_str, "\"(?i)TargetUserName\":\s*\"([^\"]+)\""), 0),
+    ServiceName = arrayindex(regextract(aedf_str, "\"(?i)ServiceName\":\s*\"([^\"]+)\""), 0),
+    SourceIP = arrayindex(regextract(aedf_str, "\"(?i)IpAddress\":\s*\"([^\"]+)\""), 0),
+    EncryptionType = arrayindex(regextract(aedf_str, "\"(?i)TicketEncryptionType\":\s*\"([^\"]+)\""), 0),
+    Status = arrayindex(regextract(aedf_str, "\"(?i)Status\":\s*\"([^\"]+)\""), 0),
+    TicketOptions = arrayindex(regextract(aedf_str, "\"(?i)TicketOptions\":\s*\"([^\"]+)\""), 0)
+| filter
+    Status = "0x6"
+    or
+    (ServiceName = "krbtgt" and EncryptionType = "0x17")
+    or
+    (TicketOptions ~= "(?i)0x50800000")
+| alter indicator = if(
+    Status = "0x6", "Non-Existent Account",
+    if(ServiceName = "krbtgt" and EncryptionType = "0x17", "RC4 krbtgt Request",
+    "Anomalous Ticket Options"))
+| fields _time, agent_hostname, EventID, TargetUser, ServiceName, SourceIP, EncryptionType, Status, TicketOptions, indicator
+| sort desc _time
