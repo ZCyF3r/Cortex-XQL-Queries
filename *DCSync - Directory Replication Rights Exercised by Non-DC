@@ -1,0 +1,19 @@
+// DCSync - Directory Replication Rights Exercised by Non-DC
+// Detects Event 4662 where a non-DC account exercises directory replication rights (DS-Replication-Get-Changes / DS-Replication-Get-Changes-All). DCSync uses these rights to replicate password hashes from AD. Legitimate replication comes only from DC machine accounts.
+// MITRE: T1003.006 - OS Credential Dumping: DCSync
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 4662
+| alter aedf_str = to_string(action_evtlog_data_fields)
+| filter aedf_str ~= "(?i)(1131f6aa-9c07-11d1-f79f-00c04fc2dcd2|1131f6ad-9c07-11d1-f79f-00c04fc2dcd2|89e95b76-444d-4c62-991a-0facbeda640c)"
+| alter
+    SubjectUser = arrayindex(regextract(aedf_str, "\"(?i)SubjectUserName\":\s*\"([^\"]+)\""), 0),
+    SubjectDomain = arrayindex(regextract(aedf_str, "\"(?i)SubjectDomainName\":\s*\"([^\"]+)\""), 0),
+    ObjectName = arrayindex(regextract(aedf_str, "\"(?i)ObjectName\":\s*\"([^\"]+)\""), 0),
+    ObjectType = arrayindex(regextract(aedf_str, "\"(?i)ObjectType\":\s*\"([^\"]+)\""), 0),
+    Properties = arrayindex(regextract(aedf_str, "\"(?i)Properties\":\s*\"([^\"]+)\""), 0)
+| filter SubjectUser not contains "$"
+| fields _time, agent_hostname, SubjectUser, SubjectDomain, ObjectName, ObjectType
+| sort desc _time
