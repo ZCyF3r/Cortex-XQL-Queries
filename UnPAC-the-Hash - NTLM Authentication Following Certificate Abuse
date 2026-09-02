@@ -17,8 +17,8 @@ dataset = xdr_data
     Workstation = arrayindex(regextract(aedf_str, "\"(?i)WorkstationName\":\s*\"([^\"]+)\""), 0),
     ElevatedToken = arrayindex(regextract(aedf_str, "\"(?i)ElevatedToken\":\s*\"([^\"]+)\""), 0),
     LogonGUID = arrayindex(regextract(aedf_str, "\"(?i)LogonGuid\":\s*\"([^\"]+)\""), 0)
-| filter LogonProcess = "NtLmSsp"
-| filter AuthPackage = "NTLM"
+| filter LogonProcess ~= "NtLmSsp"
+| filter AuthPackage ~= "NTLM"
 | filter LogonType = "3"
 | filter TargetUser not contains "$"
 | filter TargetUser not in ("ANONYMOUS LOGON", "DWM-1", "DWM-2", "UMFD-0", "UMFD-1")
