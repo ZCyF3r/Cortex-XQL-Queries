@@ -1,0 +1,13 @@
+// Remote WMI Execution via IWbemServices RPC (wmiexec)
+// Detects remote WMI method execution through the IWbemServices RPC interface. Impacket wmiexec uses ExecMethod (opnum 24) to call Win32_Process.Create on remote hosts.
+// MITRE: T1047 - Windows Management Instrumentation
+
+
+dataset = xdr_data
+| filter event_type = ENUM.RPC_CALL
+| filter action_rpc_interface_uuid = "{9556DC99-828C-11CF-A37E-00AA003240C7}"
+| filter action_rpc_func_opnum = 24
+| alter call_fields_str = to_string(action_rpc_func_str_call_fields)
+| fields _time, agent_hostname, action_rpc_func_name, action_rpc_func_opnum,
+         call_fields_str, action_rpc_username,
+         actor_remote_ip, causality_actor_type
