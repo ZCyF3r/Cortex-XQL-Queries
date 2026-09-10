@@ -7,7 +7,7 @@
 dataset = xdr_data
 | filter event_type = ENUM.RPC_CALL
 | filter action_rpc_interface_uuid = "{367ABB81-9844-35F1-AD32-98F038001003}"
-// CreateServiceW = opnum 12, StartServiceW = opnum 19, DeleteService = opnum 2
+| filter causality_actor_type in(ENUM.REMOTE_FILE_SMB, ENUM.REMOTE_TCP, ENUM.REMOTE_NAMED_PIPE)
 | filter action_rpc_func_opnum in (12, 19, 2)
 | alter rpc_function = if(
     action_rpc_func_opnum = 12, "CreateServiceW",
@@ -17,4 +17,4 @@ dataset = xdr_data
 | alter lpServiceName = json_extract_scalar(call_fields_str, "$.lpServiceName")
 | alter lpDisplayName = json_extract_scalar(call_fields_str, "$.lpDisplayName")
 | alter lpBinarypathName = json_extract_scalar(call_fields_str, "$.lpBinaryPathName")
-| fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, actor_process_image_path, actor_process_command_line, actor_process_os_pid, actor_process_image_sha256, actor_process_signature_status, action_rpc_interface_name, action_rpc_interface_uuid, event_rpc_interface_uuid, event_rpc_func_opnum, rpc_function, action_rpc_func_opnum, action_rpc_func_name, call_fields_str, action_rpc_username, actor_remote_ip, causality_actor_type, lpServiceName, lpDisplayName, lpBinarypathName
+| fields _time, agent_hostname, os_actor_primary_username, action_rpc_interface_name, action_rpc_interface_uuid, event_rpc_interface_uuid, event_rpc_func_opnum, rpc_function, action_rpc_func_opnum, action_rpc_func_name, call_fields_str, action_rpc_username, actor_remote_ip, causality_actor_type, lpServiceName, lpDisplayName, lpBinarypathName
