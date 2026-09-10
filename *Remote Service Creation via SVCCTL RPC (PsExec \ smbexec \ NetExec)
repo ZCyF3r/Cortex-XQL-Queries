@@ -1,7 +1,12 @@
+// Remote Service Creation via SVCCTL RPC (PsExec \ smbexec \ CrackMapExec)
+// Detects remote service creation, start, and deletion through the SVCCTL RPC interface.
+// CreateServiceW (opnum 12) is the attack. StartServiceW (19) and DeleteService (2) are the execution and cleanup steps.
+// MITRE: T1021.002 - Remote Services: SMB/Windows Admin Shares, T1569.002 - System Services: Service Execution
+
+
 dataset = xdr_data
 | filter event_type = ENUM.RPC_CALL
 | filter action_rpc_interface_uuid = "367ABB81-9844-35F1-AD32-98F038001003"
-// CreateServiceW = opnum 12, StartServiceW = opnum 19, DeleteService = opnum 2
 | filter action_rpc_func_opnum in (12, 19, 2)
 | alter rpc_function = if(
     action_rpc_func_opnum = 12, "CreateServiceW",
