@@ -9,4 +9,13 @@ dataset = xdr_data
 | filter action_rpc_interface_uuid = "{12345778-1234-ABCD-EF00-0123456789AC}"
 | filter action_rpc_func_opnum in (13, 17, 36)
 | filter causality_actor_type in(ENUM.REMOTE_FILE_SMB, ENUM.REMOTE_HTTP, ENUM.REMOTE_NAMED_PIPE, ENUM.REMOTE_TCP)
-| fields _time, agent_hostname, os_actor_primary_username, action_rpc_interface_name, action_rpc_interface_uuid, event_rpc_interface_uuid, event_rpc_func_opnum, action_rpc_func_opnum, action_rpc_func_name, call_fields_str, action_rpc_username, actor_remote_ip, causality_actor_type
+| comp
+    count() as total_calls,
+    count_distinct(action_rpc_func_opnum) as distinct_functions,
+    values(action_rpc_func_name) as functions_called,
+    values(agent_hostname) as target_hosts,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by action_rpc_username, actor_remote_ip
+| filter total_calls >= 50
+| sort desc total_calls
