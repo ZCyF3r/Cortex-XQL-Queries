@@ -1,0 +1,10 @@
+// DCOM Lateral Movement via ShellWindows
+// Detects remote code execution through the ShellWindows DCOM object. Used by Impacket dcomexec as an alternative to MMC20 when that interface is blocked or monitored.
+// MITRE: T1021.003 - Remote Services: Distributed Component Object Model
+
+
+dataset = xdr_data
+| filter event_type = ENUM.RPC_CALL
+| filter action_rpc_interface_uuid = "{9BA05972-F6A8-11CF-A442-00A0C90A8F39}"
+| alter call_fields_str = to_string(action_rpc_func_str_call_fields)
+| fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, actor_process_image_path, actor_process_command_line, actor_process_os_pid, actor_process_image_sha256, actor_process_signature_status, action_rpc_interface_name, action_rpc_interface_uuid, event_rpc_interface_uuid, event_rpc_func_opnum, rpc_function, action_rpc_func_opnum, action_rpc_func_name, call_fields_str, action_rpc_username, actor_remote_ip, causality_actor_type, lpServiceName, lpDisplayName, lpBinarypathName
