@@ -1,32 +1,42 @@
 // Potentially Malicious LDAP Queries
-// Detects LDAP queries that exceeded the configured search time or result count threshold. Large-scale AD enumeration (NetExec --users, BloodHound collection, ldapdomaindump) generates expensive queries that return thousands of objects. The LDAP filter string identifies what was queried.
-// MITRE: T1087.002 - Account Discovery: Domain Account
+// Detects LDAP queries that exceeded configured thresholds on the DC. Flags known attack LDAP filter patterns for Kerberoasting SPN recon, AS-REP roasting, delegation abuse, AD CS enumeration, BloodHound collection, and bulk user/computer/group enumeration. 
+// MITRE: T1087.002 - Account Discovery: Domain Account, T1069.002 - Permission Groups Discovery: Domain Groups
 
 
 dataset = xdr_data
 | filter event_type = ENUM.EVENT_LOG
 | filter action_evtlog_event_id = 1644
-| alter aedf_str = to_string(action_evtlog_data_fields)
 | alter
-    ClientIP = arrayindex(regextract(aedf_str, "\"(?i)ClientIP\":\s*\"([^\"]+)\""), 0),
-    SearchFilter = arrayindex(regextract(aedf_str, "\"(?i)SearchFilter\":\s*\"([^\"]+)\""), 0),
-    BaseDN = arrayindex(regextract(aedf_str, "\"(?i)BaseDN\":\s*\"([^\"]+)\""), 0),
-    ResultCount = arrayindex(regextract(aedf_str, "\"(?i)EntriesReturned\":\s*\"([^\"]+)\""), 0),
-    SearchTime = arrayindex(regextract(aedf_str, "\"(?i)SearchTimeInMS\":\s*\"([^\"]+)\""), 0)
+    BaseDN = action_evtlog_data_fields -> param1,
+    SearchFilter = action_evtlog_data_fields -> param2,
+    EntriesVisited = action_evtlog_data_fields -> param3,
+    EntriesReturned = action_evtlog_data_fields -> param4,
+    ClientSource = action_evtlog_data_fields -> param5,
+    SearchScope = action_evtlog_data_fields -> param6,
+    Attributes = action_evtlog_data_fields -> param7,
+    IndexUsed = action_evtlog_data_fields -> param9,
+    CallerIdentity = action_evtlog_data_fields -> param17
+| alter ClientIP = arrayindex(regextract(ClientSource, "^([^:]+)"), 0)
+| alter is_spn_enum = if(SearchFilter ~= "(?i)(servicePrincipalName)", "YES", "NO")
+| alter is_asrep_enum = if(SearchFilter ~= "(?i)(userAccountControl:1\.2\.840\.113556\.1\.4\.803:=4194304)", "YES", "NO")
+| alter is_delegation_enum = if(SearchFilter ~= "(?i)(msDS-AllowedToDelegateTo|userAccountControl:1\.2\.840\.113556\.1\.4\.803:=524288)", "YES", "NO")
+| alter is_adcs_enum = if(SearchFilter ~= "(?i)(pKICertificateTemplate|certificationAuthority|pKIEnrollmentService)", "YES", "NO")
 | alter is_user_enum = if(SearchFilter ~= "(?i)(objectClass=user|objectCategory=person|sAMAccountType=805306368)", "YES", "NO")
 | alter is_computer_enum = if(SearchFilter ~= "(?i)(objectClass=computer|sAMAccountType=805306369)", "YES", "NO")
 | alter is_group_enum = if(SearchFilter ~= "(?i)(objectClass=group|objectCategory=group)", "YES", "NO")
-| alter is_spn_enum = if(SearchFilter ~= "(?i)(servicePrincipalName=\\*|servicePrincipalName)", "YES", "NO")
-| alter is_asrep_enum = if(SearchFilter ~= "(?i)(userAccountControl:1.2.840.113556.1.4.803:=4194304)", "YES", "NO")
-| alter is_delegation_enum = if(SearchFilter ~= "(?i)(msDS-AllowedToDelegateTo|userAccountControl:1.2.840.113556.1.4.803:=524288)", "YES", "NO")
-| alter is_adcs_enum = if(SearchFilter ~= "(?i)(objectClass=pKICertificateTemplate|objectClass=certificationAuthority|pKIEnrollmentService)", "YES", "NO")
+| alter is_bloodhound = if(SearchFilter ~= "(?i)(msDS-GroupMSAMembership|adminCount=1|objectClass=trusteddomain|msDS-Allowed)", "YES", "NO")
+| alter is_gpo_enum = if(SearchFilter ~= "(?i)(objectClass=groupPolicyContainer)", "YES", "NO")
+| alter is_laps_enum = if(SearchFilter ~= "(?i)(ms-Mcs-AdmPwd|ms-LAPS)", "YES", "NO")
 | alter query_type = if(
     is_spn_enum = "YES", "Kerberoasting Recon",
     if(is_asrep_enum = "YES", "AS-REP Roasting Recon",
     if(is_delegation_enum = "YES", "Delegation Abuse Recon",
-    if(is_adcs_enum = "YES", "AD CS Enumeration (Certipy/Certify)",
+    if(is_adcs_enum = "YES", "AD CS Enumeration",
+    if(is_bloodhound = "YES", "BloodHound Collection",
+    if(is_laps_enum = "YES", "LAPS Password Extraction",
+    if(is_gpo_enum = "YES", "GPO Enumeration",
     if(is_user_enum = "YES", "User Enumeration",
     if(is_computer_enum = "YES", "Computer Enumeration",
-    if(is_group_enum = "YES", "Group Enumeration", "Other")))))))
-| fields _time, agent_hostname, ClientIP, SearchFilter, BaseDN, ResultCount, SearchTime, query_type, is_spn_enum, is_asrep_enum, is_delegation_enum, is_adcs_enum
+    if(is_group_enum = "YES", "Group Enumeration", "Other"))))))))))
+| fields _time, agent_hostname, ClientSource, ClientIP, CallerIdentity, query_type, SearchFilter, BaseDN, SearchScope, EntriesVisited, EntriesReturned, IndexUsed, is_spn_enum, is_asrep_enum, is_delegation_enum, is_adcs_enum, is_bloodhound, is_laps_enum
 | sort desc _time
