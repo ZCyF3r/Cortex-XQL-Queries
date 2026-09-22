@@ -1,0 +1,16 @@
+// Unsigned LDAP Bind
+// Detects LDAP binds performed without signing or encryption. Many attack tools (NetExec, ldapdomaindump, Impacket) use simple binds over port 389 which transmit credentials in cleartext. 
+// Event 2889 fires on the DC when a client performs an unsigned bind.
+// MITRE: T1557 - Adversary-in-the-Middle, T1552.006 - Unsecured Credentials: Group Policy Preferences
+
+
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 2889
+| alter aedf_str = to_string(action_evtlog_data_fields)
+| alter
+    ClientIP = arrayindex(regextract(aedf_str, "\"(?i)ClientIPAddress\":\s*\"([^\"]+)\""), 0),
+    BindAccount = arrayindex(regextract(aedf_str, "\"(?i)BindAccount\":\s*\"([^\"]+)\""), 0),
+    BindType = arrayindex(regextract(aedf_str, "\"(?i)BindType\":\s*\"([^\"]+)\""), 0)
+| fields _time, agent_hostname, ClientIP, BindAccount, BindType, aedf_str
+| sort desc _time
