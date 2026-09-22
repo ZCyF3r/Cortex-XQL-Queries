@@ -1,0 +1,6 @@
+dataset = xdr_data
+| filter event_type = ENUM.EVENT_LOG
+| filter action_evtlog_event_id = 2889
+| alter aedf_str = to_string(action_evtlog_data_fields)
+| fields _time, agent_hostname, aedf_str
+| limit 3
