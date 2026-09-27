@@ -1,0 +1,22 @@
+// AWS Bedrock Guardrail Deleted or Degraded
+// Detects deletion or modification of Bedrock guardrails. Attackers delete guardrails to remove content filters and PII redaction, or quietly degrade filter strengths from HIGH to NONE. 
+// This enables jailbreaking, toxic output generation, and PII extraction while the application continues running normally.
+// Reference: https://www.abstract.security/blog/detecting-aws-bedrock-abuse-from-llmjacking-to-the-hidden-attack-vectors
+// MITRE: T1562.001 - Impair Defenses: Disable or Modify Tools
+
+
+dataset = amazon_aws_raw
+| filter eventSource = "bedrock.amazonaws.com"
+| filter eventName in ("DeleteGuardrail", "UpdateGuardrail", "CreateGuardrailVersion")
+| alter
+    principal_arn = userIdentity -> arn,
+    access_key = userIdentity -> accessKeyId
+| alter request_str = to_string(requestParameters)
+| alter is_degraded = if(
+    request_str ~= "(?i)(NONE|LOW)" and eventName = "UpdateGuardrail", "YES", "NO")
+| alter severity = if(
+    eventName = "DeleteGuardrail", "CRITICAL - Guardrail Deleted",
+    if(is_degraded = "YES", "HIGH - Guardrail Degraded",
+    "MEDIUM - Guardrail Modified"))
+| fields _time, severity, eventName, principal_arn, access_key, sourceIPAddress, awsRegion, userAgent, is_degraded, request_str, errorCode
+| sort desc _time
