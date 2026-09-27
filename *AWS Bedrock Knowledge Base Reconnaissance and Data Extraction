@@ -1,0 +1,29 @@
+// AWS Bedrock Knowledge Base Reconnaissance and Data Extraction
+// Detects enumeration and querying of Bedrock Knowledge Bases. 
+// Attackers use GetKnowledgeBase to discover the backend storage configuration (including credentialsSecretArn for Pinecone/Redis/Aurora), then burst Retrieve/RetrieveAndGenerate with dump style queries to extract indexed documents.
+// Reference: https://www.abstract.security/blog/detecting-aws-bedrock-abuse-from-llmjacking-to-the-hidden-attack-vectors
+// MITRE: T1530 - Data from Cloud Storage
+
+
+dataset = amazon_aws_raw
+| filter eventSource in ("bedrock.amazonaws.com", "bedrock-agent.amazonaws.com", "bedrock-agent-runtime.amazonaws.com")
+| filter eventName in (
+    "ListKnowledgeBases", "GetKnowledgeBase", "ListDataSources", "GetDataSource",
+    "Retrieve", "RetrieveAndGenerate")
+| alter
+    principal_arn = userIdentity -> arn,
+    access_key = userIdentity -> accessKeyId
+| alter action_phase = if(
+    eventName in ("ListKnowledgeBases", "GetKnowledgeBase", "ListDataSources", "GetDataSource"), "Reconnaissance",
+    "Data Extraction")
+| comp
+    count() as total_events,
+    count_distinct(action_phase) as distinct_phases,
+    values(action_phase) as phases,
+    values(eventName) as actions,
+    values(awsRegion) as regions,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by principal_arn, access_key, sourceIPAddress
+| filter distinct_phases >= 2 or total_events >= 10
+| sort desc total_events
