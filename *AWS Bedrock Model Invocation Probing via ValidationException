@@ -1,0 +1,17 @@
+// AWS Bedrock Model Invocation Probing via ValidationException
+// Detects InvokeModel calls that return ValidationException. 
+// Attackers send deliberately malformed requests (e.g. max_tokens: -1) to confirm stolen credentials work without triggering AccessDenied. A burst of ValidationException from one identity followed by successful invocations is the credential validation.
+// Reference: https://www.abstract.security/blog/detecting-aws-bedrock-abuse-from-llmjacking-to-the-hidden-attack-vectors
+// MITRE: T1496 - Resource Hijacking
+
+
+dataset = amazon_aws_raw
+| filter eventSource = "bedrock.amazonaws.com"
+| filter eventName in ("InvokeModel", "InvokeModelWithResponseStream", "Converse", "ConverseStream")
+| filter errorCode = "ValidationException"
+| alter
+    principal_arn = userIdentity -> arn,
+    access_key = userIdentity -> accessKeyId,
+    model_id = requestParameters -> modelId
+| fields _time, eventName, principal_arn, access_key, model_id, sourceIPAddress, awsRegion, userAgent, errorCode, errorMessage
+| sort desc _time
