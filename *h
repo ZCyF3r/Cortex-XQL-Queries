@@ -1,0 +1,28 @@
+// Title       : AWS Bedrock Multi-Region Model Invocation (Quota Evasion)
+// Description : Detects a single identity invoking Bedrock models across 3+ AWS regions.
+//               Attackers spread invocations across regions to dodge per-region request
+//               quotas and maximize throughput on stolen credentials. Legitimate
+//               applications typically invoke models in one or two regions.
+// Reference   : https://www.abstract.security/blog/detecting-aws-bedrock-abuse-from-llmjacking-to-the-hidden-attack-vectors
+// MITRE       : T1496 - Resource Hijacking
+
+dataset = amazon_aws_raw
+| filter eventSource = "bedrock.amazonaws.com"
+| filter eventName in ("InvokeModel", "InvokeModelWithResponseStream", "Converse", "ConverseStream")
+| filter errorCode = null
+| alter
+    principal_arn = userIdentity -> arn,
+    access_key    = userIdentity -> accessKeyId,
+    model_id      = requestParameters -> modelId
+| comp
+    count()                      as total_invocations,
+    count_distinct(awsRegion)    as distinct_regions,
+    count_distinct(model_id)     as distinct_models,
+    values(awsRegion)            as regions,
+    values(model_id)             as models,
+    values(userAgent)            as user_agents,
+    min(_time)                   as first_seen,
+    max(_time)                   as last_seen
+  by principal_arn, access_key
+| filter distinct_regions >= 3
+| sort desc total_invocations
