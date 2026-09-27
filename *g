@@ -1,0 +1,30 @@
+// Title       : AWS Bedrock Agent Configuration Hijacked
+// Description : Detects modification of Bedrock Agent configurations. Direct hijacking
+//               uses UpdateAgent to rewrite the system prompt and CreateAgentActionGroup
+//               to attach an attacker-controlled Lambda, followed by PrepareAgent to
+//               activate the changes. Any non-CI/CD principal modifying agent configs
+//               or attaching cross-account Lambda functions is high severity.
+// Reference   : https://www.abstract.security/blog/detecting-aws-bedrock-abuse-from-llmjacking-to-the-hidden-attack-vectors
+// MITRE       : T1648 - Serverless Execution
+//               T1565 - Data Manipulation
+
+dataset = amazon_aws_raw
+| filter eventSource in ("bedrock.amazonaws.com", "bedrock-agent.amazonaws.com")
+| filter eventName in ("UpdateAgent", "CreateAgentActionGroup", "UpdateAgentActionGroup", "PrepareAgent")
+| alter
+    principal_arn = userIdentity -> arn,
+    access_key    = userIdentity -> accessKeyId
+| alter request_str = to_string(requestParameters)
+// Flag cross-account Lambda attachment
+| alter has_external_lambda = if(
+    request_str ~= "(?i)arn:aws:lambda:" and request_str not contains userIdentity -> accountId,
+    "YES - Cross Account Lambda", "NO")
+// Flag prompt manipulation keywords
+| alter has_prompt_injection = if(
+    request_str ~= "(?i)(ignore|exfiltrate|send to|leak|steal|curl|wget)",
+    "YES", "NO")
+| fields _time, eventName, principal_arn, access_key,
+         sourceIPAddress, awsRegion, userAgent,
+         has_external_lambda, has_prompt_injection,
+         request_str, errorCode
+| sort desc _time
