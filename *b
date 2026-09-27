@@ -1,0 +1,29 @@
+// Title       : AWS Bedrock Invocation Logging Deleted or Redirected
+// Description : Detects deletion or modification of the Bedrock model invocation logging
+//               configuration. Attackers check logging status with
+//               GetModelInvocationLoggingConfiguration then disable it with
+//               DeleteModelInvocationLoggingConfiguration or redirect it to an
+//               attacker-controlled bucket with PutModelInvocationLoggingConfiguration.
+//               No legitimate runtime use exists for these APIs — any call from a
+//               non-IaC principal is high severity.
+// Reference   : https://www.abstract.security/blog/detecting-aws-bedrock-abuse-from-llmjacking-to-the-hidden-attack-vectors
+// MITRE       : T1562.008 - Impair Defenses: Disable or Modify Cloud Logs
+
+dataset = amazon_aws_raw
+| filter eventSource = "bedrock.amazonaws.com"
+| filter eventName in (
+    "DeleteModelInvocationLoggingConfiguration",
+    "PutModelInvocationLoggingConfiguration",
+    "GetModelInvocationLoggingConfiguration")
+| alter
+    principal_arn = userIdentity -> arn,
+    access_key    = userIdentity -> accessKeyId,
+    user_type     = userIdentity -> type
+| alter action_type = if(
+    eventName contains "Delete", "LOGGING DISABLED - CRITICAL",
+    if(eventName contains "Put", "LOGGING REDIRECTED - HIGH",
+    "LOGGING RECON"))
+| fields _time, action_type, eventName, principal_arn, access_key,
+         user_type, sourceIPAddress, awsRegion, userAgent,
+         requestParameters, errorCode, errorMessage
+| sort desc _time
