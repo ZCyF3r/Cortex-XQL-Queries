@@ -1,0 +1,43 @@
+// Title       : AWS Bedrock LLMjacking - Multi-Phase Kill Chain Detection
+// Description : Detects the LLMjacking kill chain by correlating model enablement,
+//               reconnaissance, probing, and execution phases from a single identity
+//               within a short window. Attackers use stolen IAM credentials to enumerate
+//               available models, probe with malformed requests (ValidationException),
+//               then run inference at scale. Two or more phases from the same access
+//               key is the correlation signal.
+// Reference   : https://www.abstract.security/blog/detecting-aws-bedrock-abuse-from-llmjacking-to-the-hidden-attack-vectors
+// MITRE       : T1496 - Resource Hijacking
+
+dataset = amazon_aws_raw
+| filter eventSource = "bedrock.amazonaws.com"
+| filter eventName in (
+    "PutUseCaseForModelAccess", "CreateFoundationModelAgreement",
+    "GetFoundationModelAvailability", "ListFoundationModels",
+    "InvokeModel", "InvokeModelWithResponseStream", "Converse", "ConverseStream")
+| alter phase = if(
+    eventName in ("PutUseCaseForModelAccess", "CreateFoundationModelAgreement"), "1_Model_Enablement",
+    if(eventName in ("ListFoundationModels", "GetFoundationModelAvailability"), "2_Reconnaissance",
+    if(eventName in ("InvokeModel", "InvokeModelWithResponseStream", "Converse", "ConverseStream")
+        and errorCode = "ValidationException", "3_Probing",
+    if(eventName in ("InvokeModel", "InvokeModelWithResponseStream", "Converse", "ConverseStream")
+        and errorCode = null, "4_Execution", "Other"))))
+| alter
+    principal_arn = userIdentity -> arn,
+    access_key    = userIdentity -> accessKeyId,
+    user_type     = userIdentity -> type,
+    model_id      = requestParameters -> modelId
+| comp
+    count()                     as total_events,
+    count_distinct(phase)       as distinct_phases,
+    values(phase)               as phases_seen,
+    values(eventName)           as actions,
+    values(model_id)            as models_targeted,
+    values(awsRegion)           as regions,
+    values(errorCode)           as errors,
+    values(userAgent)           as user_agents,
+    min(_time)                  as first_seen,
+    max(_time)                  as last_seen
+  by principal_arn, access_key, sourceIPAddress
+// Two or more phases from the same identity = kill chain in progress
+| filter distinct_phases >= 2
+| sort desc distinct_phases
