@@ -32,8 +32,8 @@ dataset = amazon_aws_raw
     values(awsRegion) as regions,
     values(errorCode) as errors,
     values(userAgent) as user_agents,
-    min(_time) as first_seen,
-    max(_time) as last_seen
+    min(eventTime) as first_seen,
+    max(eventTime) as last_seen
   by principal_arn, access_key, sourceIPAddress
 | filter distinct_phases >= 2
 | sort desc distinct_phases
