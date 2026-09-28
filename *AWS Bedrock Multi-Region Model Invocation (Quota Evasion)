@@ -20,8 +20,8 @@ dataset = amazon_aws_raw
     values(awsRegion) as regions,
     values(model_id) as models,
     values(userAgent) as user_agents,
-    min(_time) as first_seen,
-    max(_time) as last_seen
+    min(eventTime) as first_seen,
+    max(eventTime) as last_seen
   by principal_arn, access_key
 | filter distinct_regions >= 3
 | sort desc total_invocations
