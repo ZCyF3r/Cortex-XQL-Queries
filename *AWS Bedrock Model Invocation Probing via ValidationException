@@ -13,5 +13,5 @@ dataset = amazon_aws_raw
     principal_arn = userIdentity -> arn,
     access_key = userIdentity -> accessKeyId,
     model_id = requestParameters -> modelId
-| fields _time, eventName, principal_arn, access_key, model_id, sourceIPAddress, awsRegion, userAgent, errorCode, errorMessage
-| sort desc _time
+| fields eventTime, eventName, principal_arn, access_key, model_id, sourceIPAddress, awsRegion, userAgent, errorCode, errorMessage
+| sort desc eventTime 
