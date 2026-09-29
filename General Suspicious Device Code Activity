@@ -18,7 +18,7 @@ dataset = msft_azure_ad_raw
     "04b07795-8ddb-461a-bbee-02f9e1bf7b46", //Microsoft Azure CLI
     "1950a258-227b-4e31-a9cf-717495945fc2"  //Azure PowerShell
 )
-| join type = inner (
+| join type = left (
     dataset = msft_o365_azure_ad_raw
     | alter request_type = arrayindex(regextract(extendedProperties,
         "RequestType\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
@@ -26,10 +26,11 @@ dataset = msft_azure_ad_raw
         "IsCompliant\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
     | alter Compliance_Managed = arrayindex(regextract(extendedProperties,
         "IsCompliantAndManaged\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
-    | filter request_type contains "Cmsi"
+    | filter request_type contains "Cmsi" or request_type = "OAuth2:Token"
     | alter cmsi_time = _time
     | alter cmsi_ip = ActorIpAddress
     | alter cmsi_upn = UserId
 ) as cmsi cmsi.cmsi_upn = UPN
+| filter request_type contains "cmsi" or (signInTokenProtectionStatus = "unbound" and request_type = "OAuth2:Token")
 | fields device_code_time, cmsi_time, UPN, device_code_ip, cmsi_ip, device_code_ua, appDisplayName, appId, Compliance, Managed, Browser, signInTokenProtectionStatus, request_type, IsCompliance, Compliance_Managed
 | sort desc device_code_time
