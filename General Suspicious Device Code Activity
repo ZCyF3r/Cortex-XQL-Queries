@@ -31,6 +31,6 @@ dataset = msft_azure_ad_raw
     | alter cmsi_ip = ActorIpAddress
     | alter cmsi_upn = UserId
 ) as cmsi cmsi.cmsi_upn = UPN
-| filter request_type contains "cmsi" or (signInTokenProtectionStatus = "unbound" and request_type = "OAuth2:Token")
+| filter request_type contains "(?i)(cmsi)" or (signInTokenProtectionStatus = "unbound" and request_type = "OAuth2:Token")
 | fields device_code_time, cmsi_time, UPN, device_code_ip, cmsi_ip, device_code_ua, appDisplayName, appId, Compliance, Managed, Browser, signInTokenProtectionStatus, request_type, IsCompliance, Compliance_Managed
 | sort desc device_code_time
