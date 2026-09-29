@@ -1,9 +1,5 @@
-// Device Code Phishing
-// Broker AppIds from unmanaged non-compliant devices with unbound tokens
-// Unmanaged/non-compliant device + device code flow + 
+// Unmanaged/non-compliant device + suspicious UA + device code flow
 // Cmsi:Cmsi token replay confirming stolen token is being replayed
-// MITRE T1528 - Steal Application Access Token, T1621 - MFA Request Generation
-
 
 dataset = msft_azure_ad_raw
 | alter Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
@@ -19,7 +15,8 @@ dataset = msft_azure_ad_raw
     "d3590ed6-52b3-4102-aeff-aad2292ab01c", //Microsoft Office
     "4765445b-32c6-49b0-83e6-1d93765276ca", //OfficeHome
     "1b730954-1685-4b74-9bfd-dac224a7b894", //MS Graph API
-    "04b07795-8ddb-461a-bbee-02f9e1bf7b46"  //Microsoft Azure CLI
+    "04b07795-8ddb-461a-bbee-02f9e1bf7b46", //Microsoft Azure CLI
+    "1950a258-227b-4e31-a9cf-717495945fc2"  //Azure PowerShell
 )
 | join type = inner (
     dataset = msft_o365_azure_ad_raw
