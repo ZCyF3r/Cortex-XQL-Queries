@@ -1,0 +1,20 @@
+// Send-As Permission Granted
+// Detects granting of Send-As or Send-on-Behalf permissions on a mailbox. Attackers use this to impersonate the compromised user — sending emails that appear to come from the victim's address.
+// MITRE: T1098.002 - Account Manipulation: Additional Email Delegate Permissions, T1036.005 - Masquerading: Match Legitimate Name or Location
+
+
+dataset = saas_audit_logs
+| filter service_type = "Exchange
+| filter operation_name_orig in ("Add-RecipientPermission", "Set-Mailbox")
+| alter raw_str = to_string(raw_log)
+| filter raw_str ~= "(?i)(SendAs|SendOnBehalf|GrantSendOnBehalfTo)"
+| alter granted_to = coalesce(
+    arrayindex(regextract(raw_str, "\"(?i)Trustee\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    arrayindex(regextract(raw_str, "\"(?i)GrantSendOnBehalfTo\",\s*\"Value\":\s*\"([^\"]+)\""), 0))
+| alter target_mailbox = arrayindex(regextract(raw_str, "\"(?i)Identity\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter
+    anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| fields _time, identity_name, operation_name_orig, target_mailbox, granted_to, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent
+| sort desc _time
