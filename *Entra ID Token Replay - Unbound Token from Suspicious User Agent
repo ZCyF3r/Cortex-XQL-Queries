@@ -13,10 +13,24 @@ dataset = msft_azure_ad_raw
 | filter error_code = "0"
 | filter signInTokenProtectionStatus = "unbound"
 | alter is_suspicious_ua = if(
-    userAgent ~= "(?i)(python|requests|aiohttp|httpx|curl|axios|node|go-http|okhttp|urllib|postman)"
-    or userAgent = null
-    or userAgent = "", "YES", "NO")
-// Flag unmanaged/non-compliant device
+  userAgent ~= "(?i)(python|requests|aiohttp|httpx|curl|axios|node|go-http|okhttp|urllib|postman)", "YES", "NO")
+| filter userAgent != null or userAgent != ""
 | alter is_unmanaged = if(Managed = "false" and Compliance = "false", "YES", "NO")
-| fields _time, userPrincipalName, appDisplayName, ipAddress, location, userAgent, Browser, OS, is_suspicious_ua, is_unmanaged, Managed, Compliance, signInTokenProtectionStatus
-| sort desc _time
+| filter is_unmanaged = "YES"
+| filter is_suspicious_ua = "YES"
+| comp
+    count() as total_signins,
+    count_distinct(ipAddress) as distinct_ips,
+    count_distinct(userAgent) as distinct_user_agents,
+    count_distinct(appDisplayName) as distinct_apps,
+    values(ipAddress) as source_ips,
+    values(userAgent) as user_agents,
+    values(appDisplayName) as applications,
+    values(location) as locations,
+    values(Managed) as managed_status,
+    values(Compliance) as compliance_status,
+    values(signInTokenProtectionStatus) as token_protection,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+by sessionId, userPrincipalName
+| filter distinct_ips >= 2
