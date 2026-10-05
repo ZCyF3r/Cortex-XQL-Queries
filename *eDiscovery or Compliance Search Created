@@ -1,0 +1,19 @@
+// eDiscovery or Compliance Search Created
+// Detects creation and execution of compliance searches or eDiscovery cases. Attackers with admin access use compliance search to find emails containing financial data, credentials, PII, or specific transaction details across the entire organization.
+// MITRE: T1114 - Email Collection, T1213.002 - Data from Information Repositories: Sharepoint
+
+
+dataset = saas_audit_logs
+| filter service_type = "Exchange"
+| filter operation_name_orig in ("New-ComplianceSearch", "Start-ComplianceSearch",
+         "SearchStarted", "SearchCreated", "New-ComplianceSearchAction",
+         "New-MailboxSearch", "SearchExportDownloaded")
+| alter raw_str = to_string(raw_log)
+| alter search_name = arrayindex(regextract(raw_str, "\"(?i)Name\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter search_query = arrayindex(regextract(raw_str, "\"(?i)ExchangeLocation\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter
+    anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| fields _time, identity_name, operation_name_orig, search_name, search_query, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent, raw_str
+| sort desc _time
