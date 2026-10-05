@@ -1,0 +1,36 @@
+// Entra ID Session\Cookie Replay - Multiple IPs per User
+// Detects a single user authenticating from multiple distinct IPs within an aggregation window. After AiTM phishing steals the session cookie, the attacker replays it from their infrastructure — producing sign-ins from the victim's legitimate IP AND the attacker's IP for the same user and application. 
+// Two or more distinct IPs for the same user within a short window, especially with different user agents or locations, is the primary session replay signal.
+// MITRE: T1550.004 - Use Alternate Authentication Material: Web Session Cookie
+
+
+dataset = msft_azure_ad_raw
+| alter
+    error_code = json_extract_scalar(to_string(status), "$.errorCode"),
+    Managed = json_extract_scalar(deviceDetail, "$.isManaged"),
+    Compliance = json_extract_scalar(deviceDetail, "$.isCompliant"),
+    Browser = json_extract_scalar(deviceDetail, "$.browser"),
+    OS = json_extract_scalar(deviceDetail, "$.operatingSystem")
+| comp
+    count() as total_signins,
+    count_distinct(ipAddress) as distinct_ips,
+    count_distinct(userAgent) as distinct_user_agents,
+    count_distinct(appDisplayName) as distinct_apps,
+    values(ipAddress) as source_ips,
+    values(userAgent) as user_agents,
+    values(appDisplayName) as applications,
+    values(location) as locations,
+    values(Managed) as managed_status,
+    values(Compliance) as compliance_status,
+    values(signInTokenProtectionStatus) as token_protection,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by userPrincipalName
+| filter error_code = "0"
+| filter distinct_ips >= 2
+| alter has_unbound_token = if(token_protection contains "unbound", "YES", "NO")
+| alter has_ua_mismatch = if(distinct_user_agents >= 2, "YES", "NO")
+| alter severity = if(
+    has_unbound_token = "YES" and has_ua_mismatch = "YES", "CRITICAL",
+    if(has_unbound_token = "YES" or has_ua_mismatch = "YES", "HIGH", "MEDIUM"))
+| sort desc severity, desc distinct_ips
