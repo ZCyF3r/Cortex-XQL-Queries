@@ -11,6 +11,9 @@ dataset = msft_azure_ad_raw
     Compliance = json_extract_scalar(deviceDetail, "$.isCompliant"),
     Browser = json_extract_scalar(deviceDetail, "$.browser"),
     OS = json_extract_scalar(deviceDetail, "$.operatingSystem")
+| filter error_code = "0"
+| filter sessionId != null and sessionId != ""
+| filter userAgent != null and userAgent != ""
 | comp
     count() as total_signins,
     count_distinct(ipAddress) as distinct_ips,
@@ -25,12 +28,10 @@ dataset = msft_azure_ad_raw
     values(signInTokenProtectionStatus) as token_protection,
     min(_time) as first_seen,
     max(_time) as last_seen
-  by userPrincipalName
-| filter error_code = "0"
+  by sessionId, userPrincipalName
 | filter distinct_ips >= 2
+| filter token_protection != "bound"
 | alter has_unbound_token = if(token_protection contains "unbound", "YES", "NO")
 | alter has_ua_mismatch = if(distinct_user_agents >= 2, "YES", "NO")
-| alter severity = if(
-    has_unbound_token = "YES" and has_ua_mismatch = "YES", "CRITICAL",
-    if(has_unbound_token = "YES" or has_ua_mismatch = "YES", "HIGH", "MEDIUM"))
-| sort desc severity, desc distinct_ips
+| filter has_ua_mismatch = "YES" and has_unbound_token = "YES"
+| sort desc distinct_ips
