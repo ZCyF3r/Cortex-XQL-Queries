@@ -1,0 +1,24 @@
+// Mailbox Forwarding Rule to External Address
+// Detects mailbox-level forwarding configured via Set-Mailbox. Attackers set ForwardingSmtpAddress or ForwardingSMTPAddress to an external address so a copy of every inbound email silently forwards to the attacker's mailbox.
+// MITRE: T1114.003 - Email Collection: Email Forwarding Rule, T1020 - Automated Exfiltration
+
+
+dataset = saas_audit_logs
+| filter service_type = "Exchange"
+| filter operation_name_orig in ("Set-Mailbox")
+| alter raw_str = to_string(raw_log)
+// Extract forwarding address
+| alter forwarding_address = coalesce(
+    arrayindex(regextract(raw_str, "\"(?i)ForwardingSmtpAddress\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    arrayindex(regextract(raw_str, "\"(?i)ForwardingSMTPAddress\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    arrayindex(regextract(raw_str, "\"(?i)ForwardingAddress\",\s*\"Value\":\s*\"([^\"]+)\""), 0))
+| alter deliver_to_and_forward = arrayindex(regextract(raw_str, "\"(?i)DeliverToMailboxAndForward\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| filter forwarding_address != null
+| alter forward_domain = arrayindex(regextract(forwarding_address, "@(.+)$"), 0)
+//| alter is_external = if(forward_domain not contains "YOURCOMPANY.com", "YES", "NO")
+| alter
+    anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| fields _time, identity_name, operation_name_orig, forwarding_address, forward_domain, is_external, deliver_to_and_forward, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent
+| sort desc _time
