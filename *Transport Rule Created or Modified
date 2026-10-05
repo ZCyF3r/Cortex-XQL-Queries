@@ -1,0 +1,25 @@
+// Transport Rule Created or Modified
+// Detects creation or modification of Exchange transport rules. Transport rules operate at the organization level — an attacker with admin access can create rules that redirect, copy, or delete mail across the entire org.
+// MITRE: T1114.003 - Email Collection: Email Forwarding Rule, T1564.008 - Hide Artifacts: Email Hiding Rules
+
+
+dataset = saas_audit_logs
+| filter service_type = "Exchange"
+| filter operation_name_orig in ("New-TransportRule", "Set-TransportRule",
+         "Enable-TransportRule", "Remove-TransportRule")
+| alter raw_str = to_string(raw_log)
+| alter rule_name = arrayindex(regextract(raw_str, "\"(?i)Name\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter redirect_to = arrayindex(regextract(raw_str, "\"(?i)RedirectMessageTo\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter bcc_to = arrayindex(regextract(raw_str, "\"(?i)BlindCopyTo\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter copy_to = arrayindex(regextract(raw_str, "\"(?i)CopyTo\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter subject_contains = arrayindex(regextract(raw_str, "\"(?i)SubjectContainsWords\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter action_type = if(
+    operation_name_orig = "New-TransportRule", "CREATED",
+    if(operation_name_orig = "Remove-TransportRule", "DELETED",
+    if(operation_name_orig = "Enable-TransportRule", "ENABLED", "MODIFIED")))
+| alter
+    anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| fields _time, identity_name, operation_name_orig, action_type, rule_name, redirect_to, bcc_to, copy_to, subject_contains, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent
+| sort desc _time
