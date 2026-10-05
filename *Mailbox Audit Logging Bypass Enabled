@@ -1,0 +1,21 @@
+// Mailbox Audit Logging Bypass Enabled
+// Detects when mailbox audit bypass is enabled on a mailbox via Set-MailboxAuditBypassAssociation or when audit logging is disabled on a specific mailbox. Attackers enable bypass so their subsequent mailbox access (reading, sending, deleting emails) is not recorded in the mailbox audit log, effectively blinding defenders.
+// MITRE: T1562.008 - Impair Defenses: Disable or Modify Cloud Logs
+
+
+dataset = saas_audit_logs
+| filter service_type = "Exchange"
+| filter operation_name_orig in ("Set-MailboxAuditBypassAssociation", "Set-Mailbox")
+| alter raw_str = to_string(raw_log)
+| filter raw_str ~= "(?i)(AuditEnabled.*False|AuditBypassEnabled.*True|AuditLogAgeLimit.*0)"
+| alter target_mailbox = arrayindex(regextract(raw_str, "\"(?i)Identity\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter audit_change = if(
+    raw_str ~= "(?i)AuditEnabled.*False", "Audit Logging Disabled",
+    if(raw_str ~= "(?i)AuditBypassEnabled.*True", "Audit Bypass Enabled",
+    "Audit Log Retention Zeroed"))
+| alter
+    anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| fields _time, identity_name, operation_name_orig, target_mailbox, audit_change, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent
+| sort desc _time
