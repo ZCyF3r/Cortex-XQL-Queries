@@ -1,0 +1,26 @@
+// Mailbox Permission or Delegation Added
+// Detects grants of mailbox access permissions (FullAccess, SendAs, SendOnBehalf) or folder-level permissions. Attackers add their controlled account as a delegate to maintain persistent access to the victim's mailbox, read emails, and send as the victim without needing the victim's credentials.
+// MITRE: T1098.002 - Account Manipulation: Additional Email Delegate Permissions, T1114.002 - Email Collection: Remote Email Collection
+
+
+dataset = saas_audit_logs
+| filter service_type = "Exchange"
+| filter operation_name_orig in ("Add-MailboxPermission", "AddFolderPermissions",
+         "Add-RecipientPermission", "Set-MailboxFolderPermission",
+         "ModifyFolderPermissions")
+| alter raw_str = to_string(raw_log)
+| alter granted_to = coalesce(
+    arrayindex(regextract(raw_str, "\"(?i)User\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    arrayindex(regextract(raw_str, "\"(?i)Trustee\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    arrayindex(regextract(raw_str, "\"(?i)Member\",\s*\"Value\":\s*\"([^\"]+)\""), 0))
+| alter permission_level = coalesce(
+    arrayindex(regextract(raw_str, "\"(?i)AccessRights\",\s*\"Value\":\s*\"([^\"]+)\""), 0),
+    arrayindex(regextract(raw_str, "\"(?i)AccessLevel\",\s*\"Value\":\s*\"([^\"]+)\""), 0))
+| alter target_mailbox = arrayindex(regextract(raw_str, "\"(?i)Identity\",\s*\"Value\":\s*\"([^\"]+)\""), 0)
+| alter is_full_access = if(permission_level ~= "(?i)(FullAccess|Owner|Editor)", "YES", "NO")
+| alter
+    anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| fields _time, identity_name, operation_name_orig, target_mailbox, granted_to, permission_level, is_full_access, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent
+| sort desc _time
