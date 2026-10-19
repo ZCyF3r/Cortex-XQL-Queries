@@ -1,0 +1,32 @@
+// ConnectWise Supply-Chain - Service Principal Self-Assigning Directory Role
+// Detects a service principal adding itself or another principal to a directory role.
+// Reference: https://guardz.com/blog/connectwise-supply-chain-breach-breakdown/
+// MITRE: T1098.003 - Account Manipulation: Additional Cloud Roles
+
+
+dataset = msft_azure_ad_audit_raw
+| filter activityDisplayName ~= "(?i)(Add member to role|Add app role assignment|Add eligible member)"
+| alter
+    initiated_app_id   = initiatedBy -> app -> appId,
+    initiated_app_name = initiatedBy -> app -> displayName,
+    initiated_app_spid = initiatedBy -> app -> servicePrincipalId,
+    initiated_user_upn = initiatedBy -> user -> userPrincipalName,
+    initiated_user_ip  = initiatedBy -> user -> ipAddress
+| alter target_str = to_string(targetResources)
+| alter role_assigned = arrayindex(regextract(target_str, "\"displayName\":\s*\"Role\.DisplayName\",\s*\"oldValue\".*?\"newValue\":\s*\"\\\\?\"?([^\"\\\\]+)"), 0)
+| alter target_name = arrayindex(regextract(target_str, "\"displayName\":\s*\"([^\"]+)\""), 0)
+| alter target_type = arrayindex(regextract(target_str, "\"type\":\s*\"([^\"]+)\""), 0)
+| filter initiated_app_id != null
+| alter is_connectwise = if(initiated_app_id in (
+    "506e08f9-6e9a-4da4-942b-a099a03644ae",
+    "24205314-2b89-4e07-a2a4-579e898a5640",
+    "2399d300-6fca-4e6a-a686-399fefe75b83",
+    "b78f6a77-d4e5-46fb-87e5-d1648bd02519",
+    "0de14c77-b9b0-4137-9360-34878a929827",
+    "412dcf96-176d-4b3a-a1b0-4981ad66971e",
+    "b2b55f5b-7758-4719-8d8f-88ae172e6bdb"), "YES - ConnectWise", "NO")
+| alter is_admin_role = if(
+    role_assigned ~= "(?i)(Global Administrator|Exchange Administrator|Privileged|Application Administrator|Cloud Application|Security Administrator)",
+    "CRITICAL", "Review")
+| fields _time, activityDisplayName, is_connectwise, is_admin_role, role_assigned, target_name, target_type, result, operationType
+| sort desc _time
