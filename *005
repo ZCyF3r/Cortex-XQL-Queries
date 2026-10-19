@@ -1,0 +1,35 @@
+// Anomalous Service Principal Sign-In - Suspicious User Agent
+// Broad detection for any service principal sign-in using a scripting user agent.
+// MITRE: T1078.004 - Valid Accounts: Cloud Accounts
+
+
+dataset = msft_azure_ad_raw
+| filter userAgent ~= "(?i)(curl\/|python-requests|Python-urllib|aiohttp|httpx|axios|PostmanRuntime|Wget|kiota)"
+| alter
+    error_code = json_extract_scalar(to_string(status), "$.errorCode"),
+    Managed = json_extract_scalar(deviceDetail, "$.isManaged"),
+    Compliance = json_extract_scalar(deviceDetail, "$.isCompliant")
+| alter is_attacker_ip = if(ipAddress = "144.172.64.128", "YES", "NO")
+| alter is_connectwise = if(appId in (
+    "506e08f9-6e9a-4da4-942b-a099a03644ae",
+    "24205314-2b89-4e07-a2a4-579e898a5640",
+    "2399d300-6fca-4e6a-a686-399fefe75b83",
+    "b78f6a77-d4e5-46fb-87e5-d1648bd02519",
+    "0de14c77-b9b0-4137-9360-34878a929827",
+    "412dcf96-176d-4b3a-a1b0-4981ad66971e",
+    "b2b55f5b-7758-4719-8d8f-88ae172e6bdb"), "YES", "NO")
+| comp
+    count() as total_signins,
+    count_distinct(appId) as distinct_apps,
+    values(appId) as app_ids,
+    values(appDisplayName) as app_names,
+    values(error_code) as outcomes,
+    values(location) as locations,
+    values(is_connectwise) as connectwise_match,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by ipAddress, userAgent
+| alter severity = if(
+    connectwise_match contains "YES", "CRITICAL - ConnectWise App",
+    if(total_signins >= 50, "HIGH - Bulk Scripted Access", "MEDIUM"))
+| sort desc total_signins
