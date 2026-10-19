@@ -1,0 +1,37 @@
+// ConnectWise Supply-Chain - Credential Added to Service Principal
+// Detects new client secrets or certificates added to any service principal.
+// Reference: https://www.decryptiondigest.com/blog/connectwise-cloud-backup-supply-chain-attack
+// MITRE: T1098.001 - Account Manipulation: Additional Cloud Credentials
+
+
+dataset = msft_azure_ad_audit_raw
+| filter activityDisplayName ~= "(?i)(Add service principal credential|Update application.*Certificates|Add application key credential|Add service principal)"
+| alter
+    initiated_app_id   = initiatedBy -> app -> appId,
+    initiated_app_name = initiatedBy -> app -> displayName,
+    initiated_user_upn = initiatedBy -> user -> userPrincipalName,
+    initiated_user_ip  = initiatedBy -> user -> ipAddress
+| alter target_str = to_string(targetResources)
+| alter target_name = arrayindex(regextract(target_str, "\"displayName\":\s*\"([^\"]+)\""), 0)
+| alter target_type = arrayindex(regextract(target_str, "\"type\":\s*\"([^\"]+)\""), 0)
+| alter credential_added = arrayindex(regextract(target_str, "\"displayName\":\s*\"KeyDescription\",.*?\"newValue\":\s*\"([^\"]+)\""), 0)
+| alter app_initiated = if(initiated_app_id != null and initiated_user_upn = null,
+    "YES - Service Principal Initiated", "User Initiated")
+| alter is_connectwise = if(
+    initiated_app_id in (
+        "506e08f9-6e9a-4da4-942b-a099a03644ae",
+        "24205314-2b89-4e07-a2a4-579e898a5640",
+        "2399d300-6fca-4e6a-a686-399fefe75b83",
+        "b78f6a77-d4e5-46fb-87e5-d1648bd02519",
+        "0de14c77-b9b0-4137-9360-34878a929827",
+        "412dcf96-176d-4b3a-a1b0-4981ad66971e",
+        "b2b55f5b-7758-4719-8d8f-88ae172e6bdb"),
+    "YES - ConnectWise Initiated",
+    if(target_str ~= "(?i)(506e08f9|24205314|2399d300|b78f6a77|0de14c77|412dcf96|b2b55f5b)",
+    "YES - ConnectWise Target", "NO"))
+| alter ua_from_details = arrayindex(regextract(to_string(additionalDetails), "\"User-Agent\",\s*\"value\":\s*\"([^\"]+)\""), 0)
+| alter is_suspicious_ua = if(
+    ua_from_details ~= "(?i)(curl|python-requests|Python-urllib|axios|httpx|kiota)",
+    "YES", "NO")
+| fields _time, activityDisplayName, app_initiated, is_connectwise, is_suspicious_ua, initiated_app_id, initiated_app_name, initiated_user_upn, initiated_user_ip, target_name, target_type, credential_added, ua_from_details, result, operationType
+| sort desc _time
