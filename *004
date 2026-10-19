@@ -1,0 +1,25 @@
+// ConnectWise Supply-Chain - Graph API Token Sweep
+// Detects high-volume Microsoft Graph API activity using attacker-associated user agents.
+// Reference: https://windowsforum.com/news/connectwise-cloud-backup-breach-disable-skykick-apps-and-hunt-microsoft-entra-backdoors.448897/
+// MITRE: T1114.002 - Email Collection: Remote Email Collection, T1199 - Trusted Relationship
+
+
+dataset = cloud_audit_logs
+| filter log_name = "microsoft_graph_activity_logs"
+| filter user_agent ~= "(?i)(python-requests|Python-urllib|curl\/|aiohttp|httpx|kiota)"
+| comp
+    count() as total_requests,
+    count_distinct(operation_name_orig) as distinct_endpoints,
+    count_distinct(operation_name) as distinct_methods,
+    values(operation_name) as methods,
+    values(operation_name_orig) as endpoints,
+    values(caller_ip_geolocation) as geolocations,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by identity_name, caller_ip, user_agent
+| filter total_requests >= 10
+| alter is_attacker_ip = if(caller_ip = "144.172.64.128", "YES", "NO")
+| alter is_connectwise_identity = if(
+    identity_name ~= "(?i)(connectwise|skykick|cloud backup|cloud management)",
+    "YES", "NO")
+| sort desc total_requests
