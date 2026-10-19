@@ -1,0 +1,22 @@
+// ConnectWise Supply-Chain - Compromised Service Principal Sign-In
+// Detects service principal sign-ins from the compromised ConnectWise Cloud Backup (506e08f9) and Cloud Management - MS Teams (24205314) application IDs.
+// Reference: https://www.bleepingcomputer.com/news/security/hackers-breach-microsoft-365-tenants-via-connectwise-supply-chain-attack/
+// MITRE: T1199 - Trusted Relationship, T1078.004 - Valid Accounts: Cloud Accounts
+
+
+dataset = msft_azure_ad_raw
+| filter appId in (
+    "506e08f9-6e9a-4da4-942b-a099a03644ae",
+    "24205314-2b89-4e07-a2a4-579e898a5640")
+| alter
+    error_code = json_extract_scalar(to_string(status), "$.errorCode")
+| alter is_attacker_ip = if(ipAddress = "144.172.64.128", "YES", "NO")
+| alter is_attacker_ua = if(
+    userAgent ~= "(?i)(curl\/7\.88|python-requests\/2\.31|Python-urllib\/3\.12)",
+    "YES", "NO")
+| alter severity = if(
+    is_attacker_ip = "YES", "CRITICAL - Confirmed Attacker IP",
+    if(is_attacker_ua = "YES", "HIGH - Attacker User Agent",
+    "REVIEW - Verify Legitimacy"))
+| fields _time, severity, appId, appDisplayName, ipAddress, userAgent, is_attacker_ip, is_attacker_ua, error_code, userPrincipalName, location
+| sort desc _time
