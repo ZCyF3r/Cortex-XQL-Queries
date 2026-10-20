@@ -72,3 +72,11 @@ dataset = box_shield_alerts_raw
     HistEnd = json_extract_scalar(details_str, "$.shield_alert.alert_summary.historical_period.date_range.end_date"),
     HistDownloadSize = json_extract_scalar(details_str, "$.shield_alert.alert_summary.historical_period.download_size"),
     HistFileCount = json_extract_scalar(details_str, "$.shield_alert.alert_summary.historical_period.downloaded_files_count")
+    //Anomaly period
+    AnomStart = json_extract_scalar(details_str, "$.shield_alert.alert_summary.anomaly_period.date_range.start_date"),
+    AnomEnd = json_extract_scalar(details_str, "$.shield_alert.alert_summary.anomaly_period.date_range.end_date"),
+    AnomDownloadSize = json_extract_scalar(details_str, "$.shield_alert.alert_summary.anomaly_period.download_size"),
+    AnomFileCount = json_extract_scalar(details_str, "$.shield_alert.alert_summary.anomaly_period.downloaded_files_count")
+// Download IPs
+| alter FirstDownloadIP = json_extract_scalar(details_str, "$.shield_alert.alert_summary.download_ips[0].ip")
+| alter FirstDownloadRegistrant = json_extract_scalar(details_str, "$.shield_alert.alert_summary.download_ips[0].registrant")
