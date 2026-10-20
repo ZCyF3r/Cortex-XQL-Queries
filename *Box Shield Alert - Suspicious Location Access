@@ -1,0 +1,40 @@
+// Box Shield Alert - Suspicious Location Access
+// Surfaces Box Shield suspicious location alerts with geographic context and accessed content details. Detects access from unusual or excluded geographic locations indicating compromised accounts or credential theft.
+// MITRE: T1078.004 - Valid Accounts: Cloud Accounts, T1530 - Data from Cloud Storage
+
+
+dataset = box_shield_alerts_raw
+| alter details_str = to_string(additional_details)
+| alter alert_type = json_extract_scalar(details_str, "$.shield_alert.rule_category")
+| filter alert_type = "Suspicious Locations"
+// Shield Alert Context
+| alter
+    RuleName = json_extract_scalar(details_str, "$.shield_alert.rule_name"),
+    AlertId = json_extract_scalar(details_str, "$.shield_alert.alert_id"),
+    Priority = json_extract_scalar(details_str, "$.shield_alert.priority")
+// User context
+| alter
+    UserName = json_extract_scalar(details_str, "$.shield_alert.user.name"),
+    UserEmail = json_extract_scalar(details_str, "$.shield_alert.user.email"),
+    UserId = json_extract_scalar(details_str, "$.shield_alert.user.id")
+// First activity in the alert
+| alter
+    ActivityTime = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].occured_at"),
+    EventType = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].event_type"),
+    ItemName = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].item_name"),
+    ItemId = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].item_id"),
+    ItemType = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].item_type"),
+    ItemPath = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].item_path"),
+    // Source IP info
+    SourceIP = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].ip_info.ip"),
+    Country = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].ip_info.country_code"),
+    City = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].ip_info.city_name"),
+    Region = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].ip_info.region_name"),
+    Registrant = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].ip_info.registrant"),
+    Latitude = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].ip_info.latitude"),
+    Longitude = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].ip_info.longitude"),
+    ServiceName = json_extract_scalar(details_str, "$.shield_alert.alert_summary.alert_activities[0].service_name")
+// Count total activities
+| alter ActivityCount = array_length(json_extract_array(details_str, "$.shield_alert.alert_summary.alert_activities"))
+| fields _time, AlertId, Priority, RuleName, UserName, UserEmail, ActivityTime, EventType, ItemName, ItemPath, ItemType, SourceIP, Country, City, Region, Registrant, ServiceName, Latitude, Longitude, ActivityCount, details_str
+| sort desc _time
