@@ -36,5 +36,5 @@ dataset = box_shield_alerts_raw
 // Download IPs
 | alter FirstDownloadIP = json_extract_scalar(details_str, "$.shield_alert.alert_summary.download_ips[0].ip")
 | alter FirstDownloadRegistrant = json_extract_scalar(details_str, "$.shield_alert.alert_summary.download_ips[0].registrant")
-| fields _time, Priority, RuleName, UserName, UserEmail, UserId, Description, DownloadDeltaSize, DownloadDeltaPCT, HistStart, HistEnd, HistDownloadSize, HistFileCount, AnomStart, AnomEnd, AnomDownloadSize, AnomFileCount, FirstDownloadIP, FirstDownloadRegistrant, AlertId
+| fields _time, Priority, AlertId, RuleName, UserName, UserEmail, UserId, Description, DownloadDeltaSize, DownloadDeltaPCT, HistStart, HistEnd, HistDownloadSize, HistFileCount, AnomStart, AnomEnd, AnomDownloadSize, AnomFileCount, FirstDownloadIP, FirstDownloadRegistrant
 | sort desc _time
