@@ -39,3 +39,36 @@ dataset = box_shield_alerts_raw
 | alter DownloadIPs = json_extract_scalar_array(details_str, "$.alert_summary.download_ips[*].ip")
 | alter DownloadRegistrants = json_extract_scalar_array(details_str, "$.alert_summary.download_ips[*].registrant")
 | sort desc _time
+
+
+
+// Box Shield Alert - Anomalous Download Behavior
+// Surfaces Box Shield anomalous download alerts with full context extraction.
+// Includes the download delta, historical baseline vs anomaly period comparison, and the source IPs used for the downloads.
+// MITRE: T1530 - Data from Cloud Storage, T1567 - Exfiltration Over Web Service
+
+
+dataset = box_shield_alerts_raw
+| alter details_str = to_string(additional_details)
+| alter alert_type = json_extract_scalar(details_str, "$.shield_alert.rule_category")
+| filter alert_type = "Anomalous Download"
+// Shield Alert Context
+| alter
+    RuleName = json_extract_scalar(details_str, "$.shield_alert.rule_name"),
+    AlertId = json_extract_scalar(details_str, "$.shield_alert.alert_id"),
+    Priority = json_extract_scalar(details_str, "$.shield_alert.priority")
+// User context
+| alter
+    UserName = json_extract_scalar(details_str, "$.shield_alert.user.name"),
+    UserEmail = json_extract_scalar(details_str, "$.shield_alert.user.email"),
+    UserId = json_extract_scalar(details_str, "$.shield_alert.user.id")
+// Anomaly details
+| alter
+    Description = json_extract_scalar(details_str, "$.shield_alert.alert_summary.description"),
+    DownloadDeltaSize = json_extract_scalar(details_str, "$.shield_alert.alert_summary.download_delta_size"),
+    DownloadDeltaPCT = json_extract_scalar(details_str, "$.shield_alert.alert_summary.download_delta_percent"),
+    // Historical baseline
+    HistStart = json_extract_scalar(details_str, "$.shield_alert.alert_summary.historical_period.date_range.start_date"),
+    HistEnd = json_extract_scalar(details_str, "$.shield_alert.alert_summary.historical_period.date_range.end_date"),
+    HistDownloadSize = json_extract_scalar(details_str, "$.shield_alert.alert_summary.historical_period.download_size"),
+    HistFileCount = json_extract_scalar(details_str, "$.shield_alert.alert_summary.historical_period.downloaded_files_count")
