@@ -1,0 +1,48 @@
+// Box Shield Alert - Malicious Content Upload
+// Surfaces Box Shield malware detection alerts with file hash, upload path, source IP, and scan results for immediate correlation and blocking.
+// MITRE: T1204.002 - User Execution: Malicious File, T1105 - Ingress Tool Transfer
+
+
+dataset = box_shield_alerts_raw
+| alter details_str = to_string(additional_details)
+| alter alert_type = json_extract_scalar(details_str, "$.shield_alert.rule_category")
+| filter alert_type = "Malicious Content"
+// Shield Alert Context
+| alter
+    RuleName = json_extract_scalar(details_str, "$.shield_alert.rule_name"),
+    AlertId = json_extract_scalar(details_str, "$.shield_alert.alert_id"),
+    Priority = json_extract_scalar(details_str, "$.shield_alert.priority")
+// User context
+| alter
+    UserName = json_extract_scalar(details_str, "$.shield_alert.user.name"),
+    UserEmail = json_extract_scalar(details_str, "$.shield_alert.user.email"),
+    UserId = json_extract_scalar(details_str, "$.shield_alert.user.id")
+// Upload activity
+| alter
+    UploadTime = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.occured_at"),
+    EventType = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.event_type"),
+    ItemName = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.item_name"),
+    ItemType = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.item_type"),
+    ItemId = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.item_id"),
+    ItemPath = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.item_path"),
+    // Source IP info
+    SourceIP = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.ip_info.ip"),
+    Country = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.ip_info.country_code"),
+    Region = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.ip_info.region_name"),
+    Registrant = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.ip_info.registrant"),
+    Latitude = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.ip_info.latitude"),
+    Longitude = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.ip_info.longitude"),
+    ServiceName = json_extract_scalar(details_str, "$.shield_alert.alert_summary.upload_activity.service_name")
+// Malware info
+| alter
+    FileName = json_extract_scalar(details_str, "$.shield_alert.alert_summary.malware_info.file_info.name"),
+    FileSize = json_extract_scalar(details_str, "$.shield_alert.alert_summary.malware_info.file_info.size"),
+    FileHash = json_extract_scalar(details_str, "$.shield_alert.alert_summary.malware_info.file_info.hash"),
+    HashType = json_extract_scalar(details_str, "$.shield_alert.alert_summary.malware_info.file_info.hash_type"),
+    FileVersion = json_extract_scalar(details_str, "$.shield_alert.alert_summary.malware_info.file_info.version"),
+    UploadedAt = json_extract_scalar(details_str, "$.shield_alert.alert_summary.malware_info.file_info.version_uploaded_at"),
+    // Scan results
+    ScanResult = json_extract_scalar(details_str, "$.shield_alert.alert_summary.malware_info.static_scan_result.scan_result"),
+    ScannedAt = json_extract_scalar(details_str, "$.shield_alert.alert_summary.malware_info.static_scan_result.scanned_at")
+| fields _time, AlertId, Priority, RuleName, UserName, UserEmail, ItemName, ItemPath, ItemType, FileName, FileSize, FileHash, HashType, ScanResult, ScannedAt, SourceIP, Country, Region, Registrant, ServiceName, UploadTime, UploadedAt, details_str
+| sort desc _time
