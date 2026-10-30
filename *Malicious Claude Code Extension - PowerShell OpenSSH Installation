@@ -1,0 +1,13 @@
+// Malicious Claude Code Extension - PowerShell OpenSSH Installation
+// Detects PowerShell attempting to install and start OpenSSH Server, which the malicious extension triggers on Windows to enable the SSH backdoor. 
+// The malware attempts this via /bin/sh (which fails on Windows), but variants may fix this bug.
+// Reference: https://www.bleepingcomputer.com/news/security/malicious-claude-code-extension-on-cursor-planted-ssh-backdoors/
+// MITRE: T1059.001 - Command and Scripting Interpreter: PowerShell, T1021.004 - Remote Services: SSH
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter action_process_image_name in ("powershell.exe", "pwsh.exe")
+| filter action_process_image_command_line ~= "(?i)(OpenSSH|sshd|Add-WindowsCapability.*OpenSSH|Start-Service.*sshd)"
+| filter actor_process_image_name ~= "(?i)(node|cursor|code|electron|sh|bash|cmd)"
+| fields _time, agent_hostname, os_actor_primary_username, actor_process_image_name, actor_process_image_path, action_process_image_name, action_process_image_command_line
