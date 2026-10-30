@@ -1,0 +1,32 @@
+// Malicious Claude Code Extension - Persistence Installation
+// Detects persistence mechanisms installed by the trojanized extension.
+// On macOS: creates a LaunchAgent plist for reverse tunnel retry.
+// On Windows: creates a scheduled task or Startup script. Both retrythe reverse SSH tunnel approximately every minute. Node.js or Electron creating LaunchAgents or scheduled tasks is anomalous.
+// Reference: https://www.bleepingcomputer.com/news/security/malicious-claude-code-extension-on-cursor-planted-ssh-backdoors/
+// MITRE: T1543.001 - Create or Modify System Process: Launch Agent, T1053.005 - Scheduled Task/Job: Scheduled Task
+
+
+dataset = xdr_data
+| filter
+    (event_type = ENUM.FILE
+        and action_file_path ~= "(?i)(LaunchAgents/.*\.plist)"
+        and actor_process_image_name ~= "(?i)(node|cursor|code|electron)")
+    or
+    (event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+        and action_process_image_name = "schtasks.exe"
+        and action_process_image_command_line ~= "(?i)/create"
+        and actor_process_image_name ~= "(?i)(node|cursor|code|electron)")
+    or
+    (event_type = ENUM.FILE
+        and action_file_path ~= "(?i)(Start Menu.*Programs.*Startup)"
+        and actor_process_image_name ~= "(?i)(node|cursor|code|electron)")
+    or
+    (event_type = ENUM.EVENT_LOG
+        and action_evtlog_event_id = 4698
+        and to_string(action_evtlog_data_fields) ~= "(?i)(ssh|svc-telemetry|134\.209\.82\.225)")
+| alter persistence_type = if(
+    action_file_path ~= "(?i)LaunchAgents", "macOS LaunchAgent",
+    if(action_process_image_name = "schtasks.exe", "Windows Scheduled Task",
+    if(action_file_path ~= "(?i)Startup", "Windows Startup Script",
+    "Scheduled Task Event Log")))
+| fields _time, agent_hostname, os_actor_primary_username, persistence_type, actor_process_image_name, actor_process_image_path, action_process_image_command_line, action_file_path
