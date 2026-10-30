@@ -1,0 +1,30 @@
+// Malicious Claude Code Extension - SSH Backdoor and Reverse Tunnel
+// Detects indicators of the trojanized Claude Code VS Code extension (version 2.1.313) distributed through Cursor's marketplace on Oct 29.
+// The malware injects an attacker SSH key named 'svc-telemetry' into authorized_keys and establishes a persistent reverse SSH tunnel.
+// Reference: https://www.bleepingcomputer.com/news/security/malicious-claude-code-extension-on-cursor-planted-ssh-backdoors/
+// MITRE: T1195.002 - Supply Chain Compromise: Compromise Software Supply Chain, T1098.004 - Account Manipulation: SSH Authorized Keys, T1572 - Protocol Tunneling
+
+
+dataset = xdr_data
+| filter event_type in (ENUM.PROCESS, ENUM.FILE, ENUM.NETWORK)
+| filter
+    (event_type = ENUM.FILE
+        and action_file_path ~= "(?i)(authorized_keys|authorized_keys2)"
+        and actor_process_image_name ~= "(?i)(node|cursor|code|electron)")
+    or
+    (event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+        and action_process_image_command_line ~= "(?i)(ssh\s+-R|ssh.*-o\s+StrictHostKeyChecking)"
+        and actor_process_image_name ~= "(?i)(node|sh|bash|cmd|powershell)")
+    or
+    (event_type = ENUM.NETWORK
+        and action_remote_ip = "134.209.82.225")
+    or
+    (event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+        and action_process_image_command_line contains "svc-telemetry")
+| alter indicator = if(
+    action_file_path ~= "(?i)authorized_keys", "SSH Key Injection",
+    if(action_process_image_command_line ~= "(?i)ssh\s+-R", "Reverse SSH Tunnel",
+    if(action_remote_ip = "134.209.82.225", "C2 Communication",
+    if(action_process_image_command_line contains "svc-telemetry", "svc-telemetry Key Reference",
+    "Other"))))
+| fields _time, agent_hostname, os_actor_primary_username, indicator, event_type, actor_process_image_name, actor_process_image_path, action_process_image_name, action_process_image_command_line, action_file_path, action_remote_ip
