@@ -1,0 +1,20 @@
+// Security Alert Email Deletion (Anti-Forensics)
+// Detects deletion of emails containing security-related keywords. Deleting emails about MFA, sign-in alerts, password resets, or security notifications is a defense evasion technique that buys the attacker time.
+// MITRE: T1070.008 - Indicator Removal: Clear Mailbox Data, T1564.008 - Hide Artifacts: Email Hiding Rules
+
+
+dataset = saas_audit_logs
+| filter service_type = "Exchange"
+| filter operation_name_orig ~= "(?i)(SoftDelete|HardDelete|MoveToDeletedItems)"
+| alter raw_str = to_string(raw_log)
+// Extract subject or affected items
+| alter subject = arrayindex(regextract(raw_str, "\"Subject\":\s*\"([^\"]+)\""), 0)
+// Flag security-related email deletion
+| filter subject ~= "(?i)(security alert|sign-in|signin|login|unusual activity|MFA|multi-factor|verification code|password|suspicious|unauthorized|new device|token|access review)"
+    or raw_str ~= "(?i)(\"Subject\".*(?:security|alert|sign-in|MFA|password|suspicious|unusual))"
+| alter
+    anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| fields _time, identity_name, operation_name_orig, subject, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent
+| sort desc _time
