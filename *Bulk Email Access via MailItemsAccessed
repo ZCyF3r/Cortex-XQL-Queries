@@ -1,0 +1,30 @@
+// Bulk Email Access via MailItemsAccessed
+// Detects high-volume MailItemsAccessed operations indicating bulk email reading or export. Helix exfiltrates from Exchange in addition MailItemsAccessed with AppId binding (application access rather than user access) from a hosted IP is the signal.
+// MITRE: T1114.002 - Email Collection: Remote Email Collection
+
+
+dataset = saas_audit_logs
+| filter service_type = "Exchange"
+| filter operation_name_orig = "MailItemsAccessed"
+| alter raw_str = to_string(raw_log)
+| alter app_id = arrayindex(regextract(raw_str, "\"AppId\":\s*\"([^\"]+)\""), 0)
+| alter mail_access_type = arrayindex(regextract(raw_str, "\"MailAccessType\":\s*\"([^\"]+)\""), 0)
+| alter
+    infrastructure = json_extract_scalar(caller_ip_enrichment, "$.infrastructure"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| alter is_hosted = if(
+    infrastructure ~= "(?i)(hosting|datacenter|cloud|server|colocation)", "YES", "NO")
+| comp
+    count() as total_access_events,
+    count_distinct(caller_ip) as distinct_ips,
+    values(caller_ip) as source_ips,
+    values(app_id) as app_ids,
+    values(mail_access_type) as access_types,
+    values(is_hosted) as hosted_infra,
+    values(user_agent) as user_agents,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by identity_name
+| filter total_access_events >= 100
+| sort desc total_access_events
