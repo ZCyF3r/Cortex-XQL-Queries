@@ -1,0 +1,16 @@
+// SharePoint Access from Scripting User Agent (Automated Collection)
+// Detects any SharePoint file access using a scripting/automation user agent.
+// MITRE: T1530 - Data from Cloud Storage
+
+
+dataset = saas_audit_logs
+| filter service_type = "SharePoint"
+| filter operation_name_orig ~= "(?i)(FileDownloaded|FileAccessed|FileCheckedOut|FileSyncDownloadedFull|PageViewed)"
+| filter user_agent ~= "(?i)(python-requests|python-urllib|curl\/|aiohttp|httpx|axios|wget|Go-http|PostmanRuntime)"
+| alter
+    anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
+| alter is_helix_ip = if(caller_ip = "179.43.185.230", "YES - Confirmed Helix", "NO")
+| fields _time, identity_name, operation_name_orig, referenced_resource_name, is_helix_ip, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent
+| sort desc _time
