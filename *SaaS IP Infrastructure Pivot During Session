@@ -2,6 +2,7 @@
 // Detects a user whose activity shifts from residential/ISP infrastructure to hosted/datacenter infrastructure within the same time window.
 // Helix authenticates from residential proxies aligned to victim geography, then pivots to a dedicated hosted IP for automated exfiltration.
 // This residential → hosted pivot is a persistent fingerprint across Helix incidents.
+// Actor: Helix (related to BlackFile / ShinyHunters)
 // MITRE: T1090 - Proxy
 
 
