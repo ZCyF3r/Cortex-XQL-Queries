@@ -1,0 +1,36 @@
+// Bulk SharePoint Download from Non-Browser User Agent
+// Detects bulk file downloads from SharePoint where the user agent is NOT a standard browser, Office app, or OneDrive sync client.
+// MITRE: T1530 - Data from Cloud Storage
+
+
+dataset = saas_audit_logs
+| filter service_type ~= "SharePoint"
+| filter operation_name_orig ~= "(?i)(FileDownloaded|FileSyncDownloadedFull)"
+| filter user_agent not contains "Microsoft Office"
+    and user_agent not contains "OneDrive"
+    and user_agent not contains "SharePoint"
+    and user_agent not contains "Microsoft SkyDriveSync"
+    and user_agent not contains "Mozilla/"
+    and user_agent not contains "Edge/"
+    and user_agent not contains "Chrome/"
+    and user_agent not contains "Safari/"
+    and user_agent not contains "Firefox/"
+    and user_agent not contains "Outlook/"
+    and user_agent not contains "Teams/"
+    and user_agent not contains "MSWAC"
+    and user_agent not contains "Microsoft Data Access"
+    and user_agent != null
+    and user_agent != ""
+| alter
+    infrastructure = json_extract_scalar(caller_ip_enrichment, "$.infrastructure"),
+    IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type")
+| comp
+    count() as total_downloads,
+    count_distinct(referenced_resource_name)  as distinct_files,
+    values(caller_ip) as source_ips,
+    values(infrastructure) as infra_types,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by identity_name, user_agent
+| filter total_downloads >= 25
+| sort desc total_downloads
