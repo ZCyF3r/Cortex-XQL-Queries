@@ -19,8 +19,6 @@ dataset = saas_audit_logs
     values(operation_name_orig) as operations,
     values(caller_ip) as source_ips,
     values(infrastructure) as infra_types,
-    values(is_helix_ip) as helix_ip_match,
-    values(is_helix_ua) as helix_ua_match,
     min(_time) as first_seen,
     max(_time) as last_seen
   by identity_name, user_agent
