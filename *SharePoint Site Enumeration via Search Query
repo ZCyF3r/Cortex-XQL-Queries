@@ -4,10 +4,8 @@
 
 
 dataset = saas_audit_logs
-| filter service_type ~= "(?i)sharepoint"
-| filter operation_name_orig ~= "(?i)(SearchQuery|SearchQueryPerformed)"
 | alter raw_str = to_string(raw_log)
-| alter search_query = arrayindex(regextract(raw_str, "\"QueryText\":\s*\"([^\"]+)\""), 0)
+| alter search_query = json_extract_scalar(raw_str, "$.SearchQueryText")
 | alter is_site_enum = if(
     search_query ~= "(?i)(contentclass:STS_Site|contentclass:STS_Web)", "YES", "NO")
 | alter is_wildcard = if(
@@ -15,6 +13,12 @@ dataset = saas_audit_logs
 | alter
     anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
     IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
-    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
-| fields _time, identity_name, operation_name_orig, search_query, is_site_enum, is_wildcard, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator"),
+    infrastructure = json_extract_scalar(caller_ip_enrichment, "$.infrastructure"),
+    IsProxy = json_extract_array(caller_ip_enrichment, "$.client_proxies"),
+    ScriptedUA = json_extract_scalar(raw_log, "$.ClientInfoString")
+| filter service_type ~= "SharePoint"
+| filter operation_name_orig ~= "(?i)(SearchQuery|SearchQueryPerformed)"
+| filter is_site_enum = "YES" or is_wildcard = "YES"
+| fields _time, identity_name, operation_name_orig, search_query, is_site_enum, is_wildcard, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, infrastructure, IsProxy, ScriptedUA, user_agent, raw_log 
 | sort desc _time
