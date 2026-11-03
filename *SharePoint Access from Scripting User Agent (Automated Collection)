@@ -4,13 +4,24 @@
 
 
 dataset = saas_audit_logs
-| filter service_type = "SharePoint"
-| filter operation_name_orig ~= "(?i)(FileDownloaded|FileAccessed|FileCheckedOut|FileSyncDownloadedFull|PageViewed)"
-| filter user_agent ~= "(?i)(python-requests|python-urllib|curl\/|aiohttp|httpx|axios|wget|Go-http|PostmanRuntime)"
+| filter service_type ~= "SharePoint"
+| filter user_agent ~= "(?i)(python-requests|python-urllib|aiohttp|httpx|Go-http)"
 | alter
     anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
     IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
-    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator")
-| alter is_helix_ip = if(caller_ip = "179.43.185.230", "YES - Confirmed Helix", "NO")
-| fields _time, identity_name, operation_name_orig, referenced_resource_name, is_helix_ip, caller_ip, caller_ip_geolocation, caller_ip_asn, VPNOperator, IsVPN, anonymousTunnel, user_agent
-| sort desc _time
+    VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator"),
+    infrastructure = json_extract_scalar(caller_ip_enrichment, "$.infrastructure")
+| alter is_scripted_ua = if(user_agent contains "python-requests/2.28.1", "YES", "NO")
+| comp
+    count() as total_operations,
+    count_distinct(operation_name_orig) as distinct_ops,
+    count_distinct(referenced_resource_name) as distinct_files,
+    values(operation_name_orig) as operations,
+    values(caller_ip) as source_ips,
+    values(infrastructure) as infra_types,
+    values(is_helix_ip) as helix_ip_match,
+    values(is_helix_ua) as helix_ua_match,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by identity_name, user_agent
+| sort desc total_operations
