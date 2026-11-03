@@ -1,7 +1,5 @@
 // SharePoint Site Enumeration via Search Query
 // Detects SharePoint search queries using contentclass:STS_Site and wildcard patterns to inventory all reachable SharePoint content.
-// Actor: Helix (related to BlackFile / ShinyHunters)
-// Reference: https://areteir.com/resources/helix-extortion-group-debuts-in-sharepoint-data-theft-attacks
 // MITRE: T1213.002 - Data from Information Repositories: Sharepoint
 
 
