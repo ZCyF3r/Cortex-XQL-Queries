@@ -1,3 +1,11 @@
+// M365 Bulk Data Exfiltration - Automated Collection via Proxy or Hosted Infrastructure
+// Detects high-volume Exchange and SharePoint activity from a single identity where the source is hosted/datacenter infrastructure, a residential proxy, or a scripting user agent (python-requests, aiohttp, etc.). 
+// Helix and similar data-extortion groups authenticate from residential proxies aligned to victim geography, then pivot to hosted infrastructure for automated bulk download.
+// Actor: Helix / BlackFile / ShinyHunters (data extortion ecosystem)
+// Reference: https://reliaquest.com/blog/threat-spotlight-helix-new-name-in-data-extortion-ecosystem/
+// MITRE: T1530 - Data from Cloud Storage, T1213.002 - Data from Information Repositories: Sharepoint, T1114.002 - Email Collection: Remote Email Collection, T1567 - Exfiltration Over Web Service
+
+
 dataset = saas_audit_logs
 | filter service_type in(ENUM.Exchange, ENUM.SharePoint)
 | alter
