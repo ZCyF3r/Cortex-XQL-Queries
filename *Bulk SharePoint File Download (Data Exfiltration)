@@ -10,13 +10,14 @@ dataset = saas_audit_logs
 | alter is_hosted = if(
     infrastructure ~= "(?i)(hosting|datacenter|cloud|server)" or IsVPN != null,
     "YES", "NO")
-| alter is_proxy = if(IsProxy ~= "(?i)(proxy)", "YES", "NO")
+| alter is_proxy = if(array_length(IsProxy) > 0, "YES", "NO")
 | comp
     count() as total_downloads,
     count_distinct(referenced_resource_name) as distinct_files,
     count_distinct(caller_ip) as distinct_ips,
     values(caller_ip) as source_ips,
     values(is_scripted_ua) as scripted_ua,
+    values(ScriptedUA) as client_info_strings,
     values(is_hosted) as hosted_infra,
     values(is_proxy) as proxy_used,
     values(user_agent) as user_agents,
@@ -27,7 +28,8 @@ dataset = saas_audit_logs
 | filter total_downloads >= 200
 | filter hosted_infra = "YES" or proxy_used = "YES" or scripted_ua = "YES"
 | alter severity = if(
-    scripted_ua contains "YES" and total_downloads >= 100, "CRITICAL - Automated Exfiltration",
-    if(total_downloads >= 200, "HIGH - Mass Download",
-    "MEDIUM - Elevated Volume"))
+    scripted_ua contains "YES", "CRITICAL - Automated Exfiltration",
+    if(proxy_used contains "YES", "HIGH - Proxy Infrastructure",
+    if(hosted_infra contains "YES", "HIGH - Hosted Infrastructure",
+    "MEDIUM - Elevated Volume")))
 | sort desc total_downloads
