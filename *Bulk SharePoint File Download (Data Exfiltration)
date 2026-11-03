@@ -1,21 +1,12 @@
-// Bulk SharePoint File Download (Data Exfiltration)
-// Detects high-volume file downloads from SharePoint by a single user. Helix's automated exfiltration tool bulk-downloads SharePoint files from a dedicated hosted IP using python-requests user agent, separate from the residential IP used for initial access.
-// Actor: Helix
-// Reference: https://areteir.com/resources/helix-extortion-group-debuts-in-sharepoint-data-theft-attacks
-// MITRE: T1530 - Data from Cloud Storage, T1567 - Exfiltration Over Web Service
-
-
 dataset = saas_audit_logs
-| filter service_type = "SharePoint"
-| filter operation_name_orig ~= "(?i)(FileDownloaded|FileSyncDownloadedFull|FileAccessed)"
 | alter
     anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
     IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
     VPNOperator = json_extract_scalar(caller_ip_enrichment, "$.tunnels_operator"),
-    infrastructure = json_extract_scalar(caller_ip_enrichment, "$.infrastructure")
-| alter is_scripted_ua = if(
-    user_agent ~= "(?i)(python-requests|python-urllib|curl|aiohttp|httpx|axios|wget|Go-http)",
-    "YES", "NO")
+    infrastructure = json_extract_scalar(caller_ip_enrichment, "$.infrastructure"),
+    IsProxy = json_extract_array(caller_ip_enrichment, "$.client_proxies"),
+    ScriptedUA = json_extract_scalar(raw_log, "$.ClientInfoString")
+| alter is_scripted_ua = if(ScriptedUA ~= "(?i)(python-requests|python-urllib|aiohttp|httpx|Go-http)", "YES", "NO")
 | alter is_hosted = if(
     infrastructure ~= "(?i)(hosting|datacenter|cloud|server)" or IsVPN != null,
     "YES", "NO")
@@ -30,8 +21,8 @@ dataset = saas_audit_logs
     values(caller_ip_geolocation) as geolocations,
     min(_time) as first_seen,
     max(_time) as last_seen
-  by identity_name
-| filter total_downloads >= 50
+      by identity_name
+| filter total_downloads >= 200
 | alter severity = if(
     scripted_ua contains "YES" and total_downloads >= 100, "CRITICAL - Automated Exfiltration",
     if(total_downloads >= 200, "HIGH - Mass Download",
