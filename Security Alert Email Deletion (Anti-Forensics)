@@ -7,9 +7,7 @@ dataset = saas_audit_logs
 | filter service_type = "Exchange"
 | filter operation_name_orig ~= "(?i)(SoftDelete|HardDelete|MoveToDeletedItems)"
 | alter raw_str = to_string(raw_log)
-// Extract subject or affected items
 | alter subject = arrayindex(regextract(raw_str, "\"Subject\":\s*\"([^\"]+)\""), 0)
-// Flag security-related email deletion
 | filter subject ~= "(?i)(security alert|sign-in|signin|login|unusual activity|MFA|multi-factor|verification code|password|suspicious|unauthorized|new device|token|access review)"
     or raw_str ~= "(?i)(\"Subject\".*(?:security|alert|sign-in|MFA|password|suspicious|unusual))"
 | alter
