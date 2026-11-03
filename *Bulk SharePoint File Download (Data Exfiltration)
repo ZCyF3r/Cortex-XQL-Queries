@@ -1,4 +1,5 @@
 dataset = saas_audit_logs
+| filter service_type in(ENUM.Exchange, ENUM.SharePoint)
 | alter
     anonymousTunnel = json_extract_scalar(caller_ip_enrichment, "$.tunnels_anonymous"),
     IsVPN = json_extract_scalar(caller_ip_enrichment, "$.tunnels_type"),
@@ -17,7 +18,6 @@ dataset = saas_audit_logs
     count_distinct(caller_ip) as distinct_ips,
     values(caller_ip) as source_ips,
     values(is_scripted_ua) as scripted_ua,
-    values(ScriptedUA) as client_info_strings,
     values(is_hosted) as hosted_infra,
     values(is_proxy) as proxy_used,
     values(user_agent) as user_agents,
@@ -25,7 +25,7 @@ dataset = saas_audit_logs
     min(_time) as first_seen,
     max(_time) as last_seen
       by identity_name
-| filter total_downloads >= 200
+| filter total_downloads >= 10000 and distinct_files >= 10000
 | filter hosted_infra = "YES" or proxy_used = "YES" or scripted_ua = "YES"
 | alter severity = if(
     scripted_ua contains "YES", "CRITICAL - Automated Exfiltration",
