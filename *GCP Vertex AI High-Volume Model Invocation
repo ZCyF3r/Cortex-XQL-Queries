@@ -1,5 +1,6 @@
 // GCP Vertex AI High-Volume Model Invocation
 // Detects a single principal making a high number of model invocation calls. LLMjacking attackers run inference at scale to maximize value from stolen credentials, generating hundreds or thousands of GenerateContent/Predict calls.
+// Reference: https://cloud.google.com/blog/topics/threat-intelligence/llmjacking-monetizing-compromised-cloud-models
 // MITRE: T1496 - Resource Hijacking
 
 
