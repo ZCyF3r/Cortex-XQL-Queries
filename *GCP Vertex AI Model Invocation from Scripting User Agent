@@ -17,6 +17,7 @@ dataset = google_cloud_logging_raw
 | filter serviceName = "aiplatform.googleapis.com"
 | filter methodName ~= "(?i)(GenerateContent|StreamGenerateContent|Predict|RawPredict|StreamRawPredict)"
 | filter callerUA ~= "(?i)(python-requests|aiohttp|httpx|curl\/|axios|Go-http|urllib|PostmanRuntime|Wget)"
+| filter callerIP != "gce-internal-ip"
 | alter is_success = if(statusCode = null or statusCode = "0", "YES", "NO")
 | fields _time, principalEmail, methodName, resourceName, callerIP, callerUA, statusCode, is_success, projectId
 | sort desc _time
