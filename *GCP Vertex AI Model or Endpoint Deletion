@@ -1,0 +1,20 @@
+// GCP Vertex AI Model or Endpoint Deletion
+// Detects deletion of Vertex AI models, endpoints, or deployment resources. Attackers may delete custom models to destroy fine-tuned IP, remove endpoints to disrupt services, or delete resources to cover tracks.
+// MITRE: T1485 - Data Destruction, T1562.001 - Impair Defenses: Disable or Modify Tools
+
+
+dataset = google_cloud_logging_raw
+| alter proto_str = to_string(protoPayload)
+| alter
+    serviceName = json_extract_scalar(proto_str, "$.serviceName"),
+    methodName = json_extract_scalar(proto_str, "$.methodName"),
+    principalEmail = json_extract_scalar(proto_str, "$.authenticationInfo.principalEmail"),
+    callerIP = json_extract_scalar(proto_str, "$.requestMetadata.callerIp"),
+    callerUA = json_extract_scalar(proto_str, "$.requestMetadata.callerSuppliedUserAgent"),
+    resourceName = json_extract_scalar(proto_str, "$.resourceName"),
+    statusCode = json_extract_scalar(proto_str, "$.status.code"),
+    projectId = json_extract_scalar(to_string(resource), "$.labels.project_id")
+| filter serviceName = "aiplatform.googleapis.com"
+| filter methodName ~= "(?i)(DeleteModel|DeleteEndpoint|UndeployModel|DeleteDeploymentResourcePool|DeleteCustomJob)"
+| fields _time, methodName, principalEmail, callerIP, callerUA, resourceName, statusCode, projectId
+| sort desc _time
