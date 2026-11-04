@@ -1,5 +1,6 @@
 // GCP Vertex AI Model and Endpoint Enumeration
 // Detects enumeration of Vertex AI models and endpoints. Attackers call ListModels/ListEndpoints to discover what models are available before invoking them. These management-plane calls are always logged in Admin Activity audit logs (on by default).
+// Reference: https://cloud.google.com/blog/topics/threat-intelligence/llmjacking-monetizing-compromised-cloud-models
 // MITRE: T1580 - Cloud Infrastructure Discovery
 
 
