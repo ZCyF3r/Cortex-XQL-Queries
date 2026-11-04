@@ -1,0 +1,22 @@
+// GCP Vertex AI Model Invocation from Scripting User Agent
+// Detects Vertex AI model invocations (GenerateContent, Predict, etc.) from scripting user agents.
+// MITRE: T1496 - Resource Hijacking
+
+
+dataset = google_cloud_logging_raw
+| alter proto_str = to_string(protoPayload)
+| alter
+    serviceName = json_extract_scalar(proto_str, "$.serviceName"),
+    methodName = json_extract_scalar(proto_str, "$.methodName"),
+    principalEmail = json_extract_scalar(proto_str, "$.authenticationInfo.principalEmail"),
+    callerIP = json_extract_scalar(proto_str, "$.requestMetadata.callerIp"),
+    callerUA = json_extract_scalar(proto_str, "$.requestMetadata.callerSuppliedUserAgent"),
+    resourceName = json_extract_scalar(proto_str, "$.resourceName"),
+    statusCode = json_extract_scalar(proto_str, "$.status.code"),
+    projectId = json_extract_scalar(to_string(resource), "$.labels.project_id")
+| filter serviceName = "aiplatform.googleapis.com"
+| filter methodName ~= "(?i)(GenerateContent|StreamGenerateContent|Predict|RawPredict|StreamRawPredict)"
+| filter callerUA ~= "(?i)(python-requests|aiohttp|httpx|curl\/|axios|Go-http|urllib|PostmanRuntime|Wget)"
+| alter is_success = if(statusCode = null or statusCode = "0", "YES", "NO")
+| fields _time, principalEmail, methodName, resourceName, callerIP, callerUA, statusCode, is_success, projectId
+| sort desc _time
