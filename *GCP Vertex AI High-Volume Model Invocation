@@ -14,7 +14,7 @@ dataset = google_cloud_logging_raw
     projectId = json_extract_scalar(to_string(resource), "$.labels.project_id")
 | filter serviceName = "aiplatform.googleapis.com"
 | filter methodName ~= "(?i)(GenerateContent|StreamGenerateContent|Predict|RawPredict|StreamRawPredict)"
-| filter statusCode = null or statusCode = "0"
+| filter callerIP != "gce-internal-ip"
 | comp
     count() as total_invocations,
     count_distinct(resourceName) as distinct_models,
