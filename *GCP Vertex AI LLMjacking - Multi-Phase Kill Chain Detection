@@ -1,0 +1,40 @@
+// GCP Vertex AI LLMjacking - Multi-Phase Kill Chain Detection
+// Detects the LLMjacking kill chain by correlating model enumeration, probing, and execution phases from a single identity.
+// Attackers usestolen service account keys or user credentials to enumerate available models, probe with test requests, then run inference at scale.
+// MITRE: T1496 - Resource Hijacking
+
+
+dataset = google_cloud_logging_raw
+| alter proto_str = to_string(protoPayload)
+| alter
+    serviceName = json_extract_scalar(proto_str, "$.serviceName"),
+    methodName = json_extract_scalar(proto_str, "$.methodName"),
+    principalEmail = json_extract_scalar(proto_str, "$.authenticationInfo.principalEmail"),
+    callerIP = json_extract_scalar(proto_str, "$.requestMetadata.callerIp"),
+    callerUA = json_extract_scalar(proto_str, "$.requestMetadata.callerSuppliedUserAgent"),
+    resourceName = json_extract_scalar(proto_str, "$.resourceName"),
+    statusCode = json_extract_scalar(proto_str, "$.status.code"),
+    statusMessage = json_extract_scalar(proto_str, "$.status.message"),
+    projectId = json_extract_scalar(to_string(resource), "$.labels.project_id")
+| filter serviceName = "aiplatform.googleapis.com"
+| filter methodName ~= "(?i)(ListModels|ListEndpoints|GetModel|GetEndpoint|GenerateContent|StreamGenerateContent|Predict|RawPredict|StreamRawPredict|CountTokens)"
+| alter phase = if(
+    methodName ~= "(?i)(ListModels|ListEndpoints|GetModel|GetEndpoint)", "Reconnaissance",
+    if(methodName ~= "(?i)(CountTokens)", "Probing",
+    if(statusCode != null and statusCode != "0" and methodName ~= "(?i)(GenerateContent|Predict)", "Probing",
+    if(methodName ~= "(?i)(GenerateContent|StreamGenerateContent|Predict|RawPredict|StreamRawPredict)", "Execution",
+    "Other"))))
+| comp
+    count() as total_events,
+    count_distinct(phase) as distinct_phases,
+    values(phase) as phases_seen,
+    values(methodName) as methods,
+    values(resourceName) as resources_targeted,
+    values(callerUA) as user_agents,
+    count_distinct(projectId) as distinct_projects,
+    values(projectId) as projects,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by principalEmail, callerIP
+| filter distinct_phases >= 2
+| sort desc distinct_phases
