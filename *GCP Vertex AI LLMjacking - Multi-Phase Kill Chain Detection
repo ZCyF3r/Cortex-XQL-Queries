@@ -18,6 +18,7 @@ dataset = google_cloud_logging_raw
     projectId = json_extract_scalar(to_string(resource), "$.labels.project_id")
 | filter serviceName = "aiplatform.googleapis.com"
 | filter methodName ~= "(?i)(ListModels|ListEndpoints|GetModel|GetEndpoint|GenerateContent|StreamGenerateContent|Predict|RawPredict|StreamRawPredict|CountTokens)"
+| filter callerIP != "gce-internal-ip"
 | alter phase = if(
     methodName ~= "(?i)(ListModels|ListEndpoints|GetModel|GetEndpoint)", "Reconnaissance",
     if(methodName ~= "(?i)(CountTokens)", "Probing",
