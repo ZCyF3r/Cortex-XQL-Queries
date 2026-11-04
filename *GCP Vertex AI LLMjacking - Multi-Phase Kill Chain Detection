@@ -1,6 +1,7 @@
 // GCP Vertex AI LLMjacking - Multi-Phase Kill Chain Detection
 // Detects the LLMjacking kill chain by correlating model enumeration, probing, and execution phases from a single identity.
 // Attackers usestolen service account keys or user credentials to enumerate available models, probe with test requests, then run inference at scale.
+// Reference: https://cloud.google.com/blog/topics/threat-intelligence/llmjacking-monetizing-compromised-cloud-models
 // MITRE: T1496 - Resource Hijacking
 
 
