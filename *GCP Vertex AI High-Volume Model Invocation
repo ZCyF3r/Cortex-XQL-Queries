@@ -2,6 +2,7 @@
 // Detects a single principal making a high number of model invocation calls. LLMjacking attackers run inference at scale to maximize value from stolen credentials, generating hundreds or thousands of GenerateContent/Predict calls.
 // MITRE: T1496 - Resource Hijacking
 
+
 dataset = google_cloud_logging_raw
 | alter proto_str = to_string(protoPayload)
 | alter
