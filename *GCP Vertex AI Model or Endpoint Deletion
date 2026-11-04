@@ -1,5 +1,6 @@
 // GCP Vertex AI Model or Endpoint Deletion
 // Detects deletion of Vertex AI models, endpoints, or deployment resources. Attackers may delete custom models to destroy fine-tuned IP, remove endpoints to disrupt services, or delete resources to cover tracks.
+// Reference: https://cloud.google.com/blog/topics/threat-intelligence/llmjacking-monetizing-compromised-cloud-models
 // MITRE: T1485 - Data Destruction, T1562.001 - Impair Defenses: Disable or Modify Tools
 
 
