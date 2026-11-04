@@ -1,0 +1,33 @@
+// GCP Vertex AI High-Volume Model Invocation
+// Detects a single principal making a high number of model invocation calls. LLMjacking attackers run inference at scale to maximize value from stolen credentials, generating hundreds or thousands of GenerateContent/Predict calls.
+// MITRE: T1496 - Resource Hijacking
+
+dataset = google_cloud_logging_raw
+| alter proto_str = to_string(protoPayload)
+| alter
+    serviceName = json_extract_scalar(proto_str, "$.serviceName"),
+    methodName = json_extract_scalar(proto_str, "$.methodName"),
+    principalEmail = json_extract_scalar(proto_str, "$.authenticationInfo.principalEmail"),
+    callerIP = json_extract_scalar(proto_str, "$.requestMetadata.callerIp"),
+    callerUA = json_extract_scalar(proto_str, "$.requestMetadata.callerSuppliedUserAgent"),
+    resourceName = json_extract_scalar(proto_str, "$.resourceName"),
+    projectId = json_extract_scalar(to_string(resource), "$.labels.project_id")
+| filter serviceName = "aiplatform.googleapis.com"
+| filter methodName ~= "(?i)(GenerateContent|StreamGenerateContent|Predict|RawPredict|StreamRawPredict)"
+| filter statusCode = null or statusCode = "0"
+| comp
+    count() as total_invocations,
+    count_distinct(resourceName) as distinct_models,
+    count_distinct(callerIP) as distinct_ips,
+    count_distinct(projectId) as distinct_projects,
+    values(resourceName) as models_used,
+    values(callerIP) as source_ips,
+    values(callerUA) as user_agents,
+    values(projectId) as projects,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by principalEmail
+| filter total_invocations >= 50
+| alter is_multi_project = if(distinct_projects >= 2, "YES - Cross Project", "NO")
+| alter is_multi_model = if(distinct_models >= 3, "YES", "NO")
+| sort desc total_invocations
