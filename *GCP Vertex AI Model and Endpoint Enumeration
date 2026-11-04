@@ -2,6 +2,7 @@
 // Detects enumeration of Vertex AI models and endpoints. Attackers call ListModels/ListEndpoints to discover what models are available before invoking them. These management-plane calls are always logged in Admin Activity audit logs (on by default).
 // MITRE: T1580 - Cloud Infrastructure Discovery
 
+
 dataset = google_cloud_logging_raw
 | alter proto_str = to_string(protoPayload)
 | alter
