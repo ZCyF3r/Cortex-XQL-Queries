@@ -14,9 +14,23 @@ dataset = xdr_data
     container_image = json_extract_scalar(container_info_str, "$.image_name"),
     pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
     pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
-    is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
-    container_command = json_extract_scalar(container_info_str, "$.other.command"),
-    container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+    is_privileged = json_extract_scalar(container_info_str, "$.privileged")
+| filter actor_process_image_name not in ("kube-apiserver", "kubectl", "kubelet",
+    "kube-proxy", "kube-controller-manager", "kube-scheduler",
+    "etcd", "etcdctl", "coredns", "calico-node", "calico-typha",
+    "cilium-agent", "cilium-operator", "envoy", "pilot-agent",
+    "fluentd", "fluent-bit", "filebeat", "promtail",
+    "prometheus", "node-exporter", "grafana-agent",
+    "containerd", "dockerd", "crio", "conmon",
+    "tini", "dumb-init", "pause")
+| filter pod_namespace not in ("kube-system", "calico-system", "cilium", "tigera-operator",
+    "monitoring", "logging", "istio-system", "linkerd", "cert-manager",
+    "ingress-nginx", "metallb-system", "gatekeeper-system")
+| alter is_suspicious_reader = if(
+    actor_process_image_name in ("sh", "bash", "ash", "dash", "zsh", "curl", "wget",
+        "python", "python3", "perl", "ruby", "node", "php", "cat", "head", "tail",
+        "cp", "scp", "tar", "base64", "xxd", "nc", "ncat"),
+    "YES - Suspicious Process", "NO")
 | alter file_category = if(
     action_file_path ~= "(?i)(shadow|passwd)", "Host Credentials",
     if(action_file_path ~= "(?i)(kubernetes\/pki|kubelet\/pki|admin\.conf|scheduler\.conf|controller-manager)", "Cluster PKI / Admin Configs",
@@ -29,5 +43,8 @@ dataset = xdr_data
     if(action_file_path ~= "(?i)(kube-env)", "GKE Bootstrap Credentials",
     if(action_file_path ~= "(?i)(docker\/certs|docker\/config)", "Container Registry Creds",
     "Other Sensitive"))))))))))
-| fields _time, file_category, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_file_path, action_process_image_command_line, container_command, container_mounts
+| alter severity = if(
+    is_suspicious_reader = "YES - Suspicious Process", "HIGH - Shell/Tool Reading Sensitive File",
+    "MEDIUM - Non-System Process Accessing Sensitive File")
+| fields _time, severity, file_category, is_suspicious_reader, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_file_path, action_process_image_command_line, container_command, container_mounts
 | sort desc _time
