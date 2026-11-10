@@ -11,18 +11,19 @@ dataset = xdr_data
         or action_process_image_command_line ~= "(?i)(stratum\+tcp|stratum\+ssl|stratum\+udp|--donate-level|--algo\s*=?\s*(rx|cn|cryptonight|randomx)|--coin\s|--pool\s|--wallet\s|--nicehash|--cpu-priority|--max-cpu-usage|--url\s+\S*pool|f2pool|flexpool|2miners|supportxmr|hashvault)"
         or action_process_image_command_line ~= "(?i)(modprobe\s+msr\s+allow_writes)"))
     or (event_type = ENUM.NETWORK and event_sub_type = ENUM.NETWORK_STREAM_CONNECT
-        and action_remote_port in (3333, 3334, 4444, 5555, 6666, 7777, 8888, 8899, 9999, 14444, 14433, 45700))
+        and action_remote_port in (3333, 3334, 4444, 5555, 14444, 14433)
+        and (actor_process_image_name in ("sh", "bash", "ash", "dash", "zsh",
+                "curl", "wget", "nc", "ncat", "socat", "python", "python3", "perl", "ruby")
+            or actor_process_image_name ~= "(?i)(xmrig|miner|cgminer|cpuminer)"))
 | alter container_info_str = to_string(actor_container_info)
 | alter
     container_name = json_extract_scalar(container_info_str, "$.name"),
     container_image = json_extract_scalar(container_info_str, "$.image_name"),
     pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
     pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
-    is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
-    container_command = json_extract_scalar(container_info_str, "$.other.command"),
-    container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+    is_privileged = json_extract_scalar(container_info_str, "$.privileged")
 | alter detection_method = if(
-    event_type = ENUM.NETWORK, "Mining Pool Connection",
+    event_type = ENUM.NETWORK, "Mining Pool Port + Suspicious Caller",
     if(action_process_image_name ~= "(?i)(xmrig|minerd|ccminer|cgminer|bfgminer|cpuminer|t-rex|phoenixminer|nbminer|gminer|lolminer|srbminer|wildrig|teamredminer)", "Known Miner Binary",
     "Mining CLI Arguments (Possible Renamed Binary)"))
 | fields _time, detection_method, event_type, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, action_remote_ip, action_remote_port, container_command, container_mounts
