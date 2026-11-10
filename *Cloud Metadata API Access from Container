@@ -14,9 +14,7 @@ dataset = xdr_data
     container_image = json_extract_scalar(container_info_str, "$.image_name"),
     pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
     pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
-    is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
-    container_command = json_extract_scalar(container_info_str, "$.other.command"),
-    container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+    is_privileged = json_extract_scalar(container_info_str, "$.privileged")
 | alter is_shell_caller = if(
     actor_process_image_name in ("sh", "bash", "ash", "dash", "zsh", "curl", "wget", "python", "python3"),
     "YES - Shell/Download Tool", "NO")
@@ -27,5 +25,7 @@ dataset = xdr_data
 | alter severity = if(
     is_shell_caller = "YES - Shell/Download Tool", "HIGH - Shell Accessing Metadata",
     "MEDIUM - Application Metadata Access")
-| fields _time, severity, metadata_target, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_command_line, action_remote_ip, action_remote_port, is_shell_caller, container_command, container_mounts
+| filter action_process_image_command_line != null
+| filter pod_name != null
+| fields _time, severity, metadata_target, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_command_line, action_remote_ip, action_remote_port, is_shell_caller
 | sort desc _time
