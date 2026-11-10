@@ -15,10 +15,11 @@ dataset = xdr_data
     is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
     container_command = json_extract_scalar(container_info_str, "$.other.command"),
     container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
-| filter actor_process_image_name ~= "[a-zA-Z]"
+| filter actor_process_image_name != null
+| filter action_process_image_name != null
 | filter pod_namespace not in ("kube-system", "calico-system", "cilium", "tigera-operator",
     "monitoring", "logging", "istio-system", "linkerd", "datadog", "dynatrace", "newrelic")
-| filter container_image not ~= "(?i)(datadog|dynatrace|newrelic|instana|sysdig|falco|aquasec|twistlock|prismacloud|stackrox)"
+| filter container_image !~= "(?i)(datadog|dynatrace|newrelic|instana|sysdig|falco|aquasec|twistlock|prismacloud|stackrox)"
 | alter severity = if(
     is_privileged = "true", "CRITICAL - ptrace in Privileged Container",
     "HIGH - ptrace Attach from Container")
