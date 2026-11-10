@@ -1,0 +1,19 @@
+// Container Namespace Unshare - Potential Escape via Namespace Manipulation
+// Detects NAMESPACE_UNSHARE events from within containers. unshare creates new namespaces — attackers use it to gain CAP_SYS_ADMIN in a new user namespace, then mount host filesystem or exploit cgroup.
+// MITRE: T1611 - Escape to Host
+
+
+dataset = xdr_data
+| filter event_type = ENUM.NAMESPACE and event_sub_type = ENUM.NAMESPACE_UNSHARE
+| filter actor_process_container_id != null
+| alter container_info_str = to_string(actor_container_info)
+| alter
+    container_name = json_extract_scalar(container_info_str, "$.name"),
+    container_image = json_extract_scalar(container_info_str, "$.image_name"),
+    pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
+    pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
+    is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
+    container_command = json_extract_scalar(container_info_str, "$.other.command"),
+    container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+| fields _time, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_command_line, actor_process_container_id, container_command, container_mounts
+| sort desc _time
