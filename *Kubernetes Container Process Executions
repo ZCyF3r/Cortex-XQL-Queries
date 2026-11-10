@@ -1,0 +1,24 @@
+// Kubernetes Container Process Executions
+// Baseline of all processes executed inside containers. Use to understand  what normally runs inside each container image.
+// MITRE : T1059 - Command and Scripting Interpreter
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter actor_process_container_id != null
+| alter container_info_str = to_string(actor_container_info)
+| alter
+    container_name = json_extract_scalar(container_info_str, "$.name"),
+    container_image = json_extract_scalar(container_info_str, "$.image_name"),
+    pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
+    pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
+    is_privileged = json_extract_scalar(container_info_str, "$.privileged")
+| comp
+    count() as total_executions,
+    count_distinct(action_process_image_name) as distinct_processes,
+    values(action_process_image_name) as processes,
+    values(action_process_image_command_line) as command_lines,
+    values(is_privileged) as privileged_status,
+    values(pod_namespace) as namespaces
+  by container_image, container_name
+| sort desc total_executions
