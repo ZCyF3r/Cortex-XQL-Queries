@@ -15,6 +15,7 @@ dataset = xdr_data
     pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
     pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
     is_privileged = json_extract_scalar(container_info_str, "$.privileged")
+| filter pod_name != null
 | filter actor_process_image_name not in ("kube-apiserver", "kubectl", "kubelet",
     "kube-proxy", "kube-controller-manager", "kube-scheduler",
     "etcd", "etcdctl", "coredns", "calico-node", "calico-typha",
