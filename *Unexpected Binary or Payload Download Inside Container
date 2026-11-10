@@ -6,6 +6,7 @@
 dataset = xdr_data
 | filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
 | filter actor_process_container_id != null
+| alter container_info_str = to_string(actor_container_info)
 | filter
     (action_process_image_name in ("curl", "wget", "fetch")
         and action_process_image_command_line ~= "(http|ftp)")
@@ -21,15 +22,12 @@ dataset = xdr_data
     or action_process_image_command_line ~= "(?i)(\/dev\/tcp\/\d)"
     or action_process_image_command_line ~= "(?i)(base64\s+-d\s.*\|\s*(sh|bash|chmod))"
     or action_process_image_name in ("scp", "sftp", "lwp-download")
-| alter container_info_str = to_string(actor_container_info)
 | alter
     container_name = json_extract_scalar(container_info_str, "$.name"),
     container_image = json_extract_scalar(container_info_str, "$.image_name"),
     pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
     pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
-    is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
-    container_command = json_extract_scalar(container_info_str, "$.other.command"),
-    container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+    is_privileged = json_extract_scalar(container_info_str, "$.privileged")
 | alter download_method = if(
     action_process_image_name in ("pip", "pip3", "npm", "npx", "gem"), "Package Manager Install",
     if(action_process_image_name in ("scp", "sftp", "lwp-download"), "File Transfer Tool",
@@ -37,5 +35,5 @@ dataset = xdr_data
     if(action_process_image_command_line ~= "(?i)\/dev\/tcp", "Bash /dev/tcp",
     if(action_process_image_name = "busybox", "Busybox Download",
     "HTTP Download Tool")))))
-| fields _time, download_method, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, container_command, container_mounts
+| fields _time, download_method, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line
 | sort desc _time
