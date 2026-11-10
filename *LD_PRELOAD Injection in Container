@@ -13,9 +13,7 @@ dataset = xdr_data
     pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
     pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
     is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
-    container_env = to_string(json_extract(container_info_str, "$.env")),
-    container_command = json_extract_scalar(container_info_str, "$.other.command"),
-    container_mounts  = to_string(json_extract(container_info_str, "$.other.mounts"))
+    container_env = to_string(json_extract(container_info_str, "$.env"))
 | filter
     action_process_image_command_line ~= "(?i)(LD_PRELOAD)"
     or container_env ~= "(?i)(LD_PRELOAD)"
@@ -38,5 +36,5 @@ dataset = xdr_data
     if(is_suspicious_path = "YES - Writable Path", "HIGH - LD_PRELOAD from Writable Path",
     if(is_known_apm = "YES - Known APM", "LOW - Known APM Agent",
     "MEDIUM - LD_PRELOAD Detected")))
-| fields _time, severity, detection_type, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, container_env, is_suspicious_path, is_known_apm, container_command, container_mounts
+| fields _time, severity, detection_type, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, container_env, is_suspicious_path, is_known_apm
 | sort desc _time
