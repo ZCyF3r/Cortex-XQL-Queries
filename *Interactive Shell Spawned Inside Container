@@ -23,5 +23,6 @@ dataset = xdr_data
     is_reverse_shell = "YES", "CRITICAL - Reverse Shell",
     if(is_privileged = "true", "HIGH - Shell in Privileged Container",
     "MEDIUM - Shell in Container"))
+| filter pod_name != null
 | fields _time, severity, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, is_reverse_shell, container_command, container_mounts
 | sort desc _time
