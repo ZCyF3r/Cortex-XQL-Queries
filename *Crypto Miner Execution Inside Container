@@ -26,5 +26,6 @@ dataset = xdr_data
     event_type = ENUM.NETWORK, "Mining Pool Port + Suspicious Caller",
     if(action_process_image_name ~= "(?i)(xmrig|minerd|ccminer|cgminer|bfgminer|cpuminer|t-rex|phoenixminer|nbminer|gminer|lolminer|srbminer|wildrig|teamredminer)", "Known Miner Binary",
     "Mining CLI Arguments (Possible Renamed Binary)"))
-| fields _time, detection_method, event_type, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, action_remote_ip, action_remote_port, container_command, container_mounts
+| filter pod_name != null
+| fields _time, detection_method, event_type, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, action_remote_ip, action_remote_port
 | sort desc _time
