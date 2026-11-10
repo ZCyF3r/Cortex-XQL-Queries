@@ -36,5 +36,6 @@ dataset = xdr_data
     if(is_suspicious_path = "YES - Writable Path", "HIGH - LD_PRELOAD from Writable Path",
     if(is_known_apm = "YES - Known APM", "LOW - Known APM Agent",
     "MEDIUM - LD_PRELOAD Detected")))
+| filter pod_name != null
 | fields _time, severity, detection_type, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, container_env, is_suspicious_path, is_known_apm
 | sort desc _time
