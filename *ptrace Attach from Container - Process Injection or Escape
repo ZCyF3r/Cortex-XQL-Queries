@@ -15,6 +15,7 @@ dataset = xdr_data
     is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
     container_command = json_extract_scalar(container_info_str, "$.other.command"),
     container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+| filter pod_name != null
 | filter actor_process_image_name != null
 | filter action_process_image_name != null
 | filter pod_namespace not in ("kube-system", "calico-system", "cilium", "tigera-operator",
