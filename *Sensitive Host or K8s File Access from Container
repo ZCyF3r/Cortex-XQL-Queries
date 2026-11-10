@@ -46,5 +46,5 @@ dataset = xdr_data
 | alter severity = if(
     is_suspicious_reader = "YES - Suspicious Process", "HIGH - Shell/Tool Reading Sensitive File",
     "MEDIUM - Non-System Process Accessing Sensitive File")
-| fields _time, severity, file_category, is_suspicious_reader, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_file_path, action_process_image_command_line, container_command, container_mounts
+| fields _time, severity, file_category, is_suspicious_reader, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_file_path, action_process_image_command_line
 | sort desc _time
