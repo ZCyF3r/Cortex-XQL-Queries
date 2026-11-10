@@ -18,7 +18,9 @@ dataset = xdr_data
 | filter pod_namespace not in ("kube-system", "calico-system", "cilium", "tigera-operator",
     "gatekeeper-system", "istio-system", "linkerd", "monitoring", "logging",
     "kube-node-lease", "cert-manager", "ingress-nginx", "metallb-system")
-| filter container_image not ~= "(?i)(calico|cilium|istio|envoy|linkerd|coredns|kube-proxy|flannel|weave|multus|cni)"
-| filter actor_process_image_name ~= "[a-zA-Z]"
+| filter container_image !~= "(?i)(calico|cilium|istio|envoy|linkerd|coredns|kube-proxy|flannel|weave|multus|cni)"
+| filter container_name != null
+| filter actor_process_image_name != null
+| filter action_process_image_command_line != null
 | fields _time, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_command_line, actor_process_container_id, container_command, container_mounts
 | sort desc _time
