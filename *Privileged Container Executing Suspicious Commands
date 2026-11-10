@@ -1,0 +1,38 @@
+// Privileged Container Executing Suspicious Commands
+// Detects suspicious process execution in privileged containers.
+// MITRE: T1611 - Escape to Host, T1082 - System Information Discovery
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter actor_process_container_id != null
+| alter container_info_str = to_string(actor_container_info)
+| alter
+    container_name = json_extract_scalar(container_info_str, "$.name"),
+    container_image = json_extract_scalar(container_info_str, "$.image_name"),
+    pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
+    pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
+    is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
+    container_command = json_extract_scalar(container_info_str, "$.other.command"),
+    container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+| filter is_privileged = "true"
+// | filter pod_namespace not in ("kube-system", "calico-system", "cilium", "tigera-operator")
+| filter
+    action_process_image_name in ("nsenter", "chroot", "mount", "umount", "fdisk",
+        "ip", "iptables", "nft", "tc", "ss", "nmap", "masscan",
+        "kubectl", "crictl", "ctr", "runc",
+        "docker", "nerdctl", "etcdctl",
+        "modprobe", "insmod", "bpftool", "debugfs",
+        "tcpdump", "socat", "lsblk", "blkid")
+    or action_process_image_command_line ~= "(?i)(\/proc\/1|\/host|\/dev\/sd|\/dev\/vd|capsh|setcap|getcap)"
+| alter activity_type = if(
+    action_process_image_name in ("nsenter", "chroot", "mount"), "Escape Tool",
+    if(action_process_image_name in ("ip", "iptables", "nft", "tc", "ss"), "Network Manipulation",
+    if(action_process_image_name in ("nmap", "masscan", "tcpdump"), "Network Recon/Scanning",
+    if(action_process_image_name in ("kubectl", "crictl", "ctr", "runc", "docker", "nerdctl", "etcdctl"), "Container/Cluster Tool",
+    if(action_process_image_name in ("modprobe", "insmod", "bpftool"), "Kernel Module / eBPF",
+    if(action_process_image_name in ("debugfs", "fdisk", "lsblk", "blkid"), "Disk / Filesystem Tool",
+    if(action_process_image_name = "socat", "Network Relay/Tunnel",
+    "Host Access")))))))
+| fields _time, activity_type, agent_hostname, pod_namespace, pod_name, container_name, container_image, actor_process_image_name, action_process_image_name, action_process_image_command_line, container_command, container_mounts
+| sort desc _time
