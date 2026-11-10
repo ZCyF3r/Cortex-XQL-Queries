@@ -1,0 +1,27 @@
+// Interactive Shell Spawned Inside Container
+// Detects shell processes started inside a container.
+// MITRE: T1059.004 - Command and Scripting Interpreter: Unix Shell
+
+
+dataset = xdr_data
+| filter event_type = ENUM.PROCESS and event_sub_type = ENUM.PROCESS_START
+| filter actor_process_container_id != null
+| filter action_process_image_name in ("sh", "bash", "zsh", "ash", "dash", "csh", "ksh")
+| alter container_info_str = to_string(actor_container_info)
+| alter
+    container_name = json_extract_scalar(container_info_str, "$.name"),
+    container_image = json_extract_scalar(container_info_str, "$.image_name"),
+    pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
+    pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
+    is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
+    container_command = json_extract_scalar(container_info_str, "$.other.command"),
+    container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+| alter is_reverse_shell = if(
+    action_process_image_command_line ~= "(?i)(\/dev\/tcp|mkfifo|nc\s+-e|ncat\s+-e|socat\s|python.*socket|perl.*socket|ruby.*socket|openssl\s+s_client|telnet\s+\S+\s+\d+|ztcp|zmodload\s+zsh\/net|node\s+-e.*child_process|php\s+-r.*fsockopen|lua.*socket|awk\s.*\/inet\/tcp|busybox\s+nc)",
+    "YES", "NO")
+| alter severity = if(
+    is_reverse_shell = "YES", "CRITICAL - Reverse Shell",
+    if(is_privileged = "true", "HIGH - Shell in Privileged Container",
+    "MEDIUM - Shell in Container"))
+| fields _time, severity, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, is_reverse_shell, container_command, container_mounts
+| sort desc _time
