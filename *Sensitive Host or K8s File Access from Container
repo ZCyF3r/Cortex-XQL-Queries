@@ -1,0 +1,33 @@
+// Sensitive Host or K8s File Access from Container
+// Detects file reads of sensitive host or Kubernetes configuration files from within a container.
+// MITRE: T1005 - Data from Local System, T1552.001 - Unsecured Credentials: Credentials in Files
+
+
+dataset = xdr_data
+| filter event_type = ENUM.FILE
+| filter event_sub_type = ENUM.FILE_OPEN
+| filter actor_process_container_id != null
+| filter action_file_path ~= "(?i)(\/etc\/shadow|\/etc\/passwd|\/etc\/kubernetes|\/var\/lib\/kubelet|kubeconfig|\.kube\/config|\/etc\/cni|\/var\/lib\/etcd|admin\.conf|scheduler\.conf|controller-manager\.conf|\/root\/\.ssh|\/etc\/ssh\/ssh_host|\/var\/lib\/rancher\/k3s|\/var\/lib\/rancher\/rke2|\/etc\/rancher\/k3s|\/var\/snap\/microk8s|\/etc\/kubernetes\/azure\.json|\/home\/kubernetes\/kube-env|\/etc\/kubernetes\/pki|\/var\/lib\/kubelet\/pki|\/etc\/docker\/certs\.d|\.docker\/config\.json)"
+| alter container_info_str = to_string(actor_container_info)
+| alter
+    container_name = json_extract_scalar(container_info_str, "$.name"),
+    container_image = json_extract_scalar(container_info_str, "$.image_name"),
+    pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
+    pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
+    is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
+    container_command = json_extract_scalar(container_info_str, "$.other.command"),
+    container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+| alter file_category = if(
+    action_file_path ~= "(?i)(shadow|passwd)", "Host Credentials",
+    if(action_file_path ~= "(?i)(kubernetes\/pki|kubelet\/pki|admin\.conf|scheduler\.conf|controller-manager)", "Cluster PKI / Admin Configs",
+    if(action_file_path ~= "(?i)(kubernetes|kubelet|kubeconfig|\.kube)", "K8s Configuration",
+    if(action_file_path ~= "(?i)(etcd)", "etcd Database",
+    if(action_file_path ~= "(?i)(ssh)", "SSH Keys",
+    if(action_file_path ~= "(?i)(rancher|k3s|rke2)", "k3s / RKE2 Secrets",
+    if(action_file_path ~= "(?i)(microk8s)", "microk8s Credentials",
+    if(action_file_path ~= "(?i)(azure\.json)", "AKS Service Principal",
+    if(action_file_path ~= "(?i)(kube-env)", "GKE Bootstrap Credentials",
+    if(action_file_path ~= "(?i)(docker\/certs|docker\/config)", "Container Registry Creds",
+    "Other Sensitive"))))))))))
+| fields _time, file_category, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_file_path, action_process_image_command_line, container_command, container_mounts
+| sort desc _time
