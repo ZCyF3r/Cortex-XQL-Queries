@@ -15,5 +15,10 @@ dataset = xdr_data
     is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
     container_command = json_extract_scalar(container_info_str, "$.other.command"),
     container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+| filter pod_namespace not in ("kube-system", "calico-system", "cilium", "tigera-operator",
+    "gatekeeper-system", "istio-system", "linkerd", "monitoring", "logging",
+    "kube-node-lease", "cert-manager", "ingress-nginx", "metallb-system")
+| filter container_image not ~= "(?i)(calico|cilium|istio|envoy|linkerd|coredns|kube-proxy|flannel|weave|multus|cni)"
+| filter actor_process_image_name ~= "[a-zA-Z]"
 | fields _time, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_command_line, actor_process_container_id, container_command, container_mounts
 | sort desc _time
