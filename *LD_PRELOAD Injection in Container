@@ -15,10 +15,17 @@ dataset = xdr_data
     is_privileged = json_extract_scalar(container_info_str, "$.privileged"),
     container_env = to_string(json_extract(container_info_str, "$.env")),
     container_command = json_extract_scalar(container_info_str, "$.other.command"),
-    container_mounts = to_string(json_extract(container_info_str, "$.other.mounts"))
+    container_mounts  = to_string(json_extract(container_info_str, "$.other.mounts"))
 | filter
     action_process_image_command_line ~= "(?i)(LD_PRELOAD)"
     or container_env ~= "(?i)(LD_PRELOAD)"
+    or (action_process_image_name in ("gcc", "g++", "cc", "clang", "clang++")
+        and action_process_image_command_line ~= "(?i)(-shared)"
+        and action_process_image_command_line ~= "(?i)(\/tmp\/|\/dev\/shm\/|\/var\/tmp\/)")
+| alter detection_type = if(
+    action_process_image_name in ("gcc", "g++", "cc", "clang", "clang++"), "Shared Object Compilation",
+    if(action_process_image_command_line ~= "(?i)(LD_PRELOAD)", "LD_PRELOAD in Command Line",
+    "LD_PRELOAD in Container Env"))
 | alter is_suspicious_path = if(
     action_process_image_command_line ~= "(?i)(LD_PRELOAD\s*=\s*\S*(\/tmp\/|\/dev\/shm\/|\/var\/tmp\/))",
     "YES - Writable Path", "NO")
@@ -27,8 +34,9 @@ dataset = xdr_data
     or container_env ~= "(?i)(\/opt\/datadog|\/opt\/dynatrace|dd-java-agent|newrelic|elastic-apm)",
     "YES - Known APM", "NO")
 | alter severity = if(
-    is_suspicious_path = "YES - Writable Path", "HIGH - Suspicious LD_PRELOAD Path",
+    detection_type = "Shared Object Compilation", "CRITICAL - .c to .so in Writable Path",
+    if(is_suspicious_path = "YES - Writable Path", "HIGH - LD_PRELOAD from Writable Path",
     if(is_known_apm = "YES - Known APM", "LOW - Known APM Agent",
-    "MEDIUM - LD_PRELOAD Detected"))
-| fields _time, severity, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, container_env, is_suspicious_path, is_known_apm, container_command, container_mounts
+    "MEDIUM - LD_PRELOAD Detected")))
+| fields _time, severity, detection_type, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line, container_env, is_suspicious_path, is_known_apm, container_command, container_mounts
 | sort desc _time
