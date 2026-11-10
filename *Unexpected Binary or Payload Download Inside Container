@@ -35,5 +35,6 @@ dataset = xdr_data
     if(action_process_image_command_line ~= "(?i)\/dev\/tcp", "Bash /dev/tcp",
     if(action_process_image_name = "busybox", "Busybox Download",
     "HTTP Download Tool")))))
+| filter pod_name != null
 | fields _time, download_method, agent_hostname, pod_namespace, pod_name, container_name, container_image, is_privileged, actor_process_image_name, action_process_image_name, action_process_image_command_line
 | sort desc _time
