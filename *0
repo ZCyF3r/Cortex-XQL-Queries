@@ -1,7 +1,0 @@
-dataset = google_cloud_logging_raw
-| filter _raw_log ~= "(?i)aiplatform"
-| alter proto_str = to_string(protoPayload)
-| alter methodName = json_extract_scalar(proto_str, "$.methodName")
-| comp count() as event_count by methodName
-| sort desc event_count
-| limit 30
