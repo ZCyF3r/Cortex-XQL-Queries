@@ -1,5 +1,0 @@
-dataset = cloud_audit_logs 
-| filter cloud_provider = ENUM.Azure 
-| filter service_type = "Kubernetes"
-| filter resource_sub_type_orig ~= "(?i)(kube-apiserver)"
-//| filter identity_name = ""
