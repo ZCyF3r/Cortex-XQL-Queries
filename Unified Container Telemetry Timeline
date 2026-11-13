@@ -1,3 +1,7 @@
+// Unified Container Telemetry Timeline
+// Query for all container process, file, and network activity on a target host/pod. Uncomment the pod_name and/or agent_hostname filters to scope down.
+
+
 dataset = xdr_data
 | alter container_info_str = to_string(actor_container_info)
 | alter
