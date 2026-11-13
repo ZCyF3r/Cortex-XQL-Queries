@@ -1,8 +1,4 @@
-// Container activity timeline
-
 dataset = xdr_data
-| filter event_type in (ENUM.PROCESS, ENUM.FILE, ENUM.NETWORK)
-| filter actor_process_container_id != null
 | alter container_info_str = to_string(actor_container_info)
 | alter
     container_name = json_extract_scalar(container_info_str, "$.name"),
@@ -10,6 +6,12 @@ dataset = xdr_data
     pod_name = json_extract_scalar(container_info_str, "$.pod_name"),
     pod_namespace = json_extract_scalar(container_info_str, "$.pod_namespace"),
     is_privileged = json_extract_scalar(container_info_str, "$.privileged")
+| alter other_str = json_extract_scalar(container_info_str, "$.other")
+| alter
+    container_mounts = to_string(json_extract(other_str, "$.mounts")),
+    container_command = to_string(json_extract(other_str, "$.command"))
+| filter event_type in (ENUM.PROCESS, ENUM.FILE, ENUM.NETWORK)
+| filter actor_process_container_id != null
 //| filter pod_name = ""
 //| filter agent_hostname = ""
 | alter activity_summary = if(
@@ -18,5 +20,5 @@ dataset = xdr_data
     if(event_type = ENUM.FILE,
         concat("FILE ", to_string(event_sub_type), ": ", coalesce(action_file_path, "?")),
         concat("NET: ", coalesce(action_remote_ip, "?"), ":", coalesce(to_string(action_remote_port), "?"))))
-| fields _time, event_type, agent_hostname, event_sub_type, activity_summary, actor_process_image_name, action_process_image_name, action_process_image_command_line, action_file_path, action_remote_ip, action_remote_port,  pod_namespace, pod_name, container_name, container_image, is_privileged
+| fields _time, event_type, agent_hostname, pod_name, pod_namespace, event_sub_type, activity_summary, actor_process_image_name, action_process_image_name, action_process_image_command_line, container_command, action_file_path, action_remote_ip, action_remote_port,  pod_namespace, pod_name, container_name, container_image, is_privileged, container_mounts
 | sort desc _time
