@@ -1,3 +1,7 @@
+// Kubernetes API Server Cloud Audit Logs Activity
+// Detects cloud audit log events associated with the Kubernetes API server, providing visibility into administrative and operational actions performed within a Kubernetes cluster.
+
+
 dataset = cloud_audit_logs 
 | filter service_type = "Kubernetes"
 | filter resource_sub_type_orig ~= "(?i)(kube-apiserver)"
