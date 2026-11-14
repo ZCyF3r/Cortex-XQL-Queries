@@ -4,7 +4,7 @@
 
 
 dataset = saas_audit_logs
-| filter service_type = "Exchange
+| filter service_type = "Exchange"
 | filter operation_name_orig in ("Add-RecipientPermission", "Set-Mailbox")
 | alter raw_str = to_string(raw_log)
 | filter raw_str ~= "(?i)(SendAs|SendOnBehalf|GrantSendOnBehalfTo)"
