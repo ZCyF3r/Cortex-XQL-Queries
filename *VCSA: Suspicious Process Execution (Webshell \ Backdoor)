@@ -1,0 +1,38 @@
+// VCSA: Suspicious Process Execution (Webshell \ Backdoor)
+// Tactic  : Execution (T1059 — Command and Scripting Interpreter)
+// vCenter appliance (VCSA) emits SYSCALL audit logs that capture process execution. Armory Castle drops:
+//- SLIMSAVAGE / CAGEMATCH webshells
+//- BEARBONES at /tmp/dbr
+//- BONESAW at /tmp/123
+//- SAWSNAKE at /tmp/sss
+//- LAZYBONES at /usr/bin/vmtoolscs
+
+
+dataset = vmware_vcenter_raw
+| filter _raw_log ~= "(?i)(SYSCALL|execve|type=EXECVE|vcsa-audit)"
+| filter _raw_log ~= "(?i)(/tmp/123|/tmp/sss|/tmp/dbr|/usr/bin/vmtoolscs|/tmp/[a-z0-9]{1,4}\b)"
+   or _raw_log ~= "(?i)(\.py\s|python.*-c|bash\s+-[ic]|sh\s+-c|wget\s|curl\s.*-o|chmod\s+\+x.*/tmp)"
+| alter
+    process_path = coalesce(
+        arrayindex(regextract(_raw_log, "exe\s*=\s*\"([^\"]+)\""), 0),
+        arrayindex(regextract(_raw_log, "(?i)comm\s*=\s*\"([^\"]+)\""), 0)
+    ),
+    command_line = arrayindex(regextract(_raw_log, "(?i)(?:cmdline|a0|EXECVE).*?\"(.+?)\""), 0),
+    process_pid = arrayindex(regextract(_raw_log, "pid\s*=\s*(\d+)"), 0),
+    parent_pid = arrayindex(regextract(_raw_log, "ppid\s*=\s*(\d+)"), 0),
+    exec_uid = arrayindex(regextract(_raw_log, "uid\s*=\s*(\d+)"), 0)
+| alter severity = if(
+    _raw_log ~= "(?i)(/tmp/123|/tmp/sss|/tmp/dbr|/usr/bin/vmtoolscs)",
+        "CRITICAL — Known Armory Castle tool path",
+    if(_raw_log ~= "(?i)(chmod\s+\+x.*/tmp|curl.*-o.*/tmp|wget.*/tmp)",
+        "HIGH — Suspicious download/staging in /tmp",
+        "MEDIUM — Suspicious process execution on VCSA"))
+// Flag the specific tooling
+| alter tool_match = if(
+    _raw_log contains "/tmp/123", "BONESAW",
+    if(_raw_log contains "/tmp/sss", "SAWSNAKE",
+       if(_raw_log contains "/tmp/dbr", "BEARBONES",
+          if(_raw_log contains "/usr/bin/vmtoolscs", "LAZYBONES",
+             ""))))
+| fields _time, severity, tool_match, process_path, command_line, process_pid, parent_pid, exec_uid, _raw_log
+| sort asc _time
