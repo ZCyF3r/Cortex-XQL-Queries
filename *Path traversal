@@ -1,0 +1,5 @@
+dataset = xdr_data 
+| filter event_type = ENUM.STORY 
+| filter action_local_ip = ""
+| filter uri != null and uri != ""
+| fields http_method, action_remote_ip, action_local_ip, action_remote_port, uri, http_status_code, action_country
