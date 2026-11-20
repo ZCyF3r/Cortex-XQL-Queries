@@ -1,11 +1,8 @@
-// VCSA: Suspicious Process Execution (Webshell \ Backdoor)
-// Tactic  : Execution (T1059 — Command and Scripting Interpreter)
-// vCenter appliance (VCSA) emits SYSCALL audit logs that capture process execution. Armory Castle drops:
-//- SLIMSAVAGE / CAGEMATCH webshells
-//- BEARBONES at /tmp/dbr
-//- BONESAW at /tmp/123
-//- SAWSNAKE at /tmp/sss
-//- LAZYBONES at /usr/bin/vmtoolscs
+// VCSA Process Execution — Armory Castle Tooling
+// Detects execution of known Armory Castle tools via VCSA SYSCALL audit logs: BONESAW (/tmp/123), SAWSNAKE (/tmp/sss),
+// BEARBONES (/tmp/dbr), LAZYBONES (/usr/bin/vmtoolscs), and SLIMSAVAGE/CAGEMATCH webshells. Also catches suspicious
+// download/staging activity in /tmp/. Allowlist legitimate /tmp/ usage from vmware services if needed.
+// MITRE: T1059 — Command and Scripting Interpreter
 
 
 dataset = vmware_vcenter_raw
