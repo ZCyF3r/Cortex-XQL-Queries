@@ -1,0 +1,22 @@
+// Armory Castle IOC IPs
+// Broad sweep of ALL vmware_vcenter_raw events matching known Armory Castle infrastructure IPs.
+// IOCs: 103.147.251[.]5, 103.190.38[.]3, 176.9.89[.]66, 185.71.15[.]109
+
+
+dataset = vmware_vcenter_raw
+| filter _raw_log ~= "(103\.147\.251\.5|103\.190\.38\.3|176\.9\.89\.66|185\.71\.15\.109)"
+| alter
+    matched_ioc = coalesce(
+        arrayindex(regextract(_raw_log, "(103\.147\.251\.5)"), 0),
+        arrayindex(regextract(_raw_log, "(103\.190\.38\.3)"), 0),
+        arrayindex(regextract(_raw_log, "(176\.9\.89\.66)"), 0),
+        arrayindex(regextract(_raw_log, "(185\.71\.15\.109)"), 0)
+    ),
+    event_class = coalesce(
+        arrayindex(regextract(_raw_log, "Event\s*:\s*(\S+)"), 0),
+        "unknown"
+    ),
+    acting_user = arrayindex(regextract(_raw_log, "(?i)(?:user|callerPrincipal|principal|userName)\s*[:=]\s*['\"]?(\S+)['\"]?"), 0)
+| alter severity = "CRITICAL — Armory Castle IOC IP match"
+| fields _time, severity, matched_ioc, event_class, acting_user, _raw_log
+| sort asc _time
