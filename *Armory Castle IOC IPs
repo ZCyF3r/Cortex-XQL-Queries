@@ -4,7 +4,7 @@
 // MITRE: Multiple (indicator-based)
 
 
-dataset = vmware_vcenter_raw
+dataset = vmware_vsphere_raw 
 | filter _raw_log ~= "(103\.147\.251\.5|103\.190\.38\.3|176\.9\.89\.66|185\.71\.15\.109)"
 | alter
     matched_ioc = coalesce(
