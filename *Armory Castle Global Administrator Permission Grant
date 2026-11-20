@@ -1,0 +1,28 @@
+// Armory Castle Global Administrator Permission Grant
+// Detects permission grants, especially GlobalPermission, to non-standard accounts. After BONESAW creates the sps-* account, Armory Castle assigns Administrator via the vSphere SOAP API.
+// MITRE: T1098 — Account Manipulation
+
+
+dataset = vmware_vsphere_raw
+| filter _raw_log ~= "(?i)(CreatePermission|CreateGlobalPermission|PermissionAddedEvent|RoleManagement|RoleAddedEvent|privilege.*grant|admin.*role.*assign|setEntityPermissions)"
+| alter
+    event_class = coalesce(
+        arrayindex(regextract(_raw_log, "Event\s*:\s*(com\.vmware\.\S+)"), 0),
+        arrayindex(regextract(_raw_log, "Event\s*:\s*(\S+)"), 0),
+        "permission_change"
+    ),
+    target_user = coalesce(
+        arrayindex(regextract(_raw_log, "(?i)(?:principal|grantee|user)\s*[:=]\s*['\"]?(\S+@\S+)['\"]?"), 0),
+        arrayindex(regextract(_raw_log, "(?i)(?:principal|grantee|user)\s*[:=]\s*['\"]?(\S+)['\"]?"), 0)
+    ),
+    role_name = arrayindex(regextract(_raw_log, "(?i)role\s*[:=]\s*['\"]?([^'\"]+)['\"]?"), 0),
+    acting_user = arrayindex(regextract(_raw_log, "(?i)(?:callerPrincipal|authenticatedUser)\s*[:=]\s*['\"]?(\S+@\S+)['\"]?"), 0),
+    source_ip = arrayindex(regextract(_raw_log, "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"), 0),
+    is_global = if(_raw_log ~= "(?i)Global", "YES", "NO")
+| alter severity = if(
+    is_global = "YES", "CRITICAL — Global admin permission granted",
+    if(_raw_log ~= "(?i)(Admin|admin)", "HIGH — Administrator role assigned",
+       "MEDIUM — Permission change"))
+| alter bonesaw_indicator = if(target_user ~= "(?i)^sps-", "BONESAW account detected", "")
+| fields _time, severity, bonesaw_indicator, event_class, target_user, role_name, acting_user, source_ip, is_global, _raw_log
+| sort asc _time
