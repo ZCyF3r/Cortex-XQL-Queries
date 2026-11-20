@@ -1,6 +1,7 @@
-// Armory Castle IOC IPs
-// Broad sweep of ALL vmware_vcenter_raw events matching known Armory Castle infrastructure IPs.
+// Armory Castle Infrastructure IP Sweep
+// Broad sweep of all vmware_vcenter_raw events matching known Armory Castle C2/staging IPs. Catches activity the behavioral  queries above might miss. Remove IPs confirmed as FPs and add new IOCs as published.
 // IOCs: 103.147.251[.]5, 103.190.38[.]3, 176.9.89[.]66, 185.71.15[.]109
+// MITRE: Multiple (indicator-based)
 
 
 dataset = vmware_vcenter_raw
