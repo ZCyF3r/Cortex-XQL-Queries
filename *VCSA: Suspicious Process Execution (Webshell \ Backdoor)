@@ -5,7 +5,7 @@
 // MITRE: T1059 — Command and Scripting Interpreter
 
 
-dataset = vmware_vcenter_raw
+dataset = vmware_vsphere_raw
 | filter _raw_log ~= "(?i)(SYSCALL|execve|type=EXECVE|vcsa-audit)"
 | filter _raw_log ~= "(?i)(/tmp/123|/tmp/sss|/tmp/dbr|/usr/bin/vmtoolscs|/tmp/[a-z0-9]{1,4}\b)"
    or _raw_log ~= "(?i)(\.py\s|python.*-c|bash\s+-[ic]|sh\s+-c|wget\s|curl\s.*-o|chmod\s+\+x.*/tmp)"
