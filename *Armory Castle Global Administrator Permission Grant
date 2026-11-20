@@ -19,16 +19,18 @@ dataset = vmware_vsphere_raw
     target_user = coalesce(
         arrayindex(regextract(event_message, "(?i)Permission\s+\w+\s+for\s+(\S+)\s+on"), 0),
         arrayindex(regextract(event_message, "(?i)(\S+@vsphere\.local)"), 0),
-        arrayindex(regextract(url_path, "(?i)(?:user|principal)=([^&]+)"), 0)),
+        arrayindex(regextract(url_path, "(?i)(?:user|principal)=([^&]+)"), 0)
+    ),
     role_name = coalesce(
         arrayindex(regextract(event_message, "(?i)role\s+is\s+([^,]+)"), 0),
-        arrayindex(regextract(event_message, "(?i)role\s+(\S+)\s+created")), 0)),
+        arrayindex(regextract(event_message, "(?i)role\s+(\S+)\s+created"), 0)
+    ),
     url_properties = arrayindex(regextract(url_path, "properties=([^&]+)"), 0)
 | filter not (log_source = "envoy-access" and http_method = "GET")
 | alter severity = if(
     is_global = "YES", "CRITICAL — Global admin permission granted",
     if(_raw_log ~= "(?i)(Admin|admin)", "HIGH — Administrator role assigned",
        "MEDIUM — Permission change"))
-| alter bonesaw_indicator = if(target_user ~= "(?i)^sps-", "BONESAW account detected", "")
-| fields _time, severity, bonesaw_indicator, event_class, target_user, role_name, acting_user, source_ip, is_global, http_method, url_path, url_properties, _raw_log
+| alter bonesaw_indicator = if(target_user ~= "(?i)sps-", "BONESAW account detected", "")
+| fields _time, severity, bonesaw_indicator, event_class, log_source, target_user, role_name, acting_user, source_ip, is_global, http_method, url_path, url_properties, event_message, _raw_log
 | sort asc _time
