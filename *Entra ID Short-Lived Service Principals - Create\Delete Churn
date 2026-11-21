@@ -1,0 +1,44 @@
+// Entra ID Short-Lived Service Principals — Create\Delete Churn
+// GTIG "burn and rotate": attackers create service principals / app registrations, add a secret, use them until rate-limited, then delete and repeat. Pairs Add + Delete on the same object within 24h, then flags initiators with 2+ cycles.
+// MITRE: T1136.003 — Create Account: Cloud Account / T1070 — Indicator Removal
+
+
+dataset = msft_azure_ad_audit_raw
+| filter activityDisplayName in (
+    "Add service principal", "Remove service principal",
+    "Add application", "Delete application", "Hard Delete application",
+    "Add service principal credentials",
+    "Update application – Certificates and secrets management")
+| alter
+    initiator = coalesce(initiatedBy -> user.userPrincipalName, initiatedBy -> app.displayName),
+    initiator_ip = initiatedBy -> user.ipAddress,
+    target_id = json_extract_scalar(to_string(targetResources), "$[0].id"),
+    target_name  = json_extract_scalar(to_string(targetResources), "$[0].displayName"),
+    phase = if(activityDisplayName ~= "^(Add service principal|Add application)$", "CREATE",
+                      if(activityDisplayName ~= "(?i)(Remove|Delete)", "DELETE", "CREDENTIAL"))
+| comp
+    values(phase) as phases,
+    values(initiator) as initiators,
+    values(initiator_ip) as initiator_ips,
+    min(_time) as created,
+    max(_time) as last_event
+  by target_id, target_name
+| filter arraystring(phases, ",") contains "CREATE" and arraystring(phases, ",") contains "DELETE"
+| alter lifetime_min = timestamp_diff(last_event, created, "MINUTE")
+| filter lifetime_min <= 1440
+| alter initiator = arrayindex(initiators, 0),
+        had_secret = if(arraystring(phases, ",") contains "CREDENTIAL", "YES", "NO"),
+        ips_str = arraystring(initiator_ips, ",")
+| comp
+    count() as burn_cycles,
+    values(target_name) as burned_objects,
+    values(had_secret) as secret_added,
+    min(lifetime_min) as shortest_lifetime_min,
+    values(ips_str) as initiator_ips,
+    min(created) as first_cycle,
+    max(last_event) as last_cycle
+  by initiator
+| filter burn_cycles >= 2
+| alter severity = if(burn_cycles >= 5, "HIGH — repeated SP burn-and-rotate", "MEDIUM — SP create/delete churn")
+| fields severity, initiator, burn_cycles, shortest_lifetime_min, secret_added, burned_objects, initiator_ips, first_cycle, last_cycle
+| sort desc burn_cycles
