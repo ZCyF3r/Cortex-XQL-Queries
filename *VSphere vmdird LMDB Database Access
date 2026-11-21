@@ -1,0 +1,20 @@
+// VSphere vmdird LMDB Database Access
+// Detects access to /storage/db/vmware-vmdir/data.mdb, the LMDB database backing vmdird/SSO. Contains all SSO accounts, groups,  STS signing certificates, and SAML metadata.
+// MITRE: T1003 — OS Credential Dumping
+
+
+dataset = vmware_vsphere_raw
+| filter _raw_log ~= "(?i)(data\.mdb|vmware-vmdir|vmdirdbcp|vmdir.*export|vmdir.*backup|ldap.*dump|/storage/db/vmware-vmdir)"
+// vpxd bracket extraction
+| alter
+    event_class = arrayindex(regextract(_raw_log, "Event\s+\[[^\]]*\]\s*\[[^\]]*\]\s*\[([^\]]+)\]"), 0),
+    acting_user = arrayindex(regextract(_raw_log, "Event\s+\[[^\]]*\]\s*\[[^\]]*\]\s*\[[^\]]*\]\s*\[[^\]]*\]\s*\[([^\]]+)\]"), 0),
+    event_message = arrayindex(regextract(_raw_log, "Event\s+(?:\[[^\]]*\]\s*){6}\[([^\]]+)\]"), 0),
+    file_path = coalesce(
+        arrayindex(regextract(_raw_log, "(/storage/db/vmware-vmdir/\S+)"), 0),
+        arrayindex(regextract(_raw_log, "(data\.mdb)"), 0)
+    ),
+    source_ip = arrayindex(regextract(_raw_log, "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"), 0)
+| alter severity = "CRITICAL — vmdird database access (BONESAW credential theft indicator)"
+| fields _time, severity, event_class, file_path, acting_user, source_ip, _raw_log
+| sort asc _time
