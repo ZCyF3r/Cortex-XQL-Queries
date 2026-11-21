@@ -1,0 +1,42 @@
+// Azure Cognitive Services Provider Registration and New AI Account
+// "Enabling LLM services" stage, an attacker registers the Microsoft.CognitiveServices resource provider and/or creates new Azure OpenAI / AI Services / AI Foundry resources in a subscription that didn't have them. 
+// Register + create by the same identity is the strongest signal. accounts/write also fires on updates — review the raw_log body.
+// MITRE: T1578.002 — Modify Cloud Compute Infrastructure: Create Cloud Instance, T1496 — Resource Hijacking
+
+
+dataset = cloud_audit_logs
+| alter op = lowercase(operation_name_orig)
+| filter op in (
+    "microsoft.cognitiveservices/register/action",
+    "microsoft.cognitiveservices/accounts/write",
+    "microsoft.machinelearningservices/register/action",
+    "microsoft.machinelearningservices/workspaces/write")
+| alter raw_str = to_string(raw_log)
+| alter
+    result_type = json_extract_scalar(raw_str, "$.resultType"),
+    resource_id = json_extract_scalar(raw_str, "$.resourceId")
+| filter coalesce(result_type, "") != "Start"
+| alter
+    stage = if(op contains "register/action", "PROVIDER_REGISTERED",
+               if(op contains "workspaces/write", "FOUNDRY_WORKSPACE_WRITE", "AI_ACCOUNT_WRITE")),
+    ai_kind = arrayindex(regextract(raw_str, "(?i)\"kind\"\s*:\s*\"(OpenAI|AIServices|CognitiveServices|Hub|Project)\""), 0),
+    subscription_id = arrayindex(regextract(coalesce(resource_id, raw_str), "(?i)/subscriptions/([0-9a-f-]{36})"), 0)
+//| filter coalesce(identity_name, "") not in ("<terraform-sp>", "<devops-pipeline>")
+| comp
+    count() as events,
+    values(stage) as stages,
+    values(ai_kind) as ai_kinds,
+    values(resource_id) as resources,
+    values(caller_ip) as caller_ips,
+    values(user_agent) as user_agents,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by identity_name, subscription_id
+| alter severity = if(
+    array_length(stages) > 1 and arraystring(stages, ",") contains "PROVIDER_REGISTERED",
+        "HIGH — provider registered + AI resource created by same identity",
+    if(arraystring(stages, ",") contains "PROVIDER_REGISTERED",
+        "MEDIUM — Cognitive Services / ML provider newly registered",
+        "LOW — AI resource created/updated"))
+| fields severity, identity_name, subscription_id, stages, ai_kinds, events, resources, caller_ips, user_agents, first_seen, last_seen
+| sort asc severity
