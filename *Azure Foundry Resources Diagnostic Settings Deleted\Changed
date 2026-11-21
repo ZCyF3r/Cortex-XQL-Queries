@@ -1,0 +1,23 @@
+// Azure Foundry Resources Diagnostic Settings Deleted\Changed
+// Azure equivalent of Bedrock invocation-logging tampering.
+// Deleting or rewriting diagnostic settings on a Cognitive Servicesor ML workspace blinds prompt/usage logging before abuse begins.
+// MITRE: T1562.008 — Impair Defenses: Disable or Modify Cloud Logs
+
+
+dataset = cloud_audit_logs
+| alter op = lowercase(operation_name_orig)
+| filter op in ("microsoft.insights/diagnosticsettings/delete", "microsoft.insights/diagnosticsettings/write")
+| alter raw_str = to_string(raw_log)
+| alter
+    result_type = json_extract_scalar(raw_str, "$.resultType"),
+    resource_id = json_extract_scalar(raw_str, "$.resourceId")
+| filter coalesce(result_type, "") != "Start"
+| filter resource_id ~= "(?i)/providers/microsoft\.(cognitiveservices/accounts|machinelearningservices/workspaces)/"
+| alter
+    ai_resource = arrayindex(regextract(resource_id, "(?i)/(?:accounts|workspaces)/([^/]+)"), 0),
+    setting = arrayindex(regextract(resource_id, "(?i)/diagnosticSettings/([^/]+)"), 0),
+    severity = if(op contains "/delete", "HIGH — diagnostic logging DELETED on AI resource",
+                     "MEDIUM — diagnostic setting changed on AI resource")
+//| filter coalesce(identity_name, "") not in ("<azure-policy-identity>")
+| fields _time, severity, identity_name, identity_type, op, ai_resource, setting, result_type, caller_ip, user_agent, resource_id
+| sort asc _time
