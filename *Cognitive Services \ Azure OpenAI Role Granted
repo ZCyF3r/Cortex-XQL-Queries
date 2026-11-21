@@ -1,0 +1,29 @@
+// Cognitive Services \ Azure OpenAI Role Granted
+// Grants of AI data-plane roles let a principal call models without keys. GTIG observed attackers creating service accounts and attaching permissions to them. Role GUIDs are only in the request body (Start record), so Start is kept and records are deduped on correlationId.
+// MITRE: T1098.003 — Account Manipulation: Additional Cloud Roles
+
+dataset = cloud_audit_logs
+| alter op = lowercase(operation_name_orig)
+| filter op = "microsoft.authorization/roleassignments/write"
+| alter raw_str = lowercase(to_string(raw_log))
+| filter raw_str ~= "(5e0bd9bd-7b93-4f28-af87-19fc36ad61bd|a001fd3d-188f-4b5d-821b-7da978bf7442|a97b65f3-24c7-4388-baec-2e87135dc908|25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68|64702f94-c441-49e6-a78b-ef80e0188fee)"
+| alter
+    correlation_id = json_extract_scalar(to_string(raw_log), "$.correlationId"),
+    result_type = json_extract_scalar(to_string(raw_log), "$.resultType"),
+    role_granted = if(raw_str contains "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd", "Cognitive Services OpenAI User",
+                     if(raw_str contains "a001fd3d-188f-4b5d-821b-7da978bf7442", "Cognitive Services OpenAI Contributor",
+                     if(raw_str contains "a97b65f3-24c7-4388-baec-2e87135dc908", "Cognitive Services User",
+                     if(raw_str contains "25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68", "Cognitive Services Contributor",
+                        "Azure AI Developer")))),
+    assignee_id = arrayindex(regextract(raw_str, "\"principalid\"\s*:\s*\"([0-9a-f-]{36})\""), 0),
+    assignee_type = arrayindex(regextract(raw_str, "\"principaltype\"\s*:\s*\"([a-z]+)\""), 0),
+    scope = arrayindex(regextract(raw_str, "\"scope\"\s*:\s*\"([^\"]+)\""), 0)
+| dedup correlation_id
+// TUNE: identities that provision AI access through change-control
+| filter coalesce(identity_name, "") not in ("<terraform-sp>", "<devops-pipeline>")
+| alter severity = if(
+    role_granted contains "Contributor", "HIGH — AI Contributor role granted",
+    if(assignee_type = "serviceprincipal", "MEDIUM — AI data-plane role granted to service principal",
+       "LOW — AI data-plane role granted"))
+| fields _time, severity, identity_name, role_granted, assignee_id, assignee_type, scope, result_type, caller_ip, user_agent
+| sort asc _time
