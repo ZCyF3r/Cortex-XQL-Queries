@@ -1,0 +1,21 @@
+// Azure Foundry Content Filter \ Blocklist Modification
+// Azure equivalent of Bedrock guardrail deletion. Mixer operators sell "jailbroken" access — modifying or deleting RAI policies (content filters) and blocklists strips the safety layer. Any change outside change-control is worth a look. Event-level.
+// MITRE: T1562.001 — Impair Defenses: Disable or Modify Tools
+
+
+dataset = cloud_audit_logs
+| alter op = lowercase(operation_name_orig)
+| filter op ~= "^microsoft\.cognitiveservices/accounts/(raipolicies|raiblocklists)(/raiblocklistitems)?/(write|delete)$"
+| alter raw_str = to_string(raw_log)
+| alter
+    result_type = json_extract_scalar(raw_str, "$.resultType"),
+    resource_id = json_extract_scalar(raw_str, "$.resourceId")
+| filter coalesce(result_type, "") != "Start"
+| alter
+    ai_account  = arrayindex(regextract(resource_id, "(?i)/accounts/([^/]+)"), 0),
+    policy_name = arrayindex(regextract(resource_id, "(?i)/(?:raiPolicies|raiBlocklists)/([^/]+)"), 0),
+    severity    = if(op contains "/delete", "HIGH — content filter / blocklist DELETED",
+                     if(op contains "raipolicies", "MEDIUM — content filter policy modified",
+                        "LOW — blocklist modified"))
+| fields _time, severity, identity_name, identity_type, op, ai_account, policy_name, result_type, caller_ip, user_agent, resource_id
+| sort asc _time
