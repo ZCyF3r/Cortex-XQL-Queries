@@ -1,14 +1,14 @@
 dataset = vmware_vsphere_raw
 | filter _raw_log ~= "(?i)(CreatePermission|CreateGlobalPermission|PermissionAddedEvent|RoleManagement|RoleAddedEvent|privilege.*grant|admin.*role.*assign|setEntityPermissions)"
 | alter
-    log_source    = arrayindex(regextract(_raw_log, "\s([\w.-]+)\s+-\s+-\s"), 0),
-    vim_event     = arrayindex(regextract(_raw_log, "(vim\.event\.\w+|com\.vmware\.[\w.]+)"), 0),
-    acting_user   = arrayindex(regextract(_raw_log, "\x5b(?:info|warning|error|verbose|user)\x5d\s*\x5b([^\x5d]+)\x5d"), 0),
+    log_source = arrayindex(regextract(_raw_log, "\s([\w.-]+)\s+-\s+-\s"), 0),
+    vim_event = arrayindex(regextract(_raw_log, "(vim\.event\.\w+|com\.vmware\.[\w.]+)"), 0),
+    acting_user = arrayindex(regextract(_raw_log, "\x5b(?:info|warning|error|verbose|user)\x5d\s*\x5b([^\x5d]+)\x5d"), 0),
     event_message = arrayindex(regextract(_raw_log, "\x5b([^\x5b\x5d]+)\x5d\s*$"), 0),
-    http_method   = arrayindex(regextract(_raw_log, "\s(GET|POST|PUT|DELETE|PATCH)\s+/"), 0),
-    url_path      = arrayindex(regextract(_raw_log, "\s(?:GET|POST|PUT|DELETE|PATCH)\s+(\S+)"), 0),
-    source_ip     = arrayindex(regextract(_raw_log, "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"), 0),
-    is_global     = if(_raw_log ~= "(?i)Global", "YES", "NO")
+    http_method = arrayindex(regextract(_raw_log, "\s(GET|POST|PUT|DELETE|PATCH)\s+/"), 0),
+    url_path = arrayindex(regextract(_raw_log, "\s(?:GET|POST|PUT|DELETE|PATCH)\s+(\S+)"), 0),
+    source_ip = arrayindex(regextract(_raw_log, "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"), 0),
+    is_global = if(_raw_log ~= "(?i)Global", "YES", "NO")
 | alter event_class = coalesce(vim_event, log_source)
 | alter
     target_user = coalesce(
