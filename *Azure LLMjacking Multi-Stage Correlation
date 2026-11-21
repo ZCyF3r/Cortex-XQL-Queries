@@ -1,0 +1,31 @@
+// Azure LLMjacking Multi-Stage Correlation
+// One identity hitting 2+ distinct LLMjacking stages inside a day — key harvest, AI enablement, model deployment, content filter or logging tampering, AI role grant, GPU/quota grab. Highest-fidelity query in the set; use Q1–Q7 for the per-stage detail.
+// MITRE: T1496 — Resource Hijacking (multi-stage)
+
+
+dataset = cloud_audit_logs
+| alter op = lowercase(operation_name_orig)
+| alter stage = if(
+    op ~= "cognitiveservices/accounts/(listkeys|regeneratekey)/action", "1_KEY_HARVEST",
+    if(op ~= "(cognitiveservices|machinelearningservices)/register/action" or op in ("microsoft.cognitiveservices/accounts/write", "microsoft.machinelearningservices/workspaces/write"), "2_AI_ENABLEMENT",
+    if(op ~= "cognitiveservices/accounts/deployments/(write|delete)", "3_MODEL_DEPLOYMENT",
+    if(op ~= "cognitiveservices/accounts/(raipolicies|raiblocklists)", "4_FILTER_TAMPER",
+    if(op ~= "insights/diagnosticsettings/(write|delete)" and to_string(raw_log) ~= "(?i)microsoft\.(cognitiveservices|machinelearningservices)", "4_LOGGING_TAMPER",
+    if(op = "microsoft.authorization/roleassignments/write" and lowercase(to_string(raw_log)) ~= "(5e0bd9bd-7b93-4f28-af87-19fc36ad61bd|a001fd3d-188f-4b5d-821b-7da978bf7442|a97b65f3-24c7-4388-baec-2e87135dc908|25fbc0a9-bd7c-42a3-aa1a-3b75d497ee68|64702f94-c441-49e6-a78b-ef80e0188fee)", "5_AI_ROLE_GRANT",
+    if(op in ("microsoft.quota/quotas/write", "microsoft.support/supporttickets/write") or (op ~= "compute/virtualmachine(s|scalesets)/write" and to_string(raw_log) ~= "(?i)Standard_N[CDVG]"), "6_GPU_QUOTA",
+       null)))))))
+| filter stage != null
+//| filter coalesce(identity_name, "") not in ("<terraform-sp>", "<devops-pipeline>")
+| bin _time span = 1d
+| comp
+    count_distinct(stage) as stage_count,
+    values(stage) as stages,
+    count() as events,
+    values(caller_ip) as caller_ips,
+    values(user_agent) as user_agents
+  by _time, identity_name, identity_type
+| filter stage_count >= 2
+| alter severity = if(stage_count >= 4, "CRITICAL — full LLMjacking chain",
+                     if(stage_count = 3, "HIGH — 3 LLMjacking stages", "MEDIUM — 2 LLMjacking stages"))
+| fields _time, severity, identity_name, identity_type, stage_count, stages, events, caller_ips, user_agents
+| sort desc stage_count
