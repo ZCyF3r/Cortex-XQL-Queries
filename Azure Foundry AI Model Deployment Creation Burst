@@ -4,6 +4,7 @@
 
 
 dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure
 | alter op = lowercase(operation_name_orig)
 | filter op in (
     "microsoft.cognitiveservices/accounts/deployments/write",
