@@ -1,0 +1,41 @@
+// Azure GPU VM Provisioning, Quota Increase, and Quota Support Tickets
+// GTIG: attackers provision GPU instances and request quota increases to run their own LLM tooling. Flags N-series (NC/ND/NV) VM creates, quota writes, and support tickets (quota requests go through Microsoft.Support).
+// MITRE: T1496 — Resource Hijacking / T1578.002
+
+
+dataset = cloud_audit_logs
+| alter op = lowercase(operation_name_orig)
+| filter op in (
+    "microsoft.compute/virtualmachines/write",
+    "microsoft.compute/virtualmachinescalesets/write",
+    "microsoft.quota/quotas/write",
+    "microsoft.capacity/resourceproviders/locations/servicelimits/write",
+    "microsoft.support/supporttickets/write")
+| alter raw_str = to_string(raw_log)
+| alter
+    vm_size = arrayindex(regextract(raw_str, "(?i)\"vmSize\"\s*:\s*\"(Standard_N[CDVG][^\"]*)\""), 0),
+    correlation_id = json_extract_scalar(raw_str, "$.correlationId"),
+    result_type = json_extract_scalar(raw_str, "$.resultType"),
+    resource_id = json_extract_scalar(raw_str, "$.resourceId")
+| filter op not contains "microsoft.compute/" or vm_size != null
+| dedup correlation_id
+| alter
+    grab_type = if(vm_size != null, "GPU_VM", if(op contains "support", "SUPPORT_TICKET", "QUOTA_WRITE")),
+    region = arrayindex(regextract(raw_str, "(?i)\"location\"\s*:\s*\"([a-z0-9]+)\""), 0)
+//| filter coalesce(identity_name, "") not in ("<ml-platform-sp>", "<aks-nodepool-identity>")
+| comp
+    count() as events,
+    values(grab_type) as grab_types,
+    values(vm_size) as gpu_sizes,
+    values(region) as regions,
+    values(caller_ip) as caller_ips,
+    values(user_agent) as user_agents,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by identity_name, identity_type
+| alter severity = if(
+    array_length(grab_types) > 1, "HIGH — GPU provisioning + quota/support request by same identity",
+    if(array_length(regions) > 1, "HIGH — GPU activity across multiple regions",
+       "MEDIUM — GPU / quota activity"))
+| fields severity, identity_name, identity_type, grab_types, gpu_sizes, regions, events, caller_ips, user_agents, first_seen, last_seen
+| sort asc severity
