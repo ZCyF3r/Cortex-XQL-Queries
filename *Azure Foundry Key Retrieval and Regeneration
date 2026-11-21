@@ -1,0 +1,39 @@
+// Azure Foundry Key Retrieval and Regeneration
+// Detects identities pulling or regenerating Cognitive Services / Azure OpenAI account keys. Key-based auth bypasses Entra, so a listed key is directly resellable. 
+// Escalates when one identity touches 3+ AI accounts (harvest sweep) or both lists and regenerates (lock-out of the owner). Run over 24h.
+// MITRE: T1552.005 — Unsecured Credentials: Cloud Instance Metadata API, T1528 — Steal Application Access Token
+
+
+dataset = cloud_audit_logs
+| alter op = lowercase(operation_name_orig)
+| filter op in (
+    "microsoft.cognitiveservices/accounts/listkeys/action",
+    "microsoft.cognitiveservices/accounts/regeneratekey/action")
+| alter raw_str = to_string(raw_log)
+| alter
+    result_type = json_extract_scalar(raw_str, "$.resultType"),
+    resource_id = json_extract_scalar(raw_str, "$.resourceId")
+| filter coalesce(result_type, "") != "Start"
+| alter
+    ai_account = arrayindex(regextract(resource_id, "(?i)/accounts/([^/]+)"), 0),
+    subscription_id = arrayindex(regextract(resource_id, "(?i)/subscriptions/([0-9a-f-]{36})"), 0),
+    key_action = if(op contains "regeneratekey", "REGENERATE", "LIST")
+| filter coalesce(identity_name, "") not in ("<terraform-sp>", "<devops-pipeline>")
+| comp
+    count() as events,
+    count_distinct(ai_account) as accounts_touched,
+    values(ai_account) as ai_accounts,
+    values(subscription_id) as subscriptions,
+    values(key_action) as key_actions,
+    values(result_type) as results,
+    values(caller_ip) as caller_ips,
+    values(user_agent) as user_agents,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by identity_name, identity_type
+| alter severity = if(
+    accounts_touched >= 3, "HIGH — key harvest across multiple Azure OpenAI accounts",
+    if(array_length(key_actions) > 1, "HIGH — same identity listed AND regenerated keys",
+       "MEDIUM — Azure OpenAI key retrieved"))
+| fields severity, identity_name, identity_type, accounts_touched, events, ai_accounts, key_actions, results, caller_ips, user_agents, subscriptions, first_seen, last_seen
+| sort desc accounts_touched
