@@ -2,7 +2,9 @@
 // Grants of AI data-plane roles let a principal call models without keys. GTIG observed attackers creating service accounts and attaching permissions to them. Role GUIDs are only in the request body (Start record), so Start is kept and records are deduped on correlationId.
 // MITRE: T1098.003 — Account Manipulation: Additional Cloud Roles
 
+
 dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure
 | alter op = lowercase(operation_name_orig)
 | filter op = "microsoft.authorization/roleassignments/write"
 | alter raw_str = lowercase(to_string(raw_log))
