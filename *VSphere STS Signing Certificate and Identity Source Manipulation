@@ -6,10 +6,10 @@
 dataset = vmware_vsphere_raw
 | filter _raw_log ~= "(?i)(CertificateManager|STSCert|STS.*cert|CertificateReplacedEvent|TrustedRootsImported|IdentitySourceManagement|IdentityProviders|signing.*cert|token.*sign|saml.*cert|sso.*cert)"
 | alter
-    event_class = arrayindex(regextract(_raw_log, "Event\s+\[[^\]]*\]\s*\[[^\]]*\]\s*\[([^\]]+)\]"), 0),
-    acting_user = arrayindex(regextract(_raw_log, "Event\s+\[[^\]]*\]\s*\[[^\]]*\]\s*\[[^\]]*\]\s*\[[^\]]*\]\s*\[([^\]]+)\]"), 0),
-    event_message = arrayindex(regextract(_raw_log, "Event\s+(?:\[[^\]]*\]\s*){6}\[([^\]]+)\]"), 0),
-    source_ip = arrayindex(regextract(_raw_log, "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"), 0)
+    event_class   = arrayindex(regextract(_raw_log, "(vim\.event\.\w+|com\.vmware\.[\w.]+)"), 0),
+    acting_user   = arrayindex(regextract(_raw_log, "\x5b(?:info|warning|error|verbose|user)\x5d\s*\x5b([^\x5d]+)\x5d"), 0),
+    event_message = arrayindex(regextract(_raw_log, "\x5b([^\x5b\x5d]+)\x5d\s*$"), 0),
+    source_ip     = arrayindex(regextract(_raw_log, "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"), 0)
 | alter severity = if(
     _raw_log ~= "(?i)(STSCert|STS.*cert|signing.*cert|token.*sign)", "CRITICAL — STS signing cert change (Golden SAML indicator)",
     if(_raw_log ~= "(?i)(CertificateReplaced|TrustedRootsImported)", "HIGH — vCenter certificate replaced",
