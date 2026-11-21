@@ -1,4 +1,4 @@
-// Cognitive Services \ Azure OpenAI Role Granted
+// Azure Foundry \ Cognitive Services Role Granted
 // Grants of AI data-plane roles let a principal call models without keys. GTIG observed attackers creating service accounts and attaching permissions to them. Role GUIDs are only in the request body (Start record), so Start is kept and records are deduped on correlationId.
 // MITRE: T1098.003 — Account Manipulation: Additional Cloud Roles
 
