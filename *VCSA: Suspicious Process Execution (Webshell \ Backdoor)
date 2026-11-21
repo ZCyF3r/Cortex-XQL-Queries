@@ -24,7 +24,6 @@ dataset = vmware_vsphere_raw
     if(_raw_log ~= "(?i)(chmod\s+\+x.*/tmp|curl.*-o.*/tmp|wget.*/tmp)",
         "HIGH — Suspicious download/staging in /tmp",
         "MEDIUM — Suspicious process execution on VCSA"))
-// Flag the specific tooling
 | alter tool_match = if(
     _raw_log contains "/tmp/123", "BONESAW",
     if(_raw_log contains "/tmp/sss", "SAWSNAKE",
