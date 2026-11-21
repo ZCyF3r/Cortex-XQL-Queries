@@ -1,23 +1,15 @@
 dataset = vmware_vsphere_raw
 | filter _raw_log ~= "(?i)(CreatePermission|CreateGlobalPermission|PermissionAddedEvent|RoleManagement|RoleAddedEvent|privilege.*grant|admin.*role.*assign|setEntityPermissions)"
-// Content-anchored extraction — no bracket counting. \x5b = "[" and \x5d = "]"
 | alter
-    // Service that wrote the line: "<host> vpxd - - ..." / "<host> envoy-access - - - ..."
     log_source    = arrayindex(regextract(_raw_log, "\s([\w.-]+)\s+-\s+-\s"), 0),
-    // vpxd event type token (vim.event.PermissionAddedEvent, com.vmware.sso.*, etc.)
     vim_event     = arrayindex(regextract(_raw_log, "(vim\.event\.\w+|com\.vmware\.[\w.]+)"), 0),
-    // vpxd: bracket right after the severity bracket = acting user
     acting_user   = arrayindex(regextract(_raw_log, "\x5b(?:info|warning|error|verbose|user)\x5d\s*\x5b([^\x5d]+)\x5d"), 0),
-    // vpxd: last bracket on the line = event message
     event_message = arrayindex(regextract(_raw_log, "\x5b([^\x5b\x5d]+)\x5d\s*$"), 0),
-    // envoy-access: HTTP method + path
     http_method   = arrayindex(regextract(_raw_log, "\s(GET|POST|PUT|DELETE|PATCH)\s+/"), 0),
     url_path      = arrayindex(regextract(_raw_log, "\s(?:GET|POST|PUT|DELETE|PATCH)\s+(\S+)"), 0),
     source_ip     = arrayindex(regextract(_raw_log, "(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"), 0),
     is_global     = if(_raw_log ~= "(?i)Global", "YES", "NO")
 | alter event_class = coalesce(vim_event, log_source)
-// vpxd PermissionAddedEvent template:
-//   "Permission created for <principal> on <entity>, role is <role>, propagation is <bool>"
 | alter
     target_user = coalesce(
         arrayindex(regextract(event_message, "(?i)Permission\s+\w+\s+for\s+(\S+)\s+on"), 0),
@@ -29,18 +21,12 @@ dataset = vmware_vsphere_raw
         arrayindex(regextract(event_message, "(?i)role\s+(\S+)\s+created"), 0)
     ),
     url_properties = arrayindex(regextract(url_path, "properties=([^&]+)"), 0)
-// envoy-access GETs with properties=grantedPrivileges are the vSphere Client READING
-// privileges (UI polling), not granting them — labeled INFO instead of dropped.
-// Null-safe: coalesce so rows with no log_source/http_method aren't silently removed.
 | alter is_ui_read = if(coalesce(log_source, "") = "envoy-access" and coalesce(http_method, "") = "GET", "YES", "NO")
 | alter severity = if(
     is_ui_read = "YES", "INFO — vSphere Client privilege read (not a grant)",
     if(is_global = "YES", "CRITICAL — Global admin permission granted",
        if(_raw_log ~= "(?i)(Admin|admin)", "HIGH — Administrator role assigned",
           "MEDIUM — Permission change")))
-// To hide UI polling once validated: | filter is_ui_read = "NO"
-// Flag BONESAW account pattern
-// sps-* may appear as "sps-x@vsphere.local" or "VSPHERE.LOCAL\sps-x"
 | alter bonesaw_indicator = if(target_user ~= "(?i)sps-", "BONESAW account detected", "")
 | fields _time, severity, bonesaw_indicator, event_class, log_source, target_user, role_name, acting_user, source_ip, is_global, http_method, url_path, url_properties, event_message, _raw_log
 | sort asc _time
