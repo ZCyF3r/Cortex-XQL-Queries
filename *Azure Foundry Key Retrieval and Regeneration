@@ -18,7 +18,7 @@ dataset = cloud_audit_logs
     ai_account = arrayindex(regextract(resource_id, "(?i)/accounts/([^/]+)"), 0),
     subscription_id = arrayindex(regextract(resource_id, "(?i)/subscriptions/([0-9a-f-]{36})"), 0),
     key_action = if(op contains "regeneratekey", "REGENERATE", "LIST")
-| filter coalesce(identity_name, "") not in ("<terraform-sp>", "<devops-pipeline>")
+//| filter coalesce(identity_name, "") not in ("<terraform-sp>", "<devops-pipeline>")
 | comp
     count() as events,
     count_distinct(ai_account) as accounts_touched,
@@ -32,7 +32,7 @@ dataset = cloud_audit_logs
     max(_time) as last_seen
   by identity_name, identity_type
 | alter severity = if(
-    accounts_touched >= 3, "HIGH — key harvest across multiple Azure OpenAI accounts",
+    accounts_touched >= 3, "HIGH — key harvest across multiple Azure Foundry/OpenAI accounts",
     if(array_length(key_actions) > 1, "HIGH — same identity listed AND regenerated keys",
        "MEDIUM — Azure OpenAI key retrieved"))
 | fields severity, identity_name, identity_type, accounts_touched, events, ai_accounts, key_actions, results, caller_ips, user_agents, subscriptions, first_seen, last_seen
