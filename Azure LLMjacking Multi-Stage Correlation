@@ -4,6 +4,7 @@
 
 
 dataset = cloud_audit_logs
+| filter cloud_provider = ENUM.Azure
 | alter op = lowercase(operation_name_orig)
 | alter stage = if(
     op ~= "cognitiveservices/accounts/(listkeys|regeneratekey)/action", "1_KEY_HARVEST",
