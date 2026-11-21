@@ -1,3 +1,9 @@
+// VSphere Global Administrator Permission Grant
+// Detects permission grants, especially GlobalPermission, to non-standard accounts. After BONESAW creates the sps-* account,
+// Armory Castle assigns Administrator via the vSphere SOAP API. Allowlist known admin accounts and service principals.
+// MITRE: T1098 — Account Manipulation
+
+
 dataset = vmware_vsphere_raw
 | filter _raw_log ~= "(?i)(CreatePermission|CreateGlobalPermission|PermissionAddedEvent|RoleManagement|RoleAddedEvent|privilege.*grant|admin.*role.*assign|setEntityPermissions)"
 | alter
