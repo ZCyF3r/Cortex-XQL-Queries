@@ -34,6 +34,6 @@ dataset = cloud_audit_logs
 | alter severity = if(
     accounts_touched >= 3, "HIGH — key harvest across multiple Azure Foundry/OpenAI accounts",
     if(array_length(key_actions) > 1, "HIGH — same identity listed AND regenerated keys",
-       "MEDIUM — Azure OpenAI key retrieved"))
+       "MEDIUM — Azure Foundry/OpenAI key retrieved"))
 | fields severity, identity_name, identity_type, accounts_touched, events, ai_accounts, key_actions, results, caller_ips, user_agents, subscriptions, first_seen, last_seen
 | sort desc accounts_touched
