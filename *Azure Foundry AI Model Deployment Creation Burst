@@ -1,0 +1,39 @@
+// Azure Foundry AI Model Deployment Creation Burst
+// Attackers deploy frontier models (and raise capacity) on stolen accounts so they can be resold. Flags one identity creating 3+ deployments, deploying across 2+ accounts, or create+delete churn in the same window. Run over 24h.
+// MITRE: T1496 — Resource Hijacking
+
+
+dataset = cloud_audit_logs
+| alter op = lowercase(operation_name_orig)
+| filter op in (
+    "microsoft.cognitiveservices/accounts/deployments/write",
+    "microsoft.cognitiveservices/accounts/deployments/delete")
+| alter raw_str = to_string(raw_log)
+| alter
+    result_type = json_extract_scalar(raw_str, "$.resultType"),
+    resource_id = json_extract_scalar(raw_str, "$.resourceId")
+| filter coalesce(result_type, "") != "Start"
+| alter
+    ai_account = arrayindex(regextract(resource_id, "(?i)/accounts/([^/]+)"), 0),
+    deployment = arrayindex(regextract(resource_id, "(?i)/deployments/([^/]+)"), 0),
+    dep_action = if(op contains "/delete", "DELETE", "WRITE")
+//| filter coalesce(identity_name, "") not in ("<terraform-sp>", "<devops-pipeline>")
+| comp
+    count() as events,
+    count_distinct(deployment) as deployments,
+    count_distinct(ai_account) as accounts,
+    values(deployment) as deployment_names,
+    values(ai_account) as ai_accounts,
+    values(dep_action) as actions,
+    values(result_type) as results,
+    values(caller_ip) as caller_ips,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by identity_name, identity_type
+| filter deployments >= 3 or accounts >= 2 or array_length(actions) > 1
+| alter severity = if(
+    accounts >= 2, "HIGH — deployments across multiple AI accounts",
+    if(array_length(actions) > 1, "HIGH — deployment create/delete churn",
+       "MEDIUM — deployment burst"))
+| fields severity, identity_name, identity_type, deployments, accounts, deployment_names, ai_accounts, actions, results, caller_ips, first_seen, last_seen
+| sort desc deployments
