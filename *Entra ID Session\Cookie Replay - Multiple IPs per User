@@ -11,27 +11,46 @@ dataset = msft_azure_ad_raw
     Compliance = json_extract_scalar(deviceDetail, "$.isCompliant"),
     Browser = json_extract_scalar(deviceDetail, "$.browser"),
     OS = json_extract_scalar(deviceDetail, "$.operatingSystem")
-| filter error_code = "0"
+| filter error_code in ("0", "53003")
 | filter sessionId != null and sessionId != ""
-| filter userAgent != null and userAgent != ""
-| comp
-    count() as total_signins,
-    count_distinct(ipAddress) as distinct_ips,
-    count_distinct(userAgent) as distinct_user_agents,
-    count_distinct(appDisplayName) as distinct_apps,
-    values(ipAddress) as source_ips,
-    values(userAgent) as user_agents,
-    values(appDisplayName) as applications,
-    values(location) as locations,
-    values(Managed) as managed_status,
-    values(Compliance) as compliance_status,
-    values(signInTokenProtectionStatus) as token_protection,
-    min(_time) as first_seen,
-    max(_time) as last_seen
+| iploc ipAddress loc_asn as asn, loc_asn_org as asn_org
+| alter net_key = coalesce(to_string(asn), ipAddress)
+| windowcomp lag(net_key) by sessionId sort asc _time as prev_net
+| windowcomp lag(ipAddress) by sessionId sort asc _time as prev_ip
+| windowcomp lag(_time) by sessionId sort asc _time as prev_time
+| windowcomp lag(userAgent) by sessionId sort asc _time as prev_ua
+| windowcomp lag(country) by sessionId sort asc _time as prev_country
+| windowcomp lag(device_id) by sessionId sort asc _time as prev_device
+| alter mins_since_prev = timestamp_diff(_time, prev_time, "MINUTE")
+| filter prev_net != null and net_key != prev_net
+| filter mins_since_prev <= 60
+// | filter asn not in (12345, 67890)
+| alter ua_changed = if(coalesce(userAgent, "") != coalesce(prev_ua, ""), 1, 0),
+        country_changed = if(coalesce(country, "") != coalesce(prev_country, ""), 1, 0),
+        device_changed = if(coalesce(device_id, "") != coalesce(prev_device, ""), 1, 0),
+        tp_unbound = if(tp_status = "unbound", 1, 0),
+        ca_blocked = if(error_code = "53003", 1, 0)
+| comp count() as network_switches,
+       min(mins_since_prev) as fastest_switch_min,
+       count_distinct(net_key) as distinct_networks,
+       values(ipAddress) as ips,
+       values(prev_ip) as prev_ips,
+       values(asn_org) as asn_orgs,
+       values(country) as countries,
+       values(city) as cities,
+       values(userAgent) as user_agents,
+       values(appDisplayName) as apps,
+       values(tp_status) as token_protection,
+       values(Managed) as managed_status,
+       values(Compliance) as compliance_status,
+       max(ua_changed) as ua_changed,
+       max(country_changed) as country_changed,
+       max(device_changed) as device_changed,
+       max(tp_unbound) as tp_unbound,
+       max(ca_blocked) as ca_blocked,
+       min(_time) as first_switch,
+       max(_time) as last_switch
   by sessionId, userPrincipalName
-| filter distinct_ips >= 2
-| filter token_protection != "bound"
-| alter has_unbound_token = if(token_protection contains "unbound", "YES", "NO")
-| alter has_ua_mismatch = if(distinct_user_agents >= 2, "YES", "NO")
-| filter has_ua_mismatch = "YES" and has_unbound_token = "YES"
-| sort desc distinct_ips
+| alter replay_score = network_switches + ua_changed + country_changed + device_changed
+                     + 2 * tp_unbound + 2 * ca_blocked + if(fastest_switch_min <= 5, 2, 0)
+| sort desc replay_score, asc fastest_switch_min
